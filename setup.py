@@ -31,10 +31,10 @@ readme_lines = readme.splitlines()
 setup(
     name='json5',
     packages=find_packages(),
-    package_data={'': ['../README.md']},
+    package_data={'': ['../README.rst']},
     entry_points={
         'console_scripts': [
-            'json5=json5.main:main',
+            'pyjson5=json5.main:main',
         ]
     },
     install_requires=[

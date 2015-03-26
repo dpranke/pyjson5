@@ -21,7 +21,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 if here not in sys.path:
     sys.path.insert(0, here)
 
-from typ.version import VERSION
+from json5.version import VERSION
 
 with open(os.path.join(here, 'README.md')) as fp:
     readme = fp.read().strip()
@@ -29,12 +29,12 @@ with open(os.path.join(here, 'README.md')) as fp:
 readme_lines = readme.splitlines()
 
 setup(
-    name='typ',
+    name='json5',
     packages=find_packages(),
     package_data={'': ['../README.md']},
     entry_points={
         'console_scripts': [
-            'json5=json5.runner:main',
+            'json5=json5.main:main',
         ]
     },
     install_requires=[
@@ -47,9 +47,9 @@ setup(
     url='https://github.com/dpranke/pyjson5',
     license='Apache',
     classifiers=[
-        'Development Status :: 3 - Alpha',
+        'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',
-        'License :: OSI Approved :: Apache',
+        'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',

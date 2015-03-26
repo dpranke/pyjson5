@@ -12,17 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-def load():
-    pass
+import json
+
+def load(fp, **kwargs):
+    return json.load(fp, **kwargs)
 
 
-def loads():
-    pass
+def loads(s, **kwargs):
+    return json.loads(s, **kwargs)
 
 
-def dump():
-    pass
+def dump(obj, fp, **kwargs):
+    return json.dump(obj, fp, **kwargs)
 
 
-def dumps():
-    pass
+def dumps(obj, **kwargs):
+    return json.dumps(obj, **kwargs)

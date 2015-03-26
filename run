@@ -39,7 +39,6 @@ def main(argv):
     subp = subps.add_parser('coverage',
                             help='Run the tests and report code coverage.')
     subp.set_defaults(func=run_coverage)
-    cov.add_arguments(subp)
 
     subp = subps.add_parser('develop',
                              help='Install a symlinked package locally.')

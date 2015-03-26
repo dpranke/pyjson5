@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import fileinput
+import json
 import os
 import sys
 
@@ -30,6 +32,9 @@ def main(argv=None, host=None, **defaults):
 
     if args.version:
         host.print_(VERSION)
+
+    inp = '\n'.join(fileinput.input(args.files))
+    host.print_(lib.dumps(lib.loads(inp)))
     return 0
 
 

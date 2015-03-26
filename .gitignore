@@ -1,4 +1,5 @@
 build
+dist
 *.pyc
 *.pyc.d
 *.py,cover

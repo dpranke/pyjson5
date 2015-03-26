@@ -1,7 +1,7 @@
 pyjson5
 =======
 
-A Python implementation of the `JSON5 data format <https://github.com/aseemk/json5>`_.
+A Python implementation of the JSON5 data format.
 
 `JSON5 <https://github.com/aseemk/json5>`_ extends the 
 `JSON <http://www.json.org>`_ data interchange format to make it

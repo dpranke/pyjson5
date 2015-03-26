@@ -33,7 +33,10 @@ def main(argv=None, host=None, **defaults):
     if args.version:
         host.print_(VERSION)
 
-    inp = '\n'.join(fileinput.input(args.files))
+    if args.cmd:
+        inp = args.cmd
+    else:
+        inp = '\n'.join(fileinput.input(args.files))
     host.print_(lib.dumps(lib.loads(inp)))
     return 0
 

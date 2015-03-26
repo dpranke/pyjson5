@@ -33,6 +33,9 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument('-V', '--version', action='store_true',
                           help='Print the json5 version and exit.')
 
+        self.add_argument('-c', metavar='STR', dest='cmd',
+                          help='inline json5 string'),
+
         self.add_argument('files', nargs='*', default=[],
                           help=argparse.SUPPRESS)
 

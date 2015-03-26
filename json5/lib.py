@@ -22,13 +22,29 @@ def load(fp, **kwargs):
 
 
 def loads(s, **kwargs):
-    import pdb; pdb.set_trace()
     parser = Parser(s, '')
-    obj, err = parser.parse()
+    ast, err = parser.parse()
     if not err:
-        return obj
+        return _walk_ast(ast)
     raise Exception(err)
 
+def _walk_ast(el):
+    if el == 'None':
+        return None
+    if el == 'True':
+        return True
+    if el == 'False':
+        return False
+    ty, v = el
+    if ty == 'number':
+        return int(v)
+    if ty == 'string':
+        return v
+    if ty == 'object':
+        return {}
+    if ty == 'array':
+        return []
+    raise Exception('unknown el: ' + el)
 
 def dump(obj, fp, **kwargs):
     s = dumps(obj, **kwargs)

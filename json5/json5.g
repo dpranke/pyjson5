@@ -1,4 +1,4 @@
-grammar      = sp value sp end,
+grammar      = sp value:v sp end                    -> v,
 
 sp           = ws*,
 
@@ -9,22 +9,22 @@ eol          = '\r\n' | '\r' | '\n',
 comment      = '//' ~eol* eol
              | '/*' ~('*/')* '*/',
 
-value        = 'null'
-             | 'true'
-             | 'false'
-             | object
-             | array
-             | string
-             | number,
+value        = 'null'                               -> 'None'
+             | 'true'                               -> 'True'
+             | 'false'                              -> 'False'
+             | object:v                             -> ['object', v]
+             | array:v                              -> ['array', v]
+             | string:v                             -> ['string', v]
+             | number:v                             -> ['number', v],
 
-object       = '{' ws member_list ws '}'
-             | '{' ws '}',
+object       = '{' ws member_list:v ws '}'          -> v
+             | '{' ws '}'                           -> [],
 
-array        = '[' ws element_list ws ']'
-             | '[' ws ']',
+array        = '[' ws element_list:v ws ']'         -> v
+             | '[' ws ']'                           -> [],
 
-string       = squote (~squote qchar*)* squote
-             | dquote (~dquote qchar*)* dquote,
+string       = squote (~squote qchar)*:qs squote    -> ''.join(qs)
+             | dquote (~dquote qchar)*:qs dquote    -> ''.join(qs),
 
 squote       = '\'',
 
@@ -34,18 +34,17 @@ qchar        = '\\\''
              | '\\"'
              | anything,
 
-element_list = value ws ',' ws element_list
-             | value ws ','
-             | value,
+element_list = value:v ws ',' ws element_list:vs    -> [v] + vs
+             | value:v ws ','                       -> [v]
+             | value:v                              -> [v],
 
-member_list  = member ws ',' ws member_list
-             | member ws ','
-             | member,
+member_list  = member:m ws ',' ws member_list:ms    -> [m] + ms
+             | member:m ws ','                      -> [m]
+             | member:m                             -> [m],
 
-member       = string ws ':' value
-             | ident ws ':' value,
+member       = string:k ws ':' value:v              -> [k, v]
+             | ident:k ws ':' value:v               -> [k, v],
 
-ident        = (letter | '$' | '_') (letter|digit)*,
+ident        = (letter|'$'|'_'):hd (letter|digit)*:tl -> ''.join([hd] + tl),
 
-number       = digit digit*,
-
+number       = digit:hd digit*:tl                     -> ''.join([hd] + tl),

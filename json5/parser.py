@@ -166,7 +166,7 @@ class Parser(CompiledParserBase):
         choice_1()
 
     def _value_(self):
-        """ 'null' -> 'None'|'true' -> 'True'|'false' -> 'False'|object:v -> ['object', v]|array:v -> ['array', v]|string:v -> ['string', v]|number:v -> ['number', v] """
+        """ 'null' -> 'None'|'true' -> 'True'|'false' -> 'False'|object:v -> ['object', v]|array:v -> ['array', v]|string:v -> ['string', v]|num_literal:v -> ['number', v] """
         p = self.pos
         def choice_0():
             self._expect('null')
@@ -241,7 +241,7 @@ class Parser(CompiledParserBase):
 
         self.pos = p
         def choice_6():
-            self._number_()
+            self._num_literal_()
             if not self.err:
                 v_v = self.val
             if self.err:
@@ -610,27 +610,8 @@ class Parser(CompiledParserBase):
         choice_1()
 
     def _ident_(self):
-        """ (letter|'$'|'_'):hd (letter|digit)*:tl -> ''.join([hd] + tl) """
-        def group():
-            p = self.pos
-            def choice_0():
-                self._letter_()
-            choice_0()
-            if not self.err:
-                return
-
-            self.pos = p
-            def choice_1():
-                self._expect('$')
-            choice_1()
-            if not self.err:
-                return
-
-            self.pos = p
-            def choice_2():
-                self._expect('_')
-            choice_2()
-        group()
+        """ ident_start:hd (letter|digit)*:tl -> ''.join([hd] + tl) """
+        self._ident_start_()
         if not self.err:
             v_hd = self.val
         if self.err:
@@ -661,11 +642,447 @@ class Parser(CompiledParserBase):
         self.val = ''.join([v_hd] + v_tl)
         self.err = None
 
-    def _number_(self):
-        """ digit:hd digit*:tl -> ''.join([hd] + tl) """
-        self._digit_()
+    def _ident_start_(self):
+        """ (letter|'$'|'_'):i -> i """
+        def group():
+            p = self.pos
+            def choice_0():
+                self._letter_()
+            choice_0()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_1():
+                self._expect('$')
+            choice_1()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_2():
+                self._expect('_')
+            choice_2()
+        group()
         if not self.err:
-            v_hd = self.val
+            v_i = self.val
+        if self.err:
+            return
+        self.val = v_i
+        self.err = None
+
+    def _num_literal_(self):
+        """ dec_literal:d ~(ident_start|digit) -> d|hex_literal """
+        p = self.pos
+        def choice_0():
+            self._dec_literal_()
+            if not self.err:
+                v_d = self.val
+            if self.err:
+                return
+            p = self.pos
+            def group():
+                p = self.pos
+                def choice_0():
+                    self._ident_start_()
+                choice_0()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_1():
+                    self._digit_()
+                choice_1()
+            group()
+            self.pos = p
+            if not self.err:
+                 self.err = "not"
+                 self.val = None
+                 return
+            self.err = None
+            if self.err:
+                return
+            self.val = v_d
+            self.err = None
+        choice_0()
+        if not self.err:
+            return
+
+        self.pos = p
+        def choice_1():
+            self._hex_literal_()
+        choice_1()
+
+    def _dec_literal_(self):
+        """ dec_int_lit:d frac:f exp:e -> d + '.' + f + e|dec_int_lit:d frac:f -> d + '.' + f|dec_int_lit:d exp:e -> d + e|dec_int_lit:d -> d|frac:f exp:e -> f + e|frac:f -> f """
+        p = self.pos
+        def choice_0():
+            self._dec_int_lit_()
+            if not self.err:
+                v_d = self.val
+            if self.err:
+                return
+            self._frac_()
+            if not self.err:
+                v_f = self.val
+            if self.err:
+                return
+            self._exp_()
+            if not self.err:
+                v_e = self.val
+            if self.err:
+                return
+            self.val = v_d + '.' + v_f + v_e
+            self.err = None
+        choice_0()
+        if not self.err:
+            return
+
+        self.pos = p
+        def choice_1():
+            self._dec_int_lit_()
+            if not self.err:
+                v_d = self.val
+            if self.err:
+                return
+            self._frac_()
+            if not self.err:
+                v_f = self.val
+            if self.err:
+                return
+            self.val = v_d + '.' + v_f
+            self.err = None
+        choice_1()
+        if not self.err:
+            return
+
+        self.pos = p
+        def choice_2():
+            self._dec_int_lit_()
+            if not self.err:
+                v_d = self.val
+            if self.err:
+                return
+            self._exp_()
+            if not self.err:
+                v_e = self.val
+            if self.err:
+                return
+            self.val = v_d + v_e
+            self.err = None
+        choice_2()
+        if not self.err:
+            return
+
+        self.pos = p
+        def choice_3():
+            self._dec_int_lit_()
+            if not self.err:
+                v_d = self.val
+            if self.err:
+                return
+            self.val = v_d
+            self.err = None
+        choice_3()
+        if not self.err:
+            return
+
+        self.pos = p
+        def choice_4():
+            self._frac_()
+            if not self.err:
+                v_f = self.val
+            if self.err:
+                return
+            self._exp_()
+            if not self.err:
+                v_e = self.val
+            if self.err:
+                return
+            self.val = v_f + v_e
+            self.err = None
+        choice_4()
+        if not self.err:
+            return
+
+        self.pos = p
+        def choice_5():
+            self._frac_()
+            if not self.err:
+                v_f = self.val
+            if self.err:
+                return
+            self.val = v_f
+            self.err = None
+        choice_5()
+
+    def _dec_int_lit_(self):
+        """ '0' ~digit -> '0'|nonzerodigit:n digit*:ds -> n + ''.join(ds) """
+        p = self.pos
+        def choice_0():
+            self._expect('0')
+            if self.err:
+                return
+            p = self.pos
+            self._digit_()
+            self.pos = p
+            if not self.err:
+                 self.err = "not"
+                 self.val = None
+                 return
+            self.err = None
+            if self.err:
+                return
+            self.val = '0'
+            self.err = None
+        choice_0()
+        if not self.err:
+            return
+
+        self.pos = p
+        def choice_1():
+            self._nonzerodigit_()
+            if not self.err:
+                v_n = self.val
+            if self.err:
+                return
+            vs = []
+            while not self.err:
+                self._digit_()
+                if not self.err:
+                    vs.append(self.val)
+            self.val = vs
+            self.err = None
+            if not self.err:
+                v_ds = self.val
+            if self.err:
+                return
+            self.val = v_n + ''.join(v_ds)
+            self.err = None
+        choice_1()
+
+    def _nonzerodigit_(self):
+        """ ('1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9') """
+        def group():
+            p = self.pos
+            def choice_0():
+                self._expect('1')
+            choice_0()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_1():
+                self._expect('2')
+            choice_1()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_2():
+                self._expect('3')
+            choice_2()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_3():
+                self._expect('4')
+            choice_3()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_4():
+                self._expect('5')
+            choice_4()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_5():
+                self._expect('6')
+            choice_5()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_6():
+                self._expect('7')
+            choice_6()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_7():
+                self._expect('8')
+            choice_7()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_8():
+                self._expect('9')
+            choice_8()
+        group()
+
+    def _hex_literal_(self):
+        """ ('0x'|'0X') hex_digit:h1 hex_digit:h2 -> '0x' + h1 + h2|('0x'|'0X') hex_digit:h -> '0x' + h """
+        p = self.pos
+        def choice_0():
+            def group():
+                p = self.pos
+                def choice_0():
+                    self._expect('0x')
+                choice_0()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_1():
+                    self._expect('0X')
+                choice_1()
+            group()
+            if self.err:
+                return
+            self._hex_digit_()
+            if not self.err:
+                v_h1 = self.val
+            if self.err:
+                return
+            self._hex_digit_()
+            if not self.err:
+                v_h2 = self.val
+            if self.err:
+                return
+            self.val = '0x' + v_h1 + v_h2
+            self.err = None
+        choice_0()
+        if not self.err:
+            return
+
+        self.pos = p
+        def choice_1():
+            def group():
+                p = self.pos
+                def choice_0():
+                    self._expect('0x')
+                choice_0()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_1():
+                    self._expect('0X')
+                choice_1()
+            group()
+            if self.err:
+                return
+            self._hex_digit_()
+            if not self.err:
+                v_h = self.val
+            if self.err:
+                return
+            self.val = '0x' + v_h
+            self.err = None
+        choice_1()
+
+    def _hex_digit_(self):
+        """ ('a'|'b'|'c'|'d'|'e'|'f'|'A'|'B'|'C'|'D'|'E'|'F'|digit) """
+        def group():
+            p = self.pos
+            def choice_0():
+                self._expect('a')
+            choice_0()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_1():
+                self._expect('b')
+            choice_1()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_2():
+                self._expect('c')
+            choice_2()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_3():
+                self._expect('d')
+            choice_3()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_4():
+                self._expect('e')
+            choice_4()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_5():
+                self._expect('f')
+            choice_5()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_6():
+                self._expect('A')
+            choice_6()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_7():
+                self._expect('B')
+            choice_7()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_8():
+                self._expect('C')
+            choice_8()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_9():
+                self._expect('D')
+            choice_9()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_10():
+                self._expect('E')
+            choice_10()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_11():
+                self._expect('F')
+            choice_11()
+            if not self.err:
+                return
+
+            self.pos = p
+            def choice_12():
+                self._digit_()
+            choice_12()
+        group()
+
+    def _frac_(self):
+        """ '.' digit*:ds -> ''.join(ds) """
+        self._expect('.')
         if self.err:
             return
         vs = []
@@ -676,8 +1093,93 @@ class Parser(CompiledParserBase):
         self.val = vs
         self.err = None
         if not self.err:
-            v_tl = self.val
+            v_ds = self.val
         if self.err:
             return
-        self.val = ''.join([v_hd] + v_tl)
+        self.val = ''.join(v_ds)
         self.err = None
+
+    def _exp_(self):
+        """ ('e'|'E') ('+'|'-'):s digit*:ds -> 'e' + s + ''.join(ds)|('e'|'E') digit*:ds -> 'e' + ''.join(ds) """
+        p = self.pos
+        def choice_0():
+            def group():
+                p = self.pos
+                def choice_0():
+                    self._expect('e')
+                choice_0()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_1():
+                    self._expect('E')
+                choice_1()
+            group()
+            if self.err:
+                return
+            def group():
+                p = self.pos
+                def choice_0():
+                    self._expect('+')
+                choice_0()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_1():
+                    self._expect('-')
+                choice_1()
+            group()
+            if not self.err:
+                v_s = self.val
+            if self.err:
+                return
+            vs = []
+            while not self.err:
+                self._digit_()
+                if not self.err:
+                    vs.append(self.val)
+            self.val = vs
+            self.err = None
+            if not self.err:
+                v_ds = self.val
+            if self.err:
+                return
+            self.val = 'e' + v_s + ''.join(v_ds)
+            self.err = None
+        choice_0()
+        if not self.err:
+            return
+
+        self.pos = p
+        def choice_1():
+            def group():
+                p = self.pos
+                def choice_0():
+                    self._expect('e')
+                choice_0()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_1():
+                    self._expect('E')
+                choice_1()
+            group()
+            if self.err:
+                return
+            vs = []
+            while not self.err:
+                self._digit_()
+                if not self.err:
+                    vs.append(self.val)
+            self.val = vs
+            self.err = None
+            if not self.err:
+                v_ds = self.val
+            if self.err:
+                return
+            self.val = 'e' + ''.join(v_ds)
+            self.err = None
+        choice_1()

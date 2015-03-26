@@ -37,6 +37,10 @@ def _walk_ast(el):
         return False
     ty, v = el
     if ty == 'number':
+        if v.startswith('0x') or v.startswith('0X'):
+           return int(v, base=16)
+        if '.' in v or 'e' in v or 'E' in v:
+           return float(v)
         return int(v)
     if ty == 'string':
         return v

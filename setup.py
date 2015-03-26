@@ -23,7 +23,7 @@ if here not in sys.path:
 
 from json5.version import VERSION
 
-with open(os.path.join(here, 'README.md')) as fp:
+with open(os.path.join(here, 'README.rst')) as fp:
     readme = fp.read().strip()
 
 readme_lines = readme.splitlines()

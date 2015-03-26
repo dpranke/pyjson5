@@ -1,0 +1,17 @@
+{
+  // single-line comment
+  foo: [1, 2, 3],
+
+  /* single-line C-style comment */
+  "bar": true,
+
+  /*
+   * multi-line C-style comment
+   */
+
+  baz: {
+    a: false,
+    b: null,
+    c: 'hello, world',
+  },
+}

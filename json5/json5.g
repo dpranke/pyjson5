@@ -1,13 +1,11 @@
-grammar      = sp value:v sp end                    -> v,
+grammar      = ws value:v ws end                    -> v,
 
-sp           = ws*,
-
-ws           = ' ' | '\t' | comment | eol,
+ws           = (' ' | '\t' | comment | eol)*,
 
 eol          = '\r\n' | '\r' | '\n',
 
-comment      = '//' ~eol* eol
-             | '/*' ~('*/')* '*/',
+comment      = '//' (~(eol|end) anything)* (end|eol)
+             | '/*' (~'*/' anything)* '*/',
 
 value        = 'null'                               -> 'None'
              | 'true'                               -> 'True'
@@ -42,8 +40,8 @@ member_list  = member:m ws ',' ws member_list:ms    -> [m] + ms
              | member:m ws ','                      -> [m]
              | member:m                             -> [m],
 
-member       = string:k ws ':' value:v              -> [k, v]
-             | ident:k ws ':' value:v               -> [k, v],
+member       = string:k ws ':' ws value:v           -> [k, v]
+             | ident:k ws ':' ws value:v            -> [k, v],
 
 ident        = (letter|'$'|'_'):hd (letter|digit)*:tl -> ''.join([hd] + tl),
 

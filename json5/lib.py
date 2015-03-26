@@ -41,9 +41,14 @@ def _walk_ast(el):
     if ty == 'string':
         return v
     if ty == 'object':
-        return {}
+        o = {}
+        for m in v:
+            k = m[0]
+            v = _walk_ast(m[1])
+            o[k] = v
+        return o
     if ty == 'array':
-        return []
+        return [_walk_ast(el) for el in v]
     raise Exception('unknown el: ' + el)
 
 def dump(obj, fp, **kwargs):

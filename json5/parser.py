@@ -4,8 +4,8 @@ from compiled_parser_base import CompiledParserBase
 class Parser(CompiledParserBase):
 
     def _grammar_(self):
-        """ sp value:v sp end -> v """
-        self._sp_()
+        """ ws value:v ws end -> v """
+        self._ws_()
         if self.err:
             return
         self._value_()
@@ -13,7 +13,7 @@ class Parser(CompiledParserBase):
             v_v = self.val
         if self.err:
             return
-        self._sp_()
+        self._ws_()
         if self.err:
             return
         self._end_()
@@ -22,43 +22,41 @@ class Parser(CompiledParserBase):
         self.val = v_v
         self.err = None
 
-    def _sp_(self):
-        """ ws* """
+    def _ws_(self):
+        """ (' '|'\t'|comment|eol)* """
         vs = []
         while not self.err:
-            self._ws_()
+            def group():
+                p = self.pos
+                def choice_0():
+                    self._expect(' ')
+                choice_0()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_1():
+                    self._expect('\t')
+                choice_1()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_2():
+                    self._comment_()
+                choice_2()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_3():
+                    self._eol_()
+                choice_3()
+            group()
             if not self.err:
                 vs.append(self.val)
         self.val = vs
         self.err = None
-
-    def _ws_(self):
-        """ ' '|'\t'|comment|eol """
-        p = self.pos
-        def choice_0():
-            self._expect(' ')
-        choice_0()
-        if not self.err:
-            return
-
-        self.pos = p
-        def choice_1():
-            self._expect('\t')
-        choice_1()
-        if not self.err:
-            return
-
-        self.pos = p
-        def choice_2():
-            self._comment_()
-        choice_2()
-        if not self.err:
-            return
-
-        self.pos = p
-        def choice_3():
-            self._eol_()
-        choice_3()
 
     def _eol_(self):
         """ '\r\n'|'\r'|'\n' """
@@ -82,7 +80,7 @@ class Parser(CompiledParserBase):
         choice_2()
 
     def _comment_(self):
-        """ '//' ~eol* eol|'/*' ~('*/')* '*/' """
+        """ '//' (~(eol|end) anything)* (end|eol)|'/*' (~'*/' anything)* '*/' """
         p = self.pos
         def choice_0():
             self._expect('//')
@@ -90,21 +88,50 @@ class Parser(CompiledParserBase):
                 return
             vs = []
             while not self.err:
-                p = self.pos
-                self._eol_()
-                self.pos = p
-                if not self.err:
-                     self.err = "not"
-                     self.val = None
-                     return
-                self.err = None
+                def group():
+                    p = self.pos
+                    def group():
+                        p = self.pos
+                        def choice_0():
+                            self._eol_()
+                        choice_0()
+                        if not self.err:
+                            return
+
+                        self.pos = p
+                        def choice_1():
+                            self._end_()
+                        choice_1()
+                    group()
+                    self.pos = p
+                    if not self.err:
+                         self.err = "not"
+                         self.val = None
+                         return
+                    self.err = None
+                    if self.err:
+                        return
+                    self._anything_()
+                group()
                 if not self.err:
                     vs.append(self.val)
             self.val = vs
             self.err = None
             if self.err:
                 return
-            self._eol_()
+            def group():
+                p = self.pos
+                def choice_0():
+                    self._end_()
+                choice_0()
+                if not self.err:
+                    return
+
+                self.pos = p
+                def choice_1():
+                    self._eol_()
+                choice_1()
+            group()
         choice_0()
         if not self.err:
             return
@@ -116,16 +143,19 @@ class Parser(CompiledParserBase):
                 return
             vs = []
             while not self.err:
-                p = self.pos
                 def group():
+                    p = self.pos
                     self._expect('*/')
+                    self.pos = p
+                    if not self.err:
+                         self.err = "not"
+                         self.val = None
+                         return
+                    self.err = None
+                    if self.err:
+                        return
+                    self._anything_()
                 group()
-                self.pos = p
-                if not self.err:
-                     self.err = "not"
-                     self.val = None
-                     return
-                self.err = None
                 if not self.err:
                     vs.append(self.val)
             self.val = vs
@@ -526,7 +556,7 @@ class Parser(CompiledParserBase):
         choice_2()
 
     def _member_(self):
-        """ string:k ws ':' value:v -> [k, v]|ident:k ws ':' value:v -> [k, v] """
+        """ string:k ws ':' ws value:v -> [k, v]|ident:k ws ':' ws value:v -> [k, v] """
         p = self.pos
         def choice_0():
             self._string_()
@@ -538,6 +568,9 @@ class Parser(CompiledParserBase):
             if self.err:
                 return
             self._expect(':')
+            if self.err:
+                return
+            self._ws_()
             if self.err:
                 return
             self._value_()
@@ -562,6 +595,9 @@ class Parser(CompiledParserBase):
             if self.err:
                 return
             self._expect(':')
+            if self.err:
+                return
+            self._ws_()
             if self.err:
                 return
             self._value_()

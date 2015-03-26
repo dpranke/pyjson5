@@ -14,16 +14,25 @@
 
 import json
 
+from json5.parser import Parser
+
 def load(fp, **kwargs):
-    return json.load(fp, **kwargs)
+    s = fp.read()
+    return loads(s, **kwargs)
 
 
 def loads(s, **kwargs):
-    return json.loads(s, **kwargs)
+    import pdb; pdb.set_trace()
+    parser = Parser(s, '')
+    obj, err = parser.parse()
+    if not err:
+        return obj
+    raise Exception(err)
 
 
 def dump(obj, fp, **kwargs):
-    return json.dump(obj, fp, **kwargs)
+    s = dumps(obj, **kwargs)
+    fp.write(s)
 
 
 def dumps(obj, **kwargs):

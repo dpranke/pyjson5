@@ -1,4 +1,4 @@
-from compiled_parser_base import CompiledParserBase
+from json5.compiled_parser_base import CompiledParserBase
 
 
 class Parser(CompiledParserBase):

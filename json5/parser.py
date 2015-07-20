@@ -927,65 +927,39 @@ class Parser(CompiledParserBase):
         group()
 
     def _hex_literal_(self):
-        """ ('0x'|'0X') hex_digit:h1 hex_digit:h2 -> '0x' + h1 + h2|('0x'|'0X') hex_digit:h -> '0x' + h """
-        p = self.pos
-        def choice_0():
-            def group():
-                p = self.pos
-                def choice_0():
-                    self._expect('0x')
-                choice_0()
-                if not self.err:
-                    return
+        """ ('0x'|'0X') hex_digit+:hs -> '0x' + ''.join(hs) """
+        def group():
+            p = self.pos
+            def choice_0():
+                self._expect('0x')
+            choice_0()
+            if not self.err:
+                return
 
-                self.pos = p
-                def choice_1():
-                    self._expect('0X')
-                choice_1()
-            group()
-            if self.err:
-                return
-            self._hex_digit_()
-            if not self.err:
-                v_h1 = self.val
-            if self.err:
-                return
-            self._hex_digit_()
-            if not self.err:
-                v_h2 = self.val
-            if self.err:
-                return
-            self.val = '0x' + v_h1 + v_h2
-            self.err = None
-        choice_0()
-        if not self.err:
+            self.pos = p
+            def choice_1():
+                self._expect('0X')
+            choice_1()
+        group()
+        if self.err:
             return
-
-        self.pos = p
-        def choice_1():
-            def group():
-                p = self.pos
-                def choice_0():
-                    self._expect('0x')
-                choice_0()
-                if not self.err:
-                    return
-
-                self.pos = p
-                def choice_1():
-                    self._expect('0X')
-                choice_1()
-            group()
-            if self.err:
-                return
+        vs = []
+        self._hex_digit_()
+        if self.err:
+            return
+        vs.append(self.val)
+        while not self.err:
             self._hex_digit_()
             if not self.err:
-                v_h = self.val
-            if self.err:
-                return
-            self.val = '0x' + v_h
-            self.err = None
-        choice_1()
+                vs.append(self.val)
+        self.val = vs
+        self.err = None
+        if not self.err:
+            v_hs = self.val
+        if self.err:
+            return
+        self.val = '0x' + ''.join(v_hs)
+        self.err = None
 
     def _hex_digit_(self):
         """ ('a'|'b'|'c'|'d'|'e'|'f'|'A'|'B'|'C'|'D'|'E'|'F'|digit) """

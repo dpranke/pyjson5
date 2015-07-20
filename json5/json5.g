@@ -62,8 +62,7 @@ dec_int_lit  = '0' ~digit                           -> '0'
 
 nonzerodigit = ('1'|'2'|'3'|'4'|'5'|'6'|'7'|'8'|'9'),
 
-hex_literal  = ('0x'|'0X') hex_digit:h1 hex_digit:h2  -> '0x' + h1 + h2
-             | ('0x'|'0X') hex_digit:h                -> '0x' + h,
+hex_literal  = ('0x'|'0X') hex_digit+:hs -> '0x' + ''.join(hs),
 
 
 hex_digit    = ('a'|'b'|'c'|'d'|'e'|'f'|

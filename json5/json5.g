@@ -43,7 +43,7 @@ member_list  = member:m ws ',' ws member_list:ms    -> [m] + ms
 member       = string:k ws ':' ws value:v           -> [k, v]
              | ident:k ws ':' ws value:v            -> [k, v],
 
-ident        = ident_start:hd (letter|digit)*:tl    -> ''.join([hd] + tl),
+ident        = ident_start:hd (ident_start|digit)*:tl -> ''.join([hd] + tl),
 
 ident_start  = (letter|'$'|'_'):i                   -> i,
 

@@ -16,10 +16,27 @@ import unittest
 
 import json5
 
-class LoadTest(unittest.TestCase):
-    def test_hex_literals(self):
-        self.assertEqual(json5.loads("0xf"), 15)
-        self.assertEqual(json5.loads("0xfe"), 254)
-        self.assertEqual(json5.loads("0xfff"), 4095)
-        self.assertEqual(json5.loads("0XABCD"), 43981)
-        self.assertEqual(json5.loads("0x123456"), 1193046)
+class BaseTestCase(unittest.TestCase):
+    def check(self, s, obj):
+        self.assertEqual(json5.loads(s), obj)
+
+class HexLiteralTest(BaseTestCase):
+    def test_multiple_lengths(self):
+        self.check('0xf', 15)
+        self.check('0xfe', 254)
+        self.check('0xfff', 4095)
+        self.check('0XABCD', 43981)
+        self.check('0x123456', 1193046)
+
+class IdentTest(BaseTestCase):
+    def test_basic(self):
+        self.check('{a: 1}', {'a': 1})
+        self.check('{$: 1}', {'$': 1})
+        self.check('{_: 1}', {'_': 1})
+
+    def test_illegal_start(self):
+        self.assertRaises(Exception, self.check, '{1: 1}', None)
+
+    def test_trailing_chars(self):
+        self.check('{a_b: 1}', {'a_b': 1})
+        self.check('{a$: 1}', {'a$': 1})

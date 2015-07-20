@@ -9,7 +9,7 @@ slightly more usable as a configuration language:
 
 * JavaScript-style comments (both single and multi-line) are legal.
 
-* Object keys may be unquoted if they are legal JavaScript field names.
+* Object keys may be unquoted if they are legal ECMAScript identifiers
 
 * Objects and arrays may end with trailing commas.
 
@@ -25,3 +25,14 @@ for ease of use.
 
 This is an early release. It is not well-tested, and has not been tuned
 for performance.
+
+Known issues
+------------
+
+* Despite what is written above, unquoted object keys cannot be just any
+  ECMAScript identifier; they must start with either an ASCII letter
+  ([a-zA-Z]), '$', or '_'.  and contain only ASCII letters, '$', '_', or
+  digits. Support for unicode letter classes is
+  `issue 4 <https://github.com/dpranke/pyjson5/issues/4>`_ and support
+  for escape sequencese is 
+  `issue 5 <https://github.com/dpranke/pyjson5/issues/5>`_.

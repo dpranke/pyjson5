@@ -610,7 +610,7 @@ class Parser(CompiledParserBase):
         choice_1()
 
     def _ident_(self):
-        """ ident_start:hd (letter|digit)*:tl -> ''.join([hd] + tl) """
+        """ ident_start:hd (ident_start|digit)*:tl -> ''.join([hd] + tl) """
         self._ident_start_()
         if not self.err:
             v_hd = self.val
@@ -621,7 +621,7 @@ class Parser(CompiledParserBase):
             def group():
                 p = self.pos
                 def choice_0():
-                    self._letter_()
+                    self._ident_start_()
                 choice_0()
                 if not self.err:
                     return

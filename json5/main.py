@@ -32,6 +32,7 @@ def main(argv=None, host=None, **defaults):
 
     if args.version:
         host.print_(VERSION)
+        return 0
 
     if args.cmd:
         inp = args.cmd

@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import json
 
 from json5.parser import Parser
+
 
 def load(fp, **kwargs):
     s = fp.read()
@@ -27,6 +29,7 @@ def loads(s, **kwargs):
     if not err:
         return _walk_ast(ast)
     raise Exception(err)
+
 
 def _walk_ast(el):
     if el == 'None':
@@ -55,10 +58,49 @@ def _walk_ast(el):
         return [_walk_ast(el) for el in v]
     raise Exception('unknown el: ' + el)
 
+
+REPLACE = {
+  True: 'true',
+  False: 'false',
+  None: 'null'
+}
+notletter = re.compile('\W')
+
+
+def dumps(data, compact=False, **kwargs):
+    if not compact:
+        return json.dumps(data, **kwargs)
+
+    t = type(data) 
+    if t is bool or t is None:
+        return REPLACE[data]
+    elif t is str:
+        single = "'" in data
+        double = '"' in data
+        if single and double:
+            return json.dumps(data)
+        elif single: 
+            return '"' + data + '"'
+        else:
+            return "'" + data + "'"
+    elif t is float or t is int:
+        return str(data)
+    elif t is dict:
+        return '{' + ','.join([
+            _dumpkey(k) + ':' + dumps(v) for k, v in data.items()
+        ]) + '}'
+    elif t is list:
+        return '[' + ','.join([dumps(v) for v in data]) + ']'
+    else: 
+        return ''
+
+def _dumpkey(k):
+    if notletter.search(k):
+        return json.dumps(k)
+    else:
+        return str(k)
+
+
 def dump(obj, fp, **kwargs):
     s = dumps(obj, **kwargs)
     fp.write(s)
-
-
-def dumps(obj, **kwargs):
-    return json.dumps(obj, **kwargs)

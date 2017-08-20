@@ -22,11 +22,14 @@ def load(fp, **kwargs):
 
 
 def loads(s, **kwargs):
-    parser = Parser(s, '')
+    if not s:
+        raise ValueError('Empty strings are not legal JSON5')
+    parser = Parser(s, '<string>')
     ast, err = parser.parse()
     if not err:
         return _walk_ast(ast)
-    raise Exception(err)
+    raise ValueError(err)
+
 
 def _walk_ast(el):
     if el == 'None':
@@ -41,6 +44,10 @@ def _walk_ast(el):
            return int(v, base=16)
         if '.' in v or 'e' in v or 'E' in v:
            return float(v)
+        if 'Infinity' in v:
+           return float(v.replace('Infinity', 'inf'))
+        if 'NaN' in v:
+           return float(v.replace('NaN', 'nan'))
         return int(v)
     if ty == 'string':
         return v

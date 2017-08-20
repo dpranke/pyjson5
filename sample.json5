@@ -1,21 +1,25 @@
 {
-  // single-line comment
-  foo: [1, 2, 3],
+    foo: 'bar',
+    while: true,
 
-  /* single-line C-style comment */
-  "bar": true,
+    this: 'is a \
+multi-line string',
 
-  /*
-   * multi-line C-style comment
-   */
+    // this is an inline comment
+    here: 'is another', // inline comment
 
-  baz: {
-    a: false,
-    b: null,
-    c: 'hello, world',
-  },
+    /* this is a block comment
+       that continues on another line */
 
-  nums: [ 0, 1, 12, 0.1, .123, 12e-34, 12.34, 12.34e5, ],
+    hex: 0xDEADbeef,
+    half: .5,
+    delta: +10,
+    to: Infinity,   // and beyond!
 
-  hexs: [ 0xa, 0XfF ],
+    finally: 'a trailing comma',
+    oh: [
+        "we shouldn't forget",
+        'arrays can have',
+        'trailing commas too',
+    ],
 }

@@ -17,6 +17,10 @@ import json
 import os
 import sys
 
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+if not THIS_DIR in sys.path:
+    sys.path.insert(0, THIS_DIR)
+
 from json5 import lib
 from json5.host import Host
 from json5.arg_parser import ArgumentParser
@@ -37,11 +41,10 @@ def main(argv=None, host=None, **defaults):
     if args.cmd:
         inp = args.cmd
     else:
-        inp = '\n'.join(fileinput.input(args.files))
+        inp = ''.join(fileinput.input(args.files))
     host.print_(lib.dumps(lib.loads(inp)))
     return 0
 
 
 if __name__ == '__main__':  # pragma: no cover
-    sys.modules['__main__'].__file__ = path_to_file
-    sys.exit(main(sys.argv[1:])[0])
+    sys.exit(main(sys.argv[1:]))

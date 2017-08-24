@@ -78,6 +78,15 @@ class Tests(unittest.TestCase):
             "foo": "bar"
             }, obj)
 
+    def test_strings(self):
+        self.check('"foo"', 'foo')
+        self.check("'foo'", 'foo')
+        self.check("'\x66oo'", 'foo')
+        self.check('"foo\\\nbar"', 'foo\nbar')
+        self.check("'foo\\\nbar'", 'foo\nbar')
+        self.assertRaises(Exception, self.check, '"\n', None)
+        self.assertRaises(Exception, self.check, "'\n", None)
+
     def test_syntax_errors(self):
         try:
             json5.loads('')

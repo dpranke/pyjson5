@@ -20,6 +20,8 @@ import json5
 
 
 class Tests(unittest.TestCase):
+    maxDiff = None
+
     def check(self, s, obj):
         self.assertEqual(json5.loads(s), obj)
 
@@ -62,28 +64,28 @@ class Tests(unittest.TestCase):
         with open(path) as fp:
             obj = json5.load(fp)
         self.assertEqual({
-            "oh": [
-                "we shouldn't forget",
-                "arrays can have",
-                "trailing commas too",
+            u'oh': [
+                u"we shouldn't forget",
+                u"arrays can have",
+                u"trailing commas too",
             ],
-            "this": "is a \nmulti-line string",
-            "delta": 10,
-            "hex": 3735928559,
-            "finally": "a trailing comma",
-            "here": "is another",
-            "to": float("inf"),
-            "while": True,
-            "half": 0.5,
-            "foo": "bar"
+            u"this": u"is a multi-line string",
+            u"delta": 10,
+            u"hex": 3735928559,
+            u"finally": "a trailing comma",
+            u"here": "is another",
+            u"to": float("inf"),
+            u"while": True,
+            u"half": 0.5,
+            u"foo": u"bar"
             }, obj)
 
     def test_strings(self):
         self.check('"foo"', 'foo')
         self.check("'foo'", 'foo')
         self.check("'\x66oo'", 'foo')
-        self.check('"foo\\\nbar"', 'foo\nbar')
-        self.check("'foo\\\nbar'", 'foo\nbar')
+        self.check('"foo\\\nbar"', 'foobar')
+        self.check("'foo\\\nbar'", 'foobar')
         self.assertRaises(Exception, self.check, '"\n', None)
         self.assertRaises(Exception, self.check, "'\n", None)
 

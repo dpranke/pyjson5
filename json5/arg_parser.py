@@ -36,6 +36,10 @@ class ArgumentParser(argparse.ArgumentParser):
         self.add_argument('-c', metavar='STR', dest='cmd',
                           help='inline json5 string'),
 
+        self.add_argument('--json', dest='format_json', action='store_const', 
+                          const=True, default=False, 
+                          help='output as json'),
+
         self.add_argument('files', nargs='*', default=[],
                           help=argparse.SUPPRESS)
 

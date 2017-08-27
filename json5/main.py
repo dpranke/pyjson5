@@ -42,7 +42,11 @@ def main(argv=None, host=None, **defaults):
         inp = args.cmd
     else:
         inp = ''.join(fileinput.input(args.files))
-    host.print_(lib.dumps(lib.loads(inp), compact=True))
+
+    if args.format_json:
+        host.print_(json.dumps(lib.loads(inp)))
+    else:
+        host.print_(lib.dumps(lib.loads(inp), compact=True))
     return 0
 
 

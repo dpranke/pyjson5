@@ -18,6 +18,7 @@ import json5
 
 from json5.fakes.host_fake import FakeHost
 from json5.host import Host
+from json5.version import VERSION
 
 
 class CheckMixin(object):
@@ -73,6 +74,15 @@ class MainTest(UnitTestMixin, CheckMixin, unittest.TestCase):
     def test_help(self):
         self.check_cmd(['--help'], returncode=0)
 
+    def test_json_switches(self):
+        self.check_cmd(['-c', '{"foo": 1}'], returncode=0,
+                       out=u'{foo:1}\n')
+        self.check_cmd(['--json', '-c', '{"foo": 1}'], returncode=0,
+                       out=u'{"foo": 1}\n')
+
+    def test_read_command(self):
+        self.check_cmd(['-c', '"foo"'], returncode=0, out=u'"foo"\n')
+
     def test_read_from_stdin(self):
         self.check_cmd([], stdin='"foo"\n', returncode=0, out=u'"foo"\n')
 
@@ -84,7 +94,11 @@ class MainTest(UnitTestMixin, CheckMixin, unittest.TestCase):
 
     def test_unknown_switch(self):
         self.check_cmd(['--unknown-switch'], returncode=2,
-            err=u'json5: error: unrecognized arguments: --unknown-switch\n')
+            err=u'json5: error: unrecognized arguments: --unknown-switch\n\n')
+
+    def test_version(self):
+        self.check_cmd(['--version'], returncode=0,
+                       out=unicode(VERSION) + '\n')
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -33,7 +33,6 @@ def loads(s, **kwargs):
     raise ValueError(err)
 
 
-
 def _walk_ast(el):
     if el == 'None':
         return None
@@ -63,24 +62,36 @@ def _walk_ast(el):
         return o
     if ty == 'array':
         return [_walk_ast(el) for el in v]
-    raise Exception('unknown el: ' + el)
+    raise Exception('unknown el: ' + el)  # pragma: no cover
 
 
-REPLACE = {
-  True: u'true',
-  False: u'false',
-  None: u'null'
-}
-notletter = re.compile('\W')
+def dump(obj, fp, **kwargs):
+    s = dumps(obj, **kwargs)
+    fp.write(s)
+
+
+_notletter = re.compile('\W')
+
+
+def _dumpkey(k):
+    if _notletter.search(k):
+        return json.dumps(k)
+    else:
+        return unicode(k)
 
 
 def dumps(data, compact=False, **kwargs):
+
     if not compact:
         return json.dumps(data, **kwargs)
 
     t = type(data)
-    if t is bool or t is None:
-        return REPLACE[data]
+    if data == True:
+        return u'true'
+    elif data == False:
+        return u'false'
+    elif data == None:
+        return u'null'
     elif t in (str, unicode):
         return json.dumps(data)
     elif t is float or t is int:
@@ -91,16 +102,5 @@ def dumps(data, compact=False, **kwargs):
         ]) + '}'
     elif t is list:
         return u'[' + ','.join([dumps(v) for v in data]) + u']'
-    else:
+    else:  # pragma: no cover
         return u''
-
-def _dumpkey(k):
-    if notletter.search(k):
-        return json.dumps(k)
-    else:
-        return unicode(k)
-
-
-def dump(obj, fp, **kwargs):
-    s = dumps(obj, **kwargs)
-    fp.write(s)

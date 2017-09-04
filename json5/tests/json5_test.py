@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import StringIO
 import math
 import os
 import unittest
@@ -19,11 +20,15 @@ import unittest
 import json5
 
 
-class Tests(unittest.TestCase):
+class TestLoads(unittest.TestCase):
     maxDiff = None
 
     def check(self, s, obj):
         self.assertEqual(json5.loads(s), obj)
+
+    def test_bools(self):
+        self.check('true', True)
+        self.check('false', False)
 
     def test_empty(self):
         self.assertRaises(ValueError, json5.loads, '')
@@ -34,11 +39,6 @@ class Tests(unittest.TestCase):
         self.check('0xfff', 4095)
         self.check('0XABCD', 43981)
         self.check('0x123456', 1193046)
-
-    def test_ints(self):
-        self.check('1', 1)
-        self.check('-1', -1)
-        self.check('+1', 1)
 
     def test_floats(self):
         self.check('1.5', 1.5)
@@ -57,6 +57,14 @@ class Tests(unittest.TestCase):
         self.check('{a$: 1}', {'a$': 1})
 
         self.assertRaises(Exception, self.check, '{1: 1}', None)
+
+    def test_ints(self):
+        self.check('1', 1)
+        self.check('-1', -1)
+        self.check('+1', 1)
+
+    def test_null(self):
+        self.check('null', None)
 
     def test_sample_file(self):
         path = os.path.join(os.path.dirname(__file__), '..', '..',
@@ -103,3 +111,35 @@ class Tests(unittest.TestCase):
         except ValueError as e:
             self.assertEqual('<string>:2 Unexpected "d" at column 7',
                              e.message)
+
+
+class TestDump(unittest.TestCase):
+    def test_basic(self):
+        sio = StringIO.StringIO()
+        json5.dump(True, sio)
+        self.assertEqual('true', sio.getvalue())
+
+
+class TestDumps(unittest.TestCase):
+    maxDiff = None
+
+    def check(self, obj, s):
+        self.assertEqual(json5.dumps(obj, compact=True), s)
+
+    def test_arrays(self):
+        self.check([], '[]')
+        self.check([1, 2, 3], '[1,2,3]')
+
+    def test_bools(self):
+        self.check(True, 'true')
+        self.check(False, 'false')
+
+    def test_numbers(self):
+        self.check(15, '15')
+
+    def test_null(self):
+        self.check(None, 'null')
+
+    def test_objects(self):
+        self.check({'foo': 1}, '{foo:1}')
+        self.check({'foo bar': 1}, '{"foo bar":1}')

@@ -87,9 +87,6 @@ class Parser(object):
     def _grammar_(self):
         self._push('grammar')
         self._sp_()
-        if self.err:
-            self._pop('grammar')
-            return
         self._value_()
         if not self.err:
             self._set('v', self.val)
@@ -97,9 +94,6 @@ class Parser(object):
             self._pop('grammar')
             return
         self._sp_()
-        if self.err:
-            self._pop('grammar')
-            return
         self._end_()
         if self.err:
             self._pop('grammar')
@@ -310,8 +304,6 @@ class Parser(object):
                     self.pos = p
             self.val = vs
             self.err = None
-            if self.err:
-                return
             self._expect(u'*/')
         choice_1()
 
@@ -426,9 +418,6 @@ class Parser(object):
                 self._pop('object_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('object_0')
-                return
             self._member_list_()
             if not self.err:
                 self._set('v', self.val)
@@ -436,9 +425,6 @@ class Parser(object):
                 self._pop('object_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('object_0')
-                return
             self._expect(u'}')
             if self.err:
                 self._pop('object_0')
@@ -457,8 +443,6 @@ class Parser(object):
             if self.err:
                 return
             self._sp_()
-            if self.err:
-                return
             self._expect(u'}')
             if self.err:
                 return
@@ -475,9 +459,6 @@ class Parser(object):
                 self._pop('array_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('array_0')
-                return
             self._element_list_()
             if not self.err:
                 self._set('v', self.val)
@@ -485,9 +466,6 @@ class Parser(object):
                 self._pop('array_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('array_0')
-                return
             self._expect(u']')
             if self.err:
                 self._pop('array_0')
@@ -506,8 +484,6 @@ class Parser(object):
             if self.err:
                 return
             self._sp_()
-            if self.err:
-                return
             self._expect(u']')
             if self.err:
                 return
@@ -622,6 +598,18 @@ class Parser(object):
         def choice_2():
             self._push('sqchar_2')
             p = self.pos
+            self._bslash_()
+            self.pos = p
+            if not self.err:
+                self.err = "not"
+                self.val = None
+                self._pop('sqchar_2')
+                return
+            self.err = None
+            if self.err:
+                self._pop('sqchar_2')
+                return
+            p = self.pos
             self._squote_()
             self.pos = p
             if not self.err:
@@ -696,6 +684,18 @@ class Parser(object):
         self.pos = p
         def choice_2():
             self._push('dqchar_2')
+            p = self.pos
+            self._bslash_()
+            self.pos = p
+            if not self.err:
+                self.err = "not"
+                self.val = None
+                self._pop('dqchar_2')
+                return
+            self.err = None
+            if self.err:
+                self._pop('dqchar_2')
+                return
             p = self.pos
             self._dquote_()
             self.pos = p
@@ -947,17 +947,11 @@ class Parser(object):
                 self._pop('element_list_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('element_list_0')
-                return
             self._expect(u',')
             if self.err:
                 self._pop('element_list_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('element_list_0')
-                return
             self._element_list_()
             if not self.err:
                 self._set('vs', self.val)
@@ -982,9 +976,6 @@ class Parser(object):
                 self._pop('element_list_1')
                 return
             self._sp_()
-            if self.err:
-                self._pop('element_list_1')
-                return
             self._expect(u',')
             if self.err:
                 self._pop('element_list_1')
@@ -1022,17 +1013,11 @@ class Parser(object):
                 self._pop('member_list_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('member_list_0')
-                return
             self._expect(u',')
             if self.err:
                 self._pop('member_list_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('member_list_0')
-                return
             self._member_list_()
             if not self.err:
                 self._set('ms', self.val)
@@ -1057,9 +1042,6 @@ class Parser(object):
                 self._pop('member_list_1')
                 return
             self._sp_()
-            if self.err:
-                self._pop('member_list_1')
-                return
             self._expect(u',')
             if self.err:
                 self._pop('member_list_1')
@@ -1097,17 +1079,11 @@ class Parser(object):
                 self._pop('member_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('member_0')
-                return
             self._expect(u':')
             if self.err:
                 self._pop('member_0')
                 return
             self._sp_()
-            if self.err:
-                self._pop('member_0')
-                return
             self._value_()
             if not self.err:
                 self._set('v', self.val)
@@ -1132,17 +1108,11 @@ class Parser(object):
                 self._pop('member_1')
                 return
             self._sp_()
-            if self.err:
-                self._pop('member_1')
-                return
             self._expect(u':')
             if self.err:
                 self._pop('member_1')
                 return
             self._sp_()
-            if self.err:
-                self._pop('member_1')
-                return
             self._value_()
             if not self.err:
                 self._set('v', self.val)
@@ -1257,7 +1227,7 @@ class Parser(object):
         self.err = False
         self.pos = p
         def choice_2():
-            self._digit_()
+            self._expect(u'$')
         choice_2()
         if not self.err:
             return
@@ -1265,16 +1235,8 @@ class Parser(object):
         self.err = False
         self.pos = p
         def choice_3():
-            self._expect(u'$')
-        choice_3()
-        if not self.err:
-            return
-
-        self.err = False
-        self.pos = p
-        def choice_4():
             self._expect(u'_')
-        choice_4()
+        choice_3()
 
     def _other_id_start_(self):
         p = self.pos
@@ -1626,9 +1588,6 @@ class Parser(object):
                 self.pos = p
             else:
                 self.val = [self.val]
-            if self.err:
-                self._pop('num_literal_1')
-                return
             self._dec_literal_()
             if not self.err:
                 self._set('d', self.val)
@@ -2130,16 +2089,6 @@ class Parser(object):
             self.val = None
             self.err = u'anything'
 
-    def _digit_(self):
-        if self.pos < self.end and self.msg[self.pos].isdigit():
-            self.val = self.msg[self.pos]
-            self.err = None
-            self.pos += 1
-        else:
-            self.val = None
-            self.err = u'a digit'
-        return
-
     def _end_(self):
         if self.pos == self.end:
             self.val = None
@@ -2151,13 +2100,7 @@ class Parser(object):
 
     def _is_unicat(self, var, cat):
         import unicodedata
-        if unicodedata.category(var) == cat:
-            self.val = True
-            self.err = None
-            self.pos += 1
-        else:
-            self.val = False
-            self.err = u'unicode cat %s' % cat
+        return unicodedata.category(var) == cat
 
     def _join(self, s, vs):
         return s.join(vs)

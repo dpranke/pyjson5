@@ -31,11 +31,11 @@ string         = squote sqchar*:cs squote             -> join('', cs)
 
 sqchar         = bslash esc_char:c                    -> c
                | bslash eol                           -> ''
-               | ~squote ~eol anything:c              -> c
+               | ~bslash ~squote ~eol anything:c      -> c
 
 dqchar         = bslash esc_char:c                    -> c
                | bslash eol                           -> ''
-               | ~dquote ~eol anything:c              -> c
+               | ~bslash ~dquote ~eol anything:c      -> c
 
 bslash         = '\u005C'
 
@@ -78,7 +78,6 @@ id_start       = ascii_id_start
 
 ascii_id_start = 'a'..'z'
                | 'A'..'Z'
-               | digit
                | '$'
                | '_'
 

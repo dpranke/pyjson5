@@ -26,28 +26,54 @@ class TestLoads(unittest.TestCase):
     def check(self, s, obj):
         self.assertEqual(json5.loads(s), obj)
 
+    def check_fail(self, s, err=None):
+        try:
+            json5.loads(s)
+            self.fail()
+        except ValueError as e:
+            if err:
+                self.assertEqual(err, e.message)
+
+    def test_arrays(self):
+        self.check('[]', [])
+        self.check('[0]', [0])
+        self.check('[0,1]', [0, 1])
+        self.check('[ 0 , 1 ]', [0, 1])
+
     def test_bools(self):
         self.check('true', True)
         self.check('false', False)
 
-    def test_empty(self):
-        self.assertRaises(ValueError, json5.loads, '')
+    def test_empty_strings_are_errors(self):
+        self.check_fail('', 'Empty strings are not legal JSON5')
 
-    def test_hex_literals(self):
+
+    def test_numbers(self):
+        # decimal literals
+        self.check('1', 1)
+        self.check('-1', -1)
+        self.check('+1', 1)
+
+        # hex literals
         self.check('0xf', 15)
         self.check('0xfe', 254)
         self.check('0xfff', 4095)
         self.check('0XABCD', 43981)
         self.check('0x123456', 1193046)
 
-    def test_floats(self):
+        # floats
         self.check('1.5', 1.5)
         self.check('1.5e3', 1500.0)
         self.check('-0.5e-2', -0.005)
+
+        # names
         self.check('Infinity', float('inf'))
         self.check('-Infinity', float('-inf'))
         self.assertTrue(math.isnan(json5.loads('NaN')))
         self.assertTrue(math.isnan(json5.loads('-NaN')))
+
+        # syntax errors
+        self.check_fail('14d', '<string>:1 Unexpected "d" at column 3')
 
     def test_identifiers(self):
         self.check('{a: 1}', {'a': 1})
@@ -56,15 +82,21 @@ class TestLoads(unittest.TestCase):
         self.check('{a_b: 1}', {'a_b': 1})
         self.check('{a$: 1}', {'a$': 1})
 
-        self.assertRaises(Exception, self.check, '{1: 1}', None)
+        # This valid JavaScript but not valid JSON5; keys must be identifiers
+        # or strings.
+        self.check_fail('{1: 1}')
 
-    def test_ints(self):
-        self.check('1', 1)
-        self.check('-1', -1)
-        self.check('+1', 1)
+    def test_identifiers_unicode(self):
+        self.check(u'{\xc3: 1}', {u'\xc3': 1})
 
     def test_null(self):
         self.check('null', None)
+
+    def test_objects(self):
+        self.check('{}', {})
+        self.check('{"foo": 0}', {"foo": 0})
+        self.check('{"foo":0,"bar":1}', {"foo": 0, "bar": 1})
+        self.check('{ "foo" : 0 , "bar" : 1 }', {"foo": 0, "bar": 1})
 
     def test_sample_file(self):
         path = os.path.join(os.path.dirname(__file__), '..', '..',
@@ -91,26 +123,51 @@ class TestLoads(unittest.TestCase):
     def test_strings(self):
         self.check('"foo"', 'foo')
         self.check("'foo'", 'foo')
-        self.check("'\x66oo'", 'foo')
+
+        # escape chars
+        self.check("'\\b\\t\\f\\n\\r\\v\\\\'", '\b\t\f\n\r\v\\')
+        self.check("'\\''", "'")
+        self.check('"\\""', '"')
+
+        # hex literals
+        self.check('"\\x66oo"', 'foo')
+
+        # unicode literals
+        self.check('"\\u0066oo"', 'foo')
+
+        # string literals w/ continuation markers at the end of the line.
+        # These should not have spaces is the result.
         self.check('"foo\\\nbar"', 'foobar')
         self.check("'foo\\\nbar'", 'foobar')
-        self.assertRaises(Exception, self.check, '"\n', None)
-        self.assertRaises(Exception, self.check, "'\n", None)
 
-    def test_syntax_errors(self):
-        try:
-            json5.loads('')
-        except ValueError as e:
-            self.assertEqual('Empty strings are not legal JSON5',
-                             e.message)
+        # unterminated string literals.
+        self.check_fail('"\n')
+        self.check_fail("'\n")
 
-        try:
-            json5.loads('''\
-{"foo":
-    14d}''')
-        except ValueError as e:
-            self.assertEqual('<string>:2 Unexpected "d" at column 7',
-                             e.message)
+        # bad hex literals
+        self.check_fail("'\\x0'")
+        self.check_fail("'\\xj'")
+        self.check_fail("'\\x0j'")
+
+        # bad unicode literals
+        self.check_fail("'\\u0'")
+        self.check_fail("'\\u00'")
+        self.check_fail("'\\u000'")
+        self.check_fail("'\\u000j'")
+        self.check_fail("'\\u00j0'")
+        self.check_fail("'\\u0j00'")
+        self.check_fail("'\\uj000'")
+
+    def test_whitespace(self):
+        self.check('\n1', 1)
+        self.check('\r1', 1)
+        self.check('\r\n1', 1)
+        self.check('\t1', 1)
+        self.check('\v1', 1)
+        self.check(u'\uFEFF 1', 1)
+        self.check(u'\u00A0 1', 1)
+        self.check(u'\u2028 1', 1)
+        self.check(u'\u2029 1', 1)
 
 
 class TestDump(unittest.TestCase):

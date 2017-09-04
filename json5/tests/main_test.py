@@ -83,7 +83,8 @@ class MainTest(UnitTestMixin, CheckMixin, unittest.TestCase):
         self.check_cmd(['foo.json5'], files=files, returncode=0, out=u'"foo"\n')
 
     def test_unknown_switch(self):
-        self.check_cmd(['--unknown-switch'], returncode=2)
+        self.check_cmd(['--unknown-switch'], returncode=2,
+            err=u'json5: error: unrecognized arguments: --unknown-switch\n')
 
 
 if __name__ == '__main__':  # pragma: no cover

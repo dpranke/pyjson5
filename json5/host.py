@@ -21,12 +21,16 @@ import tempfile
 
 class Host(object):
     def __init__(self):
+        self.stdin = sys.stdin
         self.stdout = sys.stdout
+        self.stderr = sys.stderr
 
     def chdir(self, *comps):
         return os.chdir(self.join(*comps))
 
     def fileinput(self, files=None):
+        if not files:
+            return self.stdin.readlines()
         return fileinput.input(files)
 
     def getcwd(self):

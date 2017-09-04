@@ -23,16 +23,10 @@ where possible, it mirrors the
 `standard Python JSON API <https://docs.python.org/library/json.html>`_
 for ease of use.
 
-This is an early release. It is not well-tested, and has not been tuned
-for performance.
+This is an early release. It has been reasonably well-tested, but it is
+*SLOW*. It can be 1000-6000x slower than the C-optimized JSON module,
+and is 200x slower (or more) than the pure Python JSON module.
 
 Known issues
 ------------
 
-* Despite what is written above, unquoted object keys cannot be just any
-  ECMAScript identifier; they must start with either an ASCII letter
-  ([a-zA-Z]), '$', or '_'.  and contain only ASCII letters, '$', '_', or
-  digits. Support for unicode letter classes is
-  `issue 4 <https://github.com/dpranke/pyjson5/issues/4>`_ and support
-  for escape sequencese is 
-  `issue 5 <https://github.com/dpranke/pyjson5/issues/5>`_.

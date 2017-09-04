@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import StringIO
+import io
 import math
 import os
 import unittest
@@ -32,7 +32,7 @@ class TestLoads(unittest.TestCase):
             self.fail()
         except ValueError as e:
             if err:
-                self.assertEqual(err, e.message)
+                self.assertEqual(err, str(e))
 
     def test_arrays(self):
         self.check('[]', [])
@@ -172,7 +172,7 @@ class TestLoads(unittest.TestCase):
 
 class TestDump(unittest.TestCase):
     def test_basic(self):
-        sio = StringIO.StringIO()
+        sio = io.StringIO()
         json5.dump(True, sio)
         self.assertEqual('true', sio.getvalue())
 

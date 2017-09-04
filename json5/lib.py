@@ -15,6 +15,8 @@
 import re
 import json
 
+from builtins import str
+
 from json5.parser import Parser
 
 
@@ -72,7 +74,7 @@ def _dumpkey(k):
     if _notletter.search(k):
         return json.dumps(k)
     else:
-        return unicode(k)
+        return str(k)
 
 
 def dumps(data, compact=False, **kwargs):
@@ -86,7 +88,7 @@ def dumps(data, compact=False, **kwargs):
         return u'false'
     elif data == None:
         return u'null'
-    elif t in (str, unicode):
+    elif t == type('') or t == type(u''):
         single = "'" in data
         double = '"' in data
         if single and double:
@@ -96,7 +98,7 @@ def dumps(data, compact=False, **kwargs):
         else:
             return "'" + data + "'"
     elif t is float or t is int:
-        return unicode(data)
+        return str(data)
     elif t is dict:
         return u'{' + u','.join([
             _dumpkey(k) + u':' + dumps(v) for k, v in data.items()
@@ -109,4 +111,4 @@ def dumps(data, compact=False, **kwargs):
 
 def dump(obj, fp, **kwargs):
     s = dumps(obj, **kwargs)
-    fp.write(s)
+    fp.write(str(s))

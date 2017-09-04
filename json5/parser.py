@@ -1,8 +1,10 @@
 # pylint: disable=line-too-long
 
+from builtins import str, chr
+
 class Parser(object):
     def __init__(self, msg, fname, starting_rule='grammar'):
-        self.msg = unicode(msg)
+        self.msg = str(msg)
         self.end = len(msg)
         self.fname = fname
         self.starting_rule = starting_rule
@@ -38,7 +40,7 @@ class Parser(object):
     def _err_str(self):
         lineno, colno, _ = self._err_offsets()
         prefix = u'%s:%d' % (self.fname, lineno)
-        if isinstance(self.err, basestring):
+        if type(self.err) == type(''):
             return u'%s %s' % (prefix, self.err)
         exps = list(self.errset)
         if len(exps) > 1:
@@ -65,7 +67,7 @@ class Parser(object):
         return lineno, colno, begpos
 
     def _esc(self, val):
-        return unicode(val)
+        return str(val)
 
     def _expect(self, expr):
         p = self.pos
@@ -2106,4 +2108,4 @@ class Parser(object):
         return s.join(vs)
 
     def _xtou(self, s):
-        return unichr(int(s, base=16))
+        return chr(int(s, base=16))

@@ -18,6 +18,8 @@ import shutil
 import sys
 import tempfile
 
+from builtins import str
+
 
 class Host(object):
     def __init__(self):
@@ -44,12 +46,12 @@ class Host(object):
 
     def print_(self, msg=u'', end=u'\n', stream=None):
         stream = stream or self.stdout
-        stream.write(unicode(msg) + end)
+        stream.write(str(msg) + end)
         stream.flush()
 
     def rmtree(self, path):
         shutil.rmtree(path, ignore_errors=True)
 
     def write_text_file(self, path, contents):
-        with open(path, 'w') as f:
+        with open(path, 'wb') as f:
             f.write(contents.encode('utf8'))

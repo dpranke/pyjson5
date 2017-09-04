@@ -14,6 +14,8 @@
 
 from io import StringIO
 
+from builtins import str
+
 from json5 import main
 from json5.tests import main_test
 from json5.host import Host
@@ -26,7 +28,7 @@ class CoverageTestMixin(object):
     def _call(self, host, args, stdin=None,
               returncode=None, out=None, err=None):
         if stdin:
-          host.stdin = StringIO(unicode(stdin))
+          host.stdin = StringIO(str(stdin))
         else:
           host.stdin = StringIO()
         host.stdout = StringIO()

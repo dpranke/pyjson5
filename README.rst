@@ -21,12 +21,8 @@ the full details.
 This project implements a reader and writer implementation for Python;
 where possible, it mirrors the
 `standard Python JSON API <https://docs.python.org/library/json.html>`_
-for ease of use.
+package for ease of use.
 
 This is an early release. It has been reasonably well-tested, but it is
 *SLOW*. It can be 1000-6000x slower than the C-optimized JSON module,
 and is 200x slower (or more) than the pure Python JSON module.
-
-Known issues
-------------
-

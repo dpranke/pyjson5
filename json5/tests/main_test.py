@@ -14,6 +14,8 @@
 
 import unittest
 
+from builtins import str
+
 import json5
 
 from json5.fakes.host_fake import FakeHost
@@ -54,7 +56,7 @@ class UnitTestMixin(object):
     def _call(self, host, args, stdin=None,
               returncode=None, out=None, err=None):
         if stdin is not None:
-            host.stdin.write(unicode(stdin))
+            host.stdin.write(str(stdin))
             host.stdin.seek(0)
         actual_ret = json5.main(args, host)
         actual_out = host.stdout.getvalue()
@@ -98,7 +100,7 @@ class MainTest(UnitTestMixin, CheckMixin, unittest.TestCase):
 
     def test_version(self):
         self.check_cmd(['--version'], returncode=0,
-                       out=unicode(VERSION) + '\n')
+                       out=str(VERSION) + '\n')
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import fileinput
 import json
 import os
 import sys
@@ -27,8 +26,8 @@ from json5.arg_parser import ArgumentParser
 from json5.version import VERSION
 
 
-def main(argv=None, host=None, **defaults):
-    host = Host()
+def main(argv=None, host=None):
+    host = host or Host()
     parser = ArgumentParser(host)
     args = parser.parse_args(argv)
     if parser.exit_status is not None:
@@ -41,7 +40,7 @@ def main(argv=None, host=None, **defaults):
     if args.cmd:
         inp = args.cmd
     else:
-        inp = ''.join(fileinput.input(args.files))
+        inp = ''.join(host.fileinput(args.files))
 
     if args.format_json:
         host.print_(json.dumps(lib.loads(inp)))
@@ -51,4 +50,4 @@ def main(argv=None, host=None, **defaults):
 
 
 if __name__ == '__main__':  # pragma: no cover
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(main(Host(), sys.argv[1:]))

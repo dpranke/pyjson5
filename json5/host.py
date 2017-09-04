@@ -12,19 +12,40 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import fileinput
 import os
+import shutil
 import sys
+import tempfile
 
 
 class Host(object):
     def __init__(self):
         self.stdout = sys.stdout
-        self.opener = open
 
-    def open_(self, name, mode='r'):
-        return self.opener(name, mode)
+    def chdir(self, *comps):
+        return os.chdir(self.join(*comps))
 
-    def print_(self, msg='', end='\n', stream=None):
+    def fileinput(self, files=None):
+        return fileinput.input(files)
+
+    def getcwd(self):
+        return os.getcwd()
+
+    def join(self, *comps):
+        return os.path.join(*comps)
+
+    def mkdtemp(self, **kwargs):
+        return tempfile.mkdtemp(**kwargs)
+
+    def print_(self, msg=u'', end=u'\n', stream=None):
         stream = stream or self.stdout
-        stream.write(str(msg) + end)
+        stream.write(unicode(msg) + end)
         stream.flush()
+
+    def rmtree(self, path):
+        shutil.rmtree(path, ignore_errors=True)
+
+    def write_text_file(self, path, contents):
+        with open(path, 'w') as f:
+            f.write(contents.encode('utf8'))

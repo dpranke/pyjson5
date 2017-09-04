@@ -67,9 +67,9 @@ def _walk_ast(el):
 
 
 REPLACE = {
-  True: 'true',
-  False: 'false',
-  None: 'null'
+  True: u'true',
+  False: u'false',
+  None: u'null'
 }
 notletter = re.compile('\W')
 
@@ -78,34 +78,27 @@ def dumps(data, compact=False, **kwargs):
     if not compact:
         return json.dumps(data, **kwargs)
 
-    t = type(data) 
+    t = type(data)
     if t is bool or t is None:
         return REPLACE[data]
-    elif t is str:
-        single = "'" in data
-        double = '"' in data
-        if single and double:
-            return json.dumps(data)
-        elif single: 
-            return '"' + data + '"'
-        else:
-            return "'" + data + "'"
+    elif t in (str, unicode):
+        return json.dumps(data)
     elif t is float or t is int:
-        return str(data)
+        return unicode(data)
     elif t is dict:
-        return '{' + ','.join([
-            _dumpkey(k) + ':' + dumps(v) for k, v in data.items()
+        return u'{' + u','.join([
+            _dumpkey(k) + u':' + dumps(v) for k, v in data.items()
         ]) + '}'
     elif t is list:
-        return '[' + ','.join([dumps(v) for v in data]) + ']'
-    else: 
-        return ''
+        return u'[' + ','.join([dumps(v) for v in data]) + u']'
+    else:
+        return u''
 
 def _dumpkey(k):
     if notletter.search(k):
         return json.dumps(k)
     else:
-        return str(k)
+        return unicode(k)
 
 
 def dump(obj, fp, **kwargs):

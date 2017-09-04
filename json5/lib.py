@@ -65,11 +65,6 @@ def _walk_ast(el):
     raise Exception('unknown el: ' + el)  # pragma: no cover
 
 
-def dump(obj, fp, **kwargs):
-    s = dumps(obj, **kwargs)
-    fp.write(s)
-
-
 _notletter = re.compile('\W')
 
 
@@ -81,7 +76,6 @@ def _dumpkey(k):
 
 
 def dumps(data, compact=False, **kwargs):
-
     if not compact:
         return json.dumps(data, **kwargs)
 
@@ -93,7 +87,14 @@ def dumps(data, compact=False, **kwargs):
     elif data == None:
         return u'null'
     elif t in (str, unicode):
-        return json.dumps(data)
+        single = "'" in data
+        double = '"' in data
+        if single and double:
+            return json.dumps(data)
+        elif single:
+            return '"' + data + '"'
+        else:
+            return "'" + data + "'"
     elif t is float or t is int:
         return unicode(data)
     elif t is dict:
@@ -104,3 +105,8 @@ def dumps(data, compact=False, **kwargs):
         return u'[' + ','.join([dumps(v) for v in data]) + u']'
     else:  # pragma: no cover
         return u''
+
+
+def dump(obj, fp, **kwargs):
+    s = dumps(obj, **kwargs)
+    fp.write(s)

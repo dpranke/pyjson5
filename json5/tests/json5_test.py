@@ -143,3 +143,8 @@ class TestDumps(unittest.TestCase):
     def test_objects(self):
         self.check({'foo': 1}, '{foo:1}')
         self.check({'foo bar': 1}, '{"foo bar":1}')
+
+    def test_strings(self):
+        self.check("'single'", '"\'single\'"')
+        self.check('"double"', "'\"double\"'")
+        self.check("'single \\' and double \"'", '"\'single \\\\\' and double \\"\'"')

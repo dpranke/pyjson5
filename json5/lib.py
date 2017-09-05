@@ -14,26 +14,41 @@
 
 import re
 import json
+import sys
 
 from builtins import str
 
 from .parser import Parser
 
 
-def load(fp, object_hook=None, object_pairs_hook=None, **kwargs):
+def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
+          parse_int=None, parse_constant=None, object_pairs_hook=None,
+          **kwargs):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object."""
 
     s = fp.read()
-    return loads(s,
-                 object_hook=object_hook,
+    return loads(s, encoding=encoding, cls=cls, object_hook=object_hook,
+                 parse_float=parse_float, parse_int=parse_int,
+                 parse_constant=parse_constant,
                  object_pairs_hook=object_pairs_hook,
                  **kwargs)
 
 
-def loads(s, object_hook=None, object_pairs_hook=None, **kwargs):
+def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
+          parse_int=None, parse_constant=None, object_pairs_hook=None, **kwargs):
     """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
     JSON5 document) to a Python object."""
+
+    assert cls is None, 'Custom decoders are not supported'
+
+    if sys.version_info[0] < 3:
+        decodable_type = type('')
+    else:
+        decodable_type = type(b'')
+    if isinstance(s, decodable_type):
+        encoding = encoding or 'utf-8'
+        s = s.decode(encoding)
 
     if not s:
         raise ValueError('Empty strings are not legal JSON5')
@@ -42,16 +57,24 @@ def loads(s, object_hook=None, object_pairs_hook=None, **kwargs):
     if err:
         raise ValueError(err)
 
+    def _fp_constant_parser(s):
+        return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
+
     if object_pairs_hook:
         dictify = object_pairs_hook
     elif object_hook:
         dictify = lambda pairs: object_hook(dict(pairs))
     else:
         dictify = dict
-    return _walk_ast(ast, dictify)
+
+    parse_float = parse_float or float
+    parse_int = parse_int or int
+    parse_constant = parse_constant or _fp_constant_parser
+
+    return _walk_ast(ast, dictify, parse_float, parse_int, parse_constant)
 
 
-def _walk_ast(el, dictify):
+def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
     if el == 'None':
         return None
     if el == 'True':
@@ -61,24 +84,25 @@ def _walk_ast(el, dictify):
     ty, v = el
     if ty == 'number':
         if v.startswith('0x') or v.startswith('0X'):
-           return int(v, base=16)
-        if '.' in v or 'e' in v or 'E' in v:
-           return float(v)
-        if 'Infinity' in v:
-           return float(v.replace('Infinity', 'inf'))
-        if 'NaN' in v:
-           return float(v.replace('NaN', 'nan'))
-        return int(v)
+            return parse_int(v, base=16)
+        elif '.' in v or 'e' in v or 'E' in v:
+            return parse_float(v)
+        elif 'Infinity' in v or 'NaN' in v:
+            return parse_constant(v)
+        else:
+            return parse_int(v)
     if ty == 'string':
         return v
     if ty == 'object':
         pairs = []
         for key, val_expr in v:
-            val = _walk_ast(val_expr, dictify)
+            val = _walk_ast(val_expr, dictify, parse_float, parse_int,
+                            parse_constant)
             pairs.append((key, val))
         return dictify(pairs)
     if ty == 'array':
-        return [_walk_ast(el, dictify) for el in v]
+        return [_walk_ast(el, dictify, parse_float, parse_int, parse_constant)
+                for el in v]
     raise Exception('unknown el: ' + el)  # pragma: no cover
 
 

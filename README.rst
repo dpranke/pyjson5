@@ -26,3 +26,11 @@ package for ease of use.
 This is an early release. It has been reasonably well-tested, but it is
 *SLOW*. It can be 1000-6000x slower than the C-optimized JSON module,
 and is 200x slower (or more) than the pure Python JSON module.
+
+Known issues
+============
+
+* The `cls` keyword argument that json.load()/json.loads() accepts to
+  specify a custom subclass of JSONDecoder is not and will not be supported,
+  because this implementation uses a completely different approach and
+  doesn't have anything like the JSONDecoder and JSONEncoder classes.

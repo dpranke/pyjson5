@@ -15,6 +15,7 @@
 import io
 import math
 import os
+import sys
 import unittest
 
 import json5
@@ -44,8 +45,20 @@ class TestLoads(unittest.TestCase):
         self.check('true', True)
         self.check('false', False)
 
+    def test_cls_is_not_supported(self):
+        self.assertRaises(AssertionError, json5.loads, '1', cls=lambda x: x)
+
     def test_empty_strings_are_errors(self):
         self.check_fail('', 'Empty strings are not legal JSON5')
+
+    def test_encoding(self):
+        if sys.version_info[0] < 3:
+          s = '"\xf6"'
+        else:
+          s = b'"\xf6"'
+        self.assertEqual(json5.loads(s, encoding='iso-8859-1'),
+                         u"\xf6")
+
 
     def test_numbers(self):
         # decimal literals
@@ -107,6 +120,21 @@ class TestLoads(unittest.TestCase):
         self.check('{"foo": 0}', {"foo": 0})
         self.check('{"foo":0,"bar":1}', {"foo": 0, "bar": 1})
         self.check('{ "foo" : 0 , "bar" : 1 }', {"foo": 0, "bar": 1})
+
+    def test_parse_constant(self):
+        hook = lambda x: x
+        self.assertEqual(json5.loads('-Infinity', parse_constant=hook),
+                         '-Infinity')
+        self.assertEqual(json5.loads('NaN', parse_constant=hook),
+                         'NaN')
+
+    def test_parse_float(self):
+        hook = lambda x: x
+        self.assertEqual(json5.loads('1.0', parse_float=hook), '1.0')
+
+    def test_parse_int(self):
+        hook = lambda x, base=10: x
+        self.assertEqual(json5.loads('1', parse_int=hook), '1')
 
     def test_sample_file(self):
         path = os.path.join(os.path.dirname(__file__), '..', '..',

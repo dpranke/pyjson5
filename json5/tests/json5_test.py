@@ -47,7 +47,6 @@ class TestLoads(unittest.TestCase):
     def test_empty_strings_are_errors(self):
         self.check_fail('', 'Empty strings are not legal JSON5')
 
-
     def test_numbers(self):
         # decimal literals
         self.check('1', 1)
@@ -91,6 +90,17 @@ class TestLoads(unittest.TestCase):
 
     def test_null(self):
         self.check('null', None)
+
+    def test_object_hook(self):
+        hook = lambda d: [d]
+        self.assertEqual(json5.loads('{foo: 1}', object_hook=hook),
+                         [{"foo": 1}])
+
+    def test_object_pairs_hook(self):
+        hook = lambda pairs: pairs
+        self.assertEqual(json5.loads('{foo: 1, bar: 2}',
+                                     object_pairs_hook=hook),
+                         [('foo', 1), ('bar', 2)])
 
     def test_objects(self):
         self.check('{}', {})

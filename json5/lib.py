@@ -20,15 +20,18 @@ from builtins import str
 from .parser import Parser
 
 
-def load(fp, **kwargs):
+def load(fp, object_hook=None, object_pairs_hook=None, **kwargs):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object."""
 
     s = fp.read()
-    return loads(s, **kwargs)
+    return loads(s,
+                 object_hook=object_hook,
+                 object_pairs_hook=object_pairs_hook,
+                 **kwargs)
 
 
-def loads(s, **kwargs):
+def loads(s, object_hook=None, object_pairs_hook=None, **kwargs):
     """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
     JSON5 document) to a Python object."""
 
@@ -36,12 +39,19 @@ def loads(s, **kwargs):
         raise ValueError('Empty strings are not legal JSON5')
     parser = Parser(s, '<string>')
     ast, err = parser.parse()
-    if not err:
-        return _walk_ast(ast)
-    raise ValueError(err)
+    if err:
+        raise ValueError(err)
+
+    if object_pairs_hook:
+        dictify = object_pairs_hook
+    elif object_hook:
+        dictify = lambda pairs: object_hook(dict(pairs))
+    else:
+        dictify = dict
+    return _walk_ast(ast, dictify)
 
 
-def _walk_ast(el):
+def _walk_ast(el, dictify):
     if el == 'None':
         return None
     if el == 'True':
@@ -62,14 +72,13 @@ def _walk_ast(el):
     if ty == 'string':
         return v
     if ty == 'object':
-        o = {}
-        for m in v:
-            k = m[0]
-            v = _walk_ast(m[1])
-            o[k] = v
-        return o
+        pairs = []
+        for key, val_expr in v:
+            val = _walk_ast(val_expr, dictify)
+            pairs.append((key, val))
+        return dictify(pairs)
     if ty == 'array':
-        return [_walk_ast(el) for el in v]
+        return [_walk_ast(el, dictify) for el in v]
     raise Exception('unknown el: ' + el)  # pragma: no cover
 
 

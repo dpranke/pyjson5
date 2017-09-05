@@ -12,20 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""json5 - a pure Python implementation of the JSON5 configuration language."""
+"""A pure Python implementation of the JSON5 configuration language."""
 
-from json5.arg_parser import ArgumentParser
-from json5.main import main
-from json5.lib import load, loads, dump, dumps
-from json5.version import VERSION
+from . import tool
+from .lib import load, loads, dump, dumps
+from .version import VERSION
 
 
 __all__ = [
-    'ArgumentParser',
     'VERSION',
     'dump',
     'dumps',
     'load',
     'loads',
-    'main',
+    'tool',
 ]

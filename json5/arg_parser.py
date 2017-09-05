@@ -14,34 +14,20 @@
 
 import argparse
 
-from json5.host import Host
-
 
 class _Bailout(Exception):
     pass
 
 
 class ArgumentParser(argparse.ArgumentParser):
+    SUPPRESS = argparse.SUPPRESS
 
-    def __init__(self, host=None, add_help=True):
-        super(ArgumentParser, self).__init__(prog='json5', add_help=add_help)
-
-        self._host = host or Host()
+    def __init__(self, host, **kwargs):
+        super(ArgumentParser, self).__init__(**kwargs)
+        self._host = host
         self.exit_status = None
-
-        self.usage = '%(prog)s [options] [file...]'
         self.add_argument('-V', '--version', action='store_true',
-                          help='Print the json5 version and exit.')
-
-        self.add_argument('-c', metavar='STR', dest='cmd',
-                          help='inline json5 string'),
-
-        self.add_argument('--json', dest='format_json', action='store_const', 
-                          const=True, default=False, 
-                          help='output as json'),
-
-        self.add_argument('files', nargs='*', default=[],
-                          help=argparse.SUPPRESS)
+                          help='Print the version and exit.')
 
     def parse_args(self, args=None, namespace=None):
         try:

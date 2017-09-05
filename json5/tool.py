@@ -12,24 +12,37 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
+"""Command-line tool to validate and pretty-print JSON5.
+
+Usage::
+
+    $ echo '{foo:"bar"}' | python -m json5.tool
+    { foo: "bar" }
+    $
+"""
+
 import os
 import sys
 
-THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-if not THIS_DIR in sys.path:
-    sys.path.insert(0, THIS_DIR)
-
-from json5 import lib
-from json5.host import Host
-from json5.arg_parser import ArgumentParser
-from json5.version import VERSION
+from . import arg_parser
+from . import lib
+from .host import Host
+from .version import VERSION
 
 
 def main(argv=None, host=None):
     host = host or Host()
-    parser = ArgumentParser(host)
+
+    parser = arg_parser.ArgumentParser(host, prog='json5')
+    parser.add_argument('-c', metavar='STR', dest='cmd',
+                        help='inline json5 string'),
+    parser.add_argument('--json', dest='as_json', action='store_const',
+                        const=True, default=False,
+                        help='output as json'),
+    parser.add_argument('files', nargs='*', default=[],
+                        help=parser.SUPPRESS)
     args = parser.parse_args(argv)
+
     if parser.exit_status is not None:
         return parser.exit_status
 
@@ -42,12 +55,9 @@ def main(argv=None, host=None):
     else:
         inp = ''.join(host.fileinput(args.files))
 
-    if args.format_json:
-        host.print_(json.dumps(lib.loads(inp)))
-    else:
-        host.print_(lib.dumps(lib.loads(inp), compact=True))
+    host.print_(lib.dumps(lib.loads(inp), compact=True, as_json=args.as_json))
     return 0
 
 
 if __name__ == '__main__':  # pragma: no cover
-    sys.exit(main(Host(), sys.argv[1:]))
+    sys.exit(main())

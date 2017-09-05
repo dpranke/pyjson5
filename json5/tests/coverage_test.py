@@ -16,9 +16,9 @@ from io import StringIO
 
 from builtins import str
 
-from json5 import main
-from json5.tests import main_test
-from json5.host import Host
+from . import tool_test
+from .. import tool
+from ..host import Host
 
 
 class CoverageTestMixin(object):
@@ -33,7 +33,7 @@ class CoverageTestMixin(object):
           host.stdin = StringIO()
         host.stdout = StringIO()
         host.stderr = StringIO()
-        actual_ret = main(args, host)
+        actual_ret = tool.main(args, host)
         actual_out = host.stdout.getvalue()
         actual_err = host.stderr.getvalue()
         if returncode is not None:
@@ -45,5 +45,5 @@ class CoverageTestMixin(object):
         return actual_ret, actual_out, actual_err
 
 
-class CoverageTestMain(CoverageTestMixin, main_test.MainTest):
+class CoverageTestMain(CoverageTestMixin, tool_test.ToolTest):
     pass

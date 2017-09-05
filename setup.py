@@ -21,7 +21,7 @@ here = os.path.abspath(os.path.dirname(__file__))
 if here not in sys.path:
     sys.path.insert(0, here)
 
-from json5.version import VERSION
+import json5
 
 with open(os.path.join(here, 'README.rst')) as fp:
     readme = fp.read().strip()
@@ -39,7 +39,7 @@ setup(
     },
     install_requires=[
     ],
-    version=VERSION,
+    version=json5.VERSION,
     author='Dirk Pranke',
     author_email='dpranke@chromium.org',
     description=readme_lines[3],

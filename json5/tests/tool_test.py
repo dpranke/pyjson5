@@ -18,9 +18,9 @@ from builtins import str
 
 import json5
 
-from json5.fakes.host_fake import FakeHost
-from json5.host import Host
-from json5.version import VERSION
+from ..fakes.host_fake import FakeHost
+from ..host import Host
+from ..version import VERSION
 
 
 class CheckMixin(object):
@@ -58,7 +58,7 @@ class UnitTestMixin(object):
         if stdin is not None:
             host.stdin.write(str(stdin))
             host.stdin.seek(0)
-        actual_ret = json5.main(args, host)
+        actual_ret = json5.tool.main(args, host)
         actual_out = host.stdout.getvalue()
         actual_err = host.stderr.getvalue()
         if returncode is not None:
@@ -70,7 +70,7 @@ class UnitTestMixin(object):
         return actual_ret, actual_out, actual_err
 
 
-class MainTest(UnitTestMixin, CheckMixin, unittest.TestCase):
+class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
     maxDiff = None
 
     def test_help(self):

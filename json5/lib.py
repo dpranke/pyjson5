@@ -17,15 +17,21 @@ import json
 
 from builtins import str
 
-from json5.parser import Parser
+from .parser import Parser
 
 
 def load(fp, **kwargs):
+    """Deserialize ``fp`` (a ``.read()``-supporting file-like object
+    containing a JSON document) to a Python object."""
+
     s = fp.read()
     return loads(s, **kwargs)
 
 
 def loads(s, **kwargs):
+    """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
+    JSON5 document) to a Python object."""
+
     if not s:
         raise ValueError('Empty strings are not legal JSON5')
     parser = Parser(s, '<string>')
@@ -77,38 +83,43 @@ def _dumpkey(k):
         return str(k)
 
 
-def dumps(data, compact=False, **kwargs):
-    if not compact:
-        return json.dumps(data, **kwargs)
+def dumps(obj, compact=False, as_json=False, **kwargs):
+    """Serialize ``obj`` to a JSON5-formatted ``str``."""
 
-    t = type(data)
-    if data == True:
+    if as_json or not compact:
+        return json.dumps(obj, **kwargs)
+
+    t = type(obj)
+    if obj == True:
         return u'true'
-    elif data == False:
+    elif obj == False:
         return u'false'
-    elif data == None:
+    elif obj == None:
         return u'null'
     elif t == type('') or t == type(u''):
-        single = "'" in data
-        double = '"' in data
+        single = "'" in obj
+        double = '"' in obj
         if single and double:
-            return json.dumps(data)
+            return json.dumps(obj)
         elif single:
-            return '"' + data + '"'
+            return '"' + obj + '"'
         else:
-            return "'" + data + "'"
+            return "'" + obj + "'"
     elif t is float or t is int:
-        return str(data)
+        return str(obj)
     elif t is dict:
         return u'{' + u','.join([
-            _dumpkey(k) + u':' + dumps(v) for k, v in data.items()
+            _dumpkey(k) + u':' + dumps(v) for k, v in obj.items()
         ]) + '}'
     elif t is list:
-        return u'[' + ','.join([dumps(v) for v in data]) + u']'
+        return u'[' + ','.join([dumps(el) for el in obj]) + u']'
     else:  # pragma: no cover
         return u''
 
 
 def dump(obj, fp, **kwargs):
+    """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
+    supporting file-like object)."""
+
     s = dumps(obj, **kwargs)
     fp.write(str(s))

@@ -15,11 +15,7 @@
 import io
 import sys
 
-is_python3 = bool(sys.version_info.major == 3)
-
-if is_python3:  # pragma: python3
-    # pylint: disable=redefined-builtin,invalid-name
-    unicode = str
+from builtins import str
 
 
 class FakeHost(object):
@@ -109,7 +105,7 @@ class FakeHost(object):
 
     def print_(self, msg=u'', end=u'\n', stream=None):
         stream = stream or self.stdout
-        stream.write(unicode(msg) + unicode(end))
+        stream.write(str(msg) + str(end))
         stream.flush()
 
     def read_text_file(self, *comps):

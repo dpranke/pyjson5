@@ -29,7 +29,7 @@ class TestLoads(unittest.TestCase):
     def check_fail(self, s, err=None):
         try:
             json5.loads(s)
-            self.fail()
+            self.fail()  # pragma: no cover
         except ValueError as e:
             if err:
                 self.assertEqual(err, str(e))

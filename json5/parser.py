@@ -1,6 +1,13 @@
 # pylint: disable=line-too-long
 
-from builtins import str, chr
+import sys
+
+
+if sys.version_info[0] < 3:
+    # pylint: disable=redefined-builtin
+    str = unicode
+    chr = unichr
+
 
 class Parser(object):
     def __init__(self, msg, fname, starting_rule='grammar'):

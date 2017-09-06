@@ -16,14 +16,16 @@ import re
 import json
 import sys
 
-from builtins import str
-
 from .parser import Parser
 
 
+if sys.version_info[0] < 3:
+    # pylint: disable=redefined-builtin
+    str = unicode
+
+
 def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
-          parse_int=None, parse_constant=None, object_pairs_hook=None,
-          **kwargs):
+         parse_int=None, parse_constant=None, object_pairs_hook=None):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object."""
 
@@ -31,12 +33,11 @@ def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
     return loads(s, encoding=encoding, cls=cls, object_hook=object_hook,
                  parse_float=parse_float, parse_int=parse_int,
                  parse_constant=parse_constant,
-                 object_pairs_hook=object_pairs_hook,
-                 **kwargs)
+                 object_pairs_hook=object_pairs_hook)
 
 
 def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
-          parse_int=None, parse_constant=None, object_pairs_hook=None, **kwargs):
+          parse_int=None, parse_constant=None, object_pairs_hook=None):
     """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
     JSON5 document) to a Python object."""
 

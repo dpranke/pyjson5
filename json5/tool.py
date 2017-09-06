@@ -35,10 +35,10 @@ def main(argv=None, host=None):
 
     parser = arg_parser.ArgumentParser(host, prog='json5')
     parser.add_argument('-c', metavar='STR', dest='cmd',
-                        help='inline json5 string'),
+                        help='inline json5 string')
     parser.add_argument('--json', dest='as_json', action='store_const',
                         const=True, default=False,
-                        help='output as json'),
+                        help='output as json')
     parser.add_argument('files', nargs='*', default=[],
                         help=parser.SUPPRESS)
     args = parser.parse_args(argv)

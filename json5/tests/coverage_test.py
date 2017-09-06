@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from io import StringIO
+import sys
 
-from builtins import str
+from io import StringIO
 
 from . import tool_test
 from .. import tool
 from ..host import Host
+
+
+if sys.version_info[0] < 3:
+    # pylint: disable=redefined-builtin
+    str = unicode
 
 
 class CoverageTestMixin(object):

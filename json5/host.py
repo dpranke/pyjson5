@@ -18,7 +18,10 @@ import shutil
 import sys
 import tempfile
 
-from builtins import str
+
+if sys.version_info[0] < 3:
+    # pylint: disable=redefined-builtin
+    str = unicode
 
 
 class Host(object):

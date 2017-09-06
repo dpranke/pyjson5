@@ -54,7 +54,7 @@ def main():
 
 
     # json.decoder.c_scanstring = py_scanstring
-    def py_maker(*args, **kwargs):
+    def py_maker(*_args, **_kwargs):
       decoder = json.JSONDecoder()
       decoder.scan_once = json.scanner.py_make_scanner(decoder)
       decoder.parse_string = json.decoder.py_scanstring
@@ -66,7 +66,7 @@ def main():
     all_times = []
     for i, c in enumerate(file_contents):
         times = []
-        for it in range(args.num_iterations):
+        for _ in range(args.num_iterations):
             start = time.time()
             json_obj = json.loads(c, cls=maker)
             mid = time.time()

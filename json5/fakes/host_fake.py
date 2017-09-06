@@ -15,7 +15,9 @@
 import io
 import sys
 
-from builtins import str
+if sys.version_info[0] < 3:
+    # pylint: disable=redefined-builtin
+    str = unicode
 
 
 class FakeHost(object):
@@ -24,7 +26,6 @@ class FakeHost(object):
     # "unused arg" pylint: disable=W0613
 
     python_interpreter = 'python'
-    is_python3 = bool(sys.version_info.major == 3)
 
     def __init__(self):
         self.stdin = io.StringIO()

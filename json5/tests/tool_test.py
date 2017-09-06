@@ -12,15 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 import unittest
-
-from builtins import str
 
 import json5
 
 from ..fakes.host_fake import FakeHost
 from ..host import Host
 from ..version import VERSION
+
+
+if sys.version_info[0] < 3:
+    # pylint: disable=redefined-builtin
+    str = unicode
 
 
 class CheckMixin(object):

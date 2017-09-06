@@ -242,4 +242,5 @@ class TestDumps(unittest.TestCase):
     def test_strings(self):
         self.check("'single'", '"\'single\'"')
         self.check('"double"', "'\"double\"'")
-        self.check("'single \\' and double \"'", '"\'single \\\\\' and double \\"\'"')
+        self.check("'single \\' and double \"'",
+                   '"\'single \\\\\' and double \\"\'"')

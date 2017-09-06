@@ -34,7 +34,7 @@ setup(
     package_data={'': ['../README.rst']},
     entry_points={
         'console_scripts': [
-            'pyjson5=json5.main:main',
+            'pyjson5=json5.tool:main',
         ]
     },
     install_requires=[

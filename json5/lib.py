@@ -20,18 +20,16 @@ import sys
 from .parser import Parser
 
 
-if sys.version_info[0] < 3:
+_is_python2 = sys.version_info[0] < 3
+if _is_python2:
     # pylint: disable=redefined-builtin
     str = unicode
-
-
 
 
 def load(fp, **kwargs):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object."""
     return _Decoder(**kwargs).loads(fp.read())
-
 
 
 def loads(s, **kwargs):
@@ -64,7 +62,7 @@ class _Decoder(object):
         return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
 
     def loads(self, s):
-        if sys.version_info[0] < 3:
+        if _is_python2:
             decodable_type = type('')
         else:
             decodable_type = type(b'')
@@ -130,15 +128,24 @@ class _Encoder(object):
         assert cls is None, 'Custom encoders are not supported'
         self.skipkeys = skipkeys
         self.ensure_ascii = ensure_ascii
+        self.check_circular = check_circular
         self.allow_nan = allow_nan
         self.indent = indent
-        self.separators = separators
+        self.separators = separators or {',': ', ', ':': ': '}
         self.encoding = encoding
-        self.default = default
+        self.default = default or self._default
         self.sort_keys = sort_keys
         self._notletter = re.compile('\W')
+        self._seen_objs = set()
+        self._valid_key_types = [str, int, float, bool, type(None)]
+        if _is_python2:
+            self._valid_key_types.extend([long, type('')])
+        self._indent_level = 0
 
-    def _dumpkey(self, k):
+    def _default(self, obj):
+        raise TypeError(obj)
+
+    def _key(self, k):
         if self._notletter.search(k):
             return json.dumps(k)
         else:
@@ -161,14 +168,67 @@ class _Encoder(object):
                 return '"' + obj + '"'
             else:
                 return "'" + obj + "'"
-        elif t is float or t is int:
+        elif t is float:
+            if not self.allow_nan and math.isnan(obj) or math.isinf(obj):
+                raise ValueError(obj)
+        elif t is int:
             return str(obj)
         elif t is dict:
-            return u'{' + u','.join([self._dumpkey(k) + u':' + self.dumps(v)
-                                     for k, v in obj.items()]) + '}'
+            if self.check_circular:
+                if id(obj) in self._seen_objs:
+                    raise ValueError(obj)
+                self._seen_objs.add(id(obj))
+
+            keys = obj.keys()
+            if self.sort_keys:
+                keys = sorted(keys)
+            colon = self.separators[':']
+            comma = self.separators[',']
+            if self.indent is not None:
+                indent += '\n' + ' ' * self.indent * self.indent_level
+            else:
+                indent = ''
+
+            num_keys = len(keys) - 1
+            self._indent_level += 1
+
+            s = u'{' + indent
+            for i, k in enumerate(keys):
+                if type(k) not in self._valid_key_types:
+                    if self.skipkeys:
+                        continue
+                    raise TypeError(k)
+                s += self._key(k) + colon + self.dumps(obj[k])
+                if i < num_keys:
+                    s += comma + indent
+            s += u'}'
+
+            self._indent_level -= 1
+            return s
+
         elif t is list:
-            return u'[' + ','.join([self.dumps(el) for el in obj]) + u']'
-        else:  # pragma: no-cover
-            raise ValueError(obj)
+            if self.check_circular:
+                if id(obj) in self._seen_objs:
+                    raise ValueError(obj)
+                self._seen_objs.add(id(obj))
 
+            if self.indent is not None:
+                indent += '\n' + ' ' * self.indent * self.indent_level
+            else:
+                indent = ''
+            comma = self.separators[',']
 
+            num_els = len(obj) - 1
+            self._indent_level += 1
+
+            s = u'[' + indent
+            for i, el in enumerate(obj):
+                s += self.dumps(el)
+                if i < num_els:
+                    s += comma + indent
+            s += u']'
+
+            self._indent_level -= 1
+            return s
+        else:
+            self._default(obj)

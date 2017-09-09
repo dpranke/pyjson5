@@ -223,7 +223,7 @@ class TestDumps(unittest.TestCase):
 
     def test_arrays(self):
         self.check([], '[]')
-        self.check([1, 2, 3], '[1,2,3]')
+        self.check([1, 2, 3], '[1, 2, 3]')
 
     def test_bools(self):
         self.check(True, 'true')
@@ -236,8 +236,8 @@ class TestDumps(unittest.TestCase):
         self.check(None, 'null')
 
     def test_objects(self):
-        self.check({'foo': 1}, '{foo:1}')
-        self.check({'foo bar': 1}, '{"foo bar":1}')
+        self.check({'foo': 1}, '{foo: 1}')
+        self.check({'foo bar': 1}, '{"foo bar": 1}')
 
     def test_strings(self):
         self.check("'single'", '"\'single\'"')

@@ -12,9 +12,9 @@ eol            = '\u000D' '\u000A' | '\u000D' | '\u000A'
 comment        = '//' (~eol anything)*
                | '/*' (~'*/' anything)* '*/'
 
-value          = 'null'                               -> 'None'
-               | 'true'                               -> 'True'
-               | 'false'                              -> 'False'
+value          = 'null'                               -> ['null', null]
+               | 'true'                               -> ['true', true]
+               | 'false'                              -> ['false', false]
                | object:v                             -> ['object', v]
                | array:v                              -> ['array', v]
                | string:v                             -> ['string', v]

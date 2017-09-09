@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import collections
 import re
 import json
 import sys
@@ -24,136 +25,150 @@ if sys.version_info[0] < 3:
     str = unicode
 
 
-def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
-         parse_int=None, parse_constant=None, object_pairs_hook=None):
+
+
+def load(fp, **kwargs):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object."""
-
-    s = fp.read()
-    return loads(s, encoding=encoding, cls=cls, object_hook=object_hook,
-                 parse_float=parse_float, parse_int=parse_int,
-                 parse_constant=parse_constant,
-                 object_pairs_hook=object_pairs_hook)
+    return _Decoder(**kwargs).loads(fp.read())
 
 
-def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
-          parse_int=None, parse_constant=None, object_pairs_hook=None):
+
+def loads(s, **kwargs):
     """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
     JSON5 document) to a Python object."""
+    return _Decoder(**kwargs).loads(s)
 
-    assert cls is None, 'Custom decoders are not supported'
 
-    if sys.version_info[0] < 3:
-        decodable_type = type('')
-    else:
-        decodable_type = type(b'')
-    if isinstance(s, decodable_type):
-        encoding = encoding or 'utf-8'
-        s = s.decode(encoding)
+class _Decoder(object):
 
-    if not s:
-        raise ValueError('Empty strings are not legal JSON5')
-    parser = Parser(s, '<string>')
-    ast, err = parser.parse()
-    if err:
-        raise ValueError(err)
+    def __init__(self, encoding=None, cls=None, object_hook=None,
+                 parse_float=None, parse_int=None, parse_constant=None,
+                 object_pairs_hook=None):
+        assert cls is None, 'Custom decoders are not supported'
 
-    def _fp_constant_parser(s):
+        self.encoding = encoding or 'utf-8'
+        self.cls = cls
+        self.parse_float = parse_float or float
+        self.parse_int = parse_int or int
+        self.parse_constant = parse_constant or self.parse_constant
+        self.object_pairs_hook = object_pairs_hook
+        if object_pairs_hook:
+            self.object_pairs_hook = object_pairs_hook
+        elif object_hook:
+            self.object_pairs_hook = lambda pairs: object_hook(dict(pairs))
+        else:
+            self.object_pairs_hook = dict
+
+    def parse_constant(self, s):
         return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
 
-    if object_pairs_hook:
-        dictify = object_pairs_hook
-    elif object_hook:
-        dictify = lambda pairs: object_hook(dict(pairs))
-    else:
-        dictify = dict
-
-    parse_float = parse_float or float
-    parse_int = parse_int or int
-    parse_constant = parse_constant or _fp_constant_parser
-
-    return _walk_ast(ast, dictify, parse_float, parse_int, parse_constant)
-
-
-def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
-    if el == 'None':
-        return None
-    if el == 'True':
-        return True
-    if el == 'False':
-        return False
-    ty, v = el
-    if ty == 'number':
-        if v.startswith('0x') or v.startswith('0X'):
-            return parse_int(v, base=16)
-        elif '.' in v or 'e' in v or 'E' in v:
-            return parse_float(v)
-        elif 'Infinity' in v or 'NaN' in v:
-            return parse_constant(v)
+    def loads(self, s):
+        if sys.version_info[0] < 3:
+            decodable_type = type('')
         else:
-            return parse_int(v)
-    if ty == 'string':
-        return v
-    if ty == 'object':
-        pairs = []
-        for key, val_expr in v:
-            val = _walk_ast(val_expr, dictify, parse_float, parse_int,
-                            parse_constant)
-            pairs.append((key, val))
-        return dictify(pairs)
-    if ty == 'array':
-        return [_walk_ast(el, dictify, parse_float, parse_int, parse_constant)
-                for el in v]
-    raise Exception('unknown el: ' + el)  # pragma: no cover
+            decodable_type = type(b'')
+        if isinstance(s, decodable_type):
+            s = s.decode(self.encoding)
+
+        if not s:
+            raise ValueError('Empty strings are not legal JSON5')
+
+        parser = Parser(s, '<string>')
+        ast, err = parser.parse()
+        if err:
+            raise ValueError(err)
+
+        return self.walk(ast)
+
+    def walk(self, ast_node):
+        node_type, node_val = ast_node
+        if node_type in ('null', 'true', 'false', 'string'):
+            return node_val
+        elif node_type == 'number':
+            if node_val.startswith('0x') or node_val.startswith('0X'):
+                return self.parse_int(node_val, base=16)
+            elif '.' in node_val or 'e' in node_val or 'E' in node_val:
+                return self.parse_float(node_val)
+            elif 'Infinity' in node_val or 'NaN' in node_val:
+                return self.parse_constant(node_val)
+            else:
+                return self.parse_int(node_val)
+        elif node_type == 'object':
+            pairs = [(key, self.walk(val)) for key, val in node_val]
+            return self.object_pairs_hook(pairs)
+        elif node_type == 'array':
+            return [self.walk(el) for el in node_val]
+        else:  # pragma: no cover
+            raise Exception('unknown ast node: ' + repr(ast_node))
 
 
-_notletter = re.compile('\W')
 
-
-def _dumpkey(k):
-    if _notletter.search(k):
-        return json.dumps(k)
+def dumps(obj, **kwargs):
+    """Serialize ``obj`` to a JSON5-formatted string."""
+    compact = kwargs.pop('compact', False)
+    as_json = kwargs.pop('as_json', not compact)
+    if as_json:
+        return str(json.dumps(obj, **kwargs))
     else:
-        return str(k)
-
-
-def dumps(obj, compact=False, as_json=False, **kwargs):
-    """Serialize ``obj`` to a JSON5-formatted ``str``."""
-
-    if as_json or not compact:
-        return json.dumps(obj, **kwargs)
-
-    t = type(obj)
-    if obj == True:
-        return u'true'
-    elif obj == False:
-        return u'false'
-    elif obj == None:
-        return u'null'
-    elif t == type('') or t == type(u''):
-        single = "'" in obj
-        double = '"' in obj
-        if single and double:
-            return json.dumps(obj)
-        elif single:
-            return '"' + obj + '"'
-        else:
-            return "'" + obj + "'"
-    elif t is float or t is int:
-        return str(obj)
-    elif t is dict:
-        return u'{' + u','.join([
-            _dumpkey(k) + u':' + dumps(v) for k, v in obj.items()
-        ]) + '}'
-    elif t is list:
-        return u'[' + ','.join([dumps(el) for el in obj]) + u']'
-    else:  # pragma: no cover
-        return u''
+        return str(_Encoder(**kwargs).dumps(obj))
 
 
 def dump(obj, fp, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
     supporting file-like object)."""
+    fp.write(dumps(obj, **kwargs))
 
-    s = dumps(obj, **kwargs)
-    fp.write(str(s))
+
+class _Encoder(object):
+
+    def __init__(self, skipkeys=False, ensure_ascii=True,
+                 check_circular=True, allow_nan=True,
+                 cls=None, indent=None, separators=None,
+                 encoding='utf-8', default=None,
+                 sort_keys=False):
+        assert cls is None, 'Custom encoders are not supported'
+        self.skipkeys = skipkeys
+        self.ensure_ascii = ensure_ascii
+        self.allow_nan = allow_nan
+        self.indent = indent
+        self.separators = separators
+        self.encoding = encoding
+        self.default = default
+        self.sort_keys = sort_keys
+        self._notletter = re.compile('\W')
+
+    def _dumpkey(self, k):
+        if self._notletter.search(k):
+            return json.dumps(k)
+        else:
+            return str(k)
+
+    def dumps(self, obj):
+        t = type(obj)
+        if obj is True:
+            return u'true'
+        elif obj is False:
+            return u'false'
+        elif obj is None:
+            return u'null'
+        elif t == type('') or t == type(u''):
+            single = "'" in obj
+            double = '"' in obj
+            if single and double:
+                return json.dumps(obj)
+            elif single:
+                return '"' + obj + '"'
+            else:
+                return "'" + obj + "'"
+        elif t is float or t is int:
+            return str(obj)
+        elif t is dict:
+            return u'{' + u','.join([self._dumpkey(k) + u':' + self.dumps(v)
+                                     for k, v in obj.items()]) + '}'
+        elif t is list:
+            return u'[' + ','.join([self.dumps(el) for el in obj]) + u']'
+        else:  # pragma: no-cover
+            raise ValueError(obj)
+
+

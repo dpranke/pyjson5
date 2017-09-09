@@ -322,7 +322,7 @@ class Parser(object):
             self._expect(u'null')
             if self.err:
                 return
-            self.val = u'None'
+            self.val = [u'null', None]
             self.err = None
         choice_0()
         if not self.err:
@@ -334,7 +334,7 @@ class Parser(object):
             self._expect(u'true')
             if self.err:
                 return
-            self.val = u'True'
+            self.val = [u'true', True]
             self.err = None
         choice_1()
         if not self.err:
@@ -346,7 +346,7 @@ class Parser(object):
             self._expect(u'false')
             if self.err:
                 return
-            self.val = u'False'
+            self.val = [u'false', False]
             self.err = None
         choice_2()
         if not self.err:

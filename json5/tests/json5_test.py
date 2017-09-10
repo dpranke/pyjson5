@@ -469,3 +469,10 @@ class TestDumps(unittest.TestCase):
         self.check({'foo': 1, 'bar': 2},
                    '{\n  foo: 1,\n  bar: 2,\n}',
                    trailing_commas=True, indent=2)
+
+    def test_unicode_keys(self):
+        self.check({u'\xe1': 1}, u'{\xe1: 1}')
+
+    def test_unicode_esc_in_identifier(self):
+        self.check({u'\\u0041': 1}, u'{\\u0041: 1}')
+

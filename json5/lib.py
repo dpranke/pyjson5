@@ -14,6 +14,8 @@
 
 import math
 import sys
+import unicodedata
+
 
 _is_python2 = sys.version_info[0] < 3
 if _is_python2:
@@ -256,11 +258,10 @@ class Encoder(object):
         if self.as_json:
             return dquote + self._esc_str(k, esc_dquote=True) + dquote
 
-        ch = k[0]
-        needs_quotes = not self._is_id_start(ch)
-        has_squote = ch == squote
-        for ch in k[1:]:
-            needs_quotes = needs_quotes or not self._is_id_continue(ch)
+        needs_quotes = not self._is_id_start(k)
+        has_squote = k[0] == squote
+        for i, ch in enumerate(k[1:], 1):
+            needs_quotes = needs_quotes or not self._is_id_cont(k[i:])
             has_squote = has_squote or ch == squote
         if needs_quotes:
             if not has_squote:
@@ -278,17 +279,41 @@ class Encoder(object):
             chars.append(self._esc_char(ch, esc_dquote))
         return ''.join(chars)
 
+    _id_start_cats = ('Ll', 'Lm', 'Lo', 'Lt', 'Lu', 'Nl')
+
+    _id_cont_cats = _id_start_cats + ('Mn', 'Mc', 'Nd', 'Pc')
+
     def _indent(self):
         if self.indent is not None:
             return '\n' + ' ' * self.indent * self._indent_level
         else:
             return ''
 
-    def _is_id_start(self, ch):
-        return ch.isalpha() or ch == '_'
+    def _is_any_cat(self, ch, cats):
+        return unicodedata.category(str(ch)) in cats
 
-    def _is_id_continue(self, ch):
-        return ch.isalnum() or ch == '_'
+    def _is_ascii_start(self, ch):
+        return ch.isalpha() or ch == '_' or ch == '$'
+
+    def _is_hex(self, ch):
+        return ('0' <= ch <= '9') or ('a' <= ch <= 'f') or ('A' <= ch <= 'F')
+
+    def _is_id_cont(self, s):
+        ch = s[0]
+        return (self._is_ascii_start(ch) or ch.isdigit() or
+                self._is_any_cat(ch, self._id_cont_cats) or
+                ch == u'\u200C' or ch == u'\u200D' or self._is_uni_esc(s))
+
+    def _is_id_start(self, s):
+        ch = s[0]
+        return (self._is_ascii_start(ch) or
+                self._is_any_cat(ch, self._id_start_cats) or
+                self._is_uni_esc(s))
+
+    def _is_uni_esc(self, s):
+        return (len(s) >= 6 and s[0] == '\\' and s[1] == 'u' and
+                self._is_hex(s[2]) and self._is_hex(s[3]) and
+                self._is_hex(s[4]) and self._is_hex(s[5]))
 
     def _sep(self, i, n):
         if i < n:

@@ -26,16 +26,16 @@ from .parser import Parser
 def load(fp, **kwargs):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object."""
-    return _Decoder(**kwargs).loads(fp.read())
+    return Decoder(**kwargs).decode(fp.read())
 
 
 def loads(s, **kwargs):
     """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
     JSON5 document) to a Python object."""
-    return _Decoder(**kwargs).loads(s)
+    return Decoder(**kwargs).decode(s)
 
 
-class _Decoder(object):
+class Decoder(object):
 
     def __init__(self, encoding=None, cls=None, object_hook=None,
                  parse_float=None, parse_int=None, parse_constant=None,
@@ -46,7 +46,7 @@ class _Decoder(object):
         self.cls = cls
         self.parse_float = parse_float or float
         self.parse_int = parse_int or int
-        self.parse_constant = parse_constant or self.parse_constant
+        self.parse_constant = parse_constant or self._default_parse_constant
         self.object_pairs_hook = object_pairs_hook
         if object_pairs_hook:
             self.object_pairs_hook = object_pairs_hook
@@ -55,10 +55,7 @@ class _Decoder(object):
         else:
             self.object_pairs_hook = dict
 
-    def parse_constant(self, s):
-        return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
-
-    def loads(self, s):
+    def decode(self, s):
         if _is_python2:
             decodable_type = type('')
         else:
@@ -74,9 +71,12 @@ class _Decoder(object):
         if err:
             raise ValueError(err)
 
-        return self.walk(ast)
+        return self._walk(ast)
 
-    def walk(self, ast_node):
+    def _default_parse_constant(self, s):
+        return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
+
+    def _walk(self, ast_node):
         node_type, node_val = ast_node
         if node_type in ('null', 'true', 'false', 'string'):
             return node_val
@@ -90,17 +90,17 @@ class _Decoder(object):
             else:
                 return self.parse_int(node_val)
         elif node_type == 'object':
-            pairs = [(key, self.walk(val)) for key, val in node_val]
+            pairs = [(key, self._walk(val)) for key, val in node_val]
             return self.object_pairs_hook(pairs)
         elif node_type == 'array':
-            return [self.walk(el) for el in node_val]
+            return [self._walk(el) for el in node_val]
         else:  # pragma: no cover
             raise Exception('unknown ast node: ' + repr(ast_node))
 
 
 def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted string."""
-    return _Encoder(**kwargs).dumps(obj)
+    return Encoder(**kwargs).encode(obj)
 
 
 def dump(obj, fp, **kwargs):
@@ -114,7 +114,7 @@ dquote = '"'
 bslash = '\\'
 
 
-class _Encoder(object):
+class Encoder(object):
 
     def __init__(self, skipkeys=False, ensure_ascii=True,
                  check_circular=True, allow_nan=True,
@@ -136,19 +136,19 @@ class _Encoder(object):
         self.as_json = as_json
 
         if separators:
-            comma, colon = separators
+            item_sep, key_sep = separators
         else:
-            comma, colon = (None, None)
-        if comma is None:
-            self._comma = ',' if compact else ', '
+            item_sep, key_sep = (None, None)
+        if item_sep is None:
+            self.item_separator = ',' if compact else ', '
         else:
-            self._comma = comma
-        if colon is None:
-            self._colon = ':' if compact else ': '
+            self.item_separator = item_sep
+        if key_sep is None:
+            self.key_separator = ':' if compact else ': '
         else:
-            self._colon = colon
+            self.key_separator = key_sep
         if self.indent:
-            self._comma = self._comma.strip()
+            self.item_separator = self.item_separator.strip()
 
         self._seen_objs = set()
         self._valid_key_types = [str, int, float, bool, type(None)]
@@ -156,8 +156,102 @@ class _Encoder(object):
             self._valid_key_types.extend([long, type('')])
         self._indent_level = 0
 
+    def encode(self, obj):
+        t = type(obj)
+        if obj is True:
+            return 'true'
+        elif obj is False:
+            return 'false'
+        elif obj is None:
+            return 'null'
+        elif t == type('') or t == type(u''):
+            return self._encode_str(obj)
+        elif t == float:
+            return self._encode_float(obj)
+        elif t is int:
+            return str(obj)
+        elif t is dict:
+            return self._encode_dict(obj)
+        elif t is list:
+            return self._encode_list(obj)
+        else:
+            return self.encode(self.default(obj))
+
     def _default(self, obj):
         raise TypeError(obj)
+
+    def _encode_dict(self, obj):
+        keys = obj.keys()
+        if not keys:
+            return '{}'
+
+        if self.sort_keys:
+            keys = sorted(keys)
+        num_keys = len(keys) - 1
+
+        if self.check_circular:
+            if id(obj) in self._seen_objs:
+                raise ValueError(obj)
+            self._seen_objs.add(id(obj))
+
+        s = '{'
+        self._indent_level += 1
+        for i, k in enumerate(keys):
+            if type(k) not in self._valid_key_types:
+                if self.skipkeys:
+                    continue
+                raise TypeError(k)
+            s += self._indent() + self._esc_key(k) + self.key_separator
+            s += self.encode(obj[k]) + self._sep(i, num_keys)
+        self._indent_level -= 1
+        s += self._indent() + '}'
+        return s
+
+    def _encode_float(self, obj):
+        if not math.isnan(obj) and not math.isinf(obj):
+            return str(obj)
+        elif not self.allow_nan:
+            raise ValueError(obj)
+        elif math.isnan(obj):
+            return 'NaN'
+        elif obj == float('inf'):
+            return 'Infinity'
+        else:
+            return '-Infinity'
+
+    def _encode_list(self, obj):
+        if self.check_circular:
+            if id(obj) in self._seen_objs:
+                raise ValueError(obj)
+            self._seen_objs.add(id(obj))
+        num_els = len(obj) - 1
+
+        if not obj:
+            return '[]'
+
+        s = '['
+        self._indent_level += 1
+        for i, el in enumerate(obj):
+            s += self._indent() + self.encode(el) + self._sep(i, num_els)
+        self._indent_level -= 1
+        s += self._indent() + ']'
+        return s
+
+    def _encode_str(self, obj):
+        has_single_quote = "'" in obj
+        if not has_single_quote:
+            return squote + self._esc_str(obj, esc_dquote=False) + squote
+        else:
+            return dquote + self._esc_str(obj, esc_dquote=True) + dquote
+
+    def _esc_char(self, ch, esc_dquote):
+        o = ord(ch)
+        if ch == dquote and esc_dquote:
+            return bslash + dquote
+        elif 32 <= o < 128:
+            return ch
+        else:
+            return '\\u%04x' % o
 
     def _esc_key(self, k):
         if self.as_json:
@@ -184,96 +278,19 @@ class _Encoder(object):
             chars.append(self._esc_char(ch, esc_dquote))
         return ''.join(chars)
 
-    def _esc_char(self, ch, esc_dquote):
-        o = ord(ch)
-        if ch == dquote and esc_dquote:
-            return bslash + dquote
-        elif 32 <= o < 128:
-            return ch
-        else:
-            return '\\u%04x' % o
-
     def _indent(self):
         if self.indent is not None:
             return '\n' + ' ' * self.indent * self._indent_level
         else:
             return ''
 
-    def dumps(self, obj):
-        t = type(obj)
-        if obj is True:
-            return 'true'
-        elif obj is False:
-            return 'false'
-        elif obj is None:
-            return 'null'
-        elif t == type('') or t == type(u''):
-            has_single_quote = "'" in obj
-            if not has_single_quote:
-                return squote + self._esc_str(obj, esc_dquote=False) + squote
+    def _sep(self, i, n):
+        if i < n:
+            return self.item_separator
+        elif self.trailing_commas:
+            if self.indent is None:
+                return self.item_separator
             else:
-                return dquote + self._esc_str(obj, esc_dquote=True) + dquote
-        elif t == float:
-            if not math.isnan(obj) and not math.isinf(obj):
-                return str(obj)
-            elif not self.allow_nan:
-                raise ValueError(obj)
-            elif math.isnan(obj):
-                return 'NaN'
-            elif obj == float('inf'):
-                return 'Infinity'
-            else:
-                return '-Infinity'
-        elif t is int:
-            return str(obj)
-        elif t is dict:
-            if self.check_circular:
-                if id(obj) in self._seen_objs:
-                    raise ValueError(obj)
-                self._seen_objs.add(id(obj))
-
-            keys = obj.keys()
-            if not keys:
-                return '{}'
-
-            if self.sort_keys:
-                keys = sorted(keys)
-            num_keys = len(keys) - 1
-
-            s = '{'
-            self._indent_level += 1
-            for i, k in enumerate(keys):
-                if type(k) not in self._valid_key_types:
-                    if self.skipkeys:
-                        continue
-                    raise TypeError(k)
-                s += self._indent()
-                s += self._esc_key(k) + self._colon + self.dumps(obj[k])
-                if i < num_keys or self.trailing_commas:
-                    s += self._comma
-            self._indent_level -= 1
-            s += self._indent() + '}'
-            return s
-
-        elif t is list:
-            if self.check_circular:
-                if id(obj) in self._seen_objs:
-                    raise ValueError(obj)
-                self._seen_objs.add(id(obj))
-            num_els = len(obj) - 1
-
-            if not obj:
-                return '[]'
-
-            s = '['
-            self._indent_level += 1
-            for i, el in enumerate(obj):
-                s += self._indent()
-                s += self.dumps(el)
-                if i < num_els or self.trailing_commas:
-                    s += self._comma
-            self._indent_level -= 1
-            s += self._indent() + ']'
-            return s
+                return self.item_separator.strip()
         else:
-            return self.default(obj)
+            return ''

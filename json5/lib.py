@@ -60,9 +60,6 @@ class Decoder(object):
         if isinstance(s, decodable_type):
             s = s.decode(self.encoding)
 
-        if not s:
-            raise ValueError('Empty strings are not legal JSON5')
-
         parser = Parser(s, '<string>')
         ast, err = parser.parse()
         if err:
@@ -259,10 +256,11 @@ class Encoder(object):
         if self.as_json:
             return dquote + self._esc_str(k, esc_dquote=True) + dquote
 
-        needs_quotes = False
-        has_squote = False
-        for ch in k:
-            needs_quotes = needs_quotes or (not ch.isalnum() and not ch == '_')
+        ch = k[0]
+        needs_quotes = not self._is_id_start(ch)
+        has_squote = ch == squote
+        for ch in k[1:]:
+            needs_quotes = needs_quotes or not self._is_id_continue(ch)
             has_squote = has_squote or ch == squote
         if needs_quotes:
             if not has_squote:
@@ -285,6 +283,12 @@ class Encoder(object):
             return '\n' + ' ' * self.indent * self._indent_level
         else:
             return ''
+
+    def _is_id_start(self, ch):
+        return ch.isalpha() or ch == '_'
+
+    def _is_id_continue(self, ch):
+        return ch.isalnum() or ch == '_'
 
     def _sep(self, i, n):
         if i < n:

@@ -19,12 +19,11 @@ class Parser(object):
         self.err = None
         self.pos = 0
         self.errpos = 0
-        self.errset = set()
         self.scopes = []
 
     def parse(self):
         rule_fn = getattr(self, '_' + self.starting_rule + '_', None)
-        if not rule_fn:
+        if not rule_fn:  # pragma: no cover
             return None, 'unknown rule "%s"' % self.starting_rule
         rule_fn()
         if self.err:
@@ -47,16 +46,12 @@ class Parser(object):
     def _err_str(self):
         lineno, colno, _ = self._err_offsets()
         prefix = u'%s:%d' % (self.fname, lineno)
-        if type(self.err) == type(''):
-            return u'%s %s' % (prefix, self.err)
-        exps = list(self.errset)
-        if len(exps) > 1:
-            return u'%s Unexpected "%s" at column %d' % (
-                prefix, self.msg[self.errpos], colno)
         if self.errpos == 0 and len(self.msg) == 0:
             return u'input must not be empty'
-        return u'%s Expecting a "%s" at column %d, got a "%s"' % (
-                prefix, exps[0], colno, self.msg[self.errpos])
+        if self.errpos == len(self.msg):
+            return u'%s Unexpected end of input' % prefix
+        return u'%s Unexpected "%s" at column %d' % (
+                prefix, self.msg[self.errpos], colno)
 
     def _err_offsets(self):
         lineno = 1
@@ -76,6 +71,12 @@ class Parser(object):
     def _esc(self, val):
         return str(val)
 
+    def _err_add(self, s):
+        self.val = None
+        self.err = True
+        if self.pos >= self.errpos:
+            self.errpos = self.pos
+
     def _expect(self, expr):
         p = self.pos
         l = len(expr)
@@ -84,14 +85,17 @@ class Parser(object):
             self.val = expr
             self.err = False
         else:
-            self.val = None
-            self.err = True
-            if self.pos >= self.errpos:
-                if self.pos > self.errpos:
-                    self.errset = set()
-                self.errset.add(self._esc(expr))
-                self.errpos = self.pos
+            self._err_add(self._esc(expr))
         return
+
+    def _range(self, i, j):
+        p = self.pos
+        if p != self.end and ord(i) <= ord(self.msg[p]) <= ord(j):
+            self.val = self.msg[p]
+            self.pos += 1
+            return
+        else:
+            self._err_add('something between %s and %s' % (i, j))
 
     def _grammar_(self):
         self._push('grammar')
@@ -103,10 +107,6 @@ class Parser(object):
             self._pop('grammar')
             return
         self._sp_()
-        self._end_()
-        if self.err:
-            self._pop('grammar')
-            return
         self.val = self._get('v')
         self.err = None
         self._pop('grammar')
@@ -266,11 +266,11 @@ class Parser(object):
                     p = self.pos
                     self._eol_()
                     self.pos = p
-                    if not self.err:
+                    self.val = None
+                    if self.err:
+                        self.err = None
+                    else:
                         self.err = "not"
-                        self.val = None
-                        return
-                    self.err = None
                     if self.err:
                         return
                     self._anything_()
@@ -298,11 +298,11 @@ class Parser(object):
                     p = self.pos
                     self._expect(u'*/')
                     self.pos = p
-                    if not self.err:
+                    self.val = None
+                    if self.err:
+                        self.err = None
+                    else:
                         self.err = "not"
-                        self.val = None
-                        return
-                    self.err = None
                     if self.err:
                         return
                     self._anything_()
@@ -520,9 +520,6 @@ class Parser(object):
             self.err = None
             if not self.err:
                 self._set('cs', self.val)
-            if self.err:
-                self._pop('string_0')
-                return
             self._squote_()
             if self.err:
                 self._pop('string_0')
@@ -554,9 +551,6 @@ class Parser(object):
             self.err = None
             if not self.err:
                 self._set('cs', self.val)
-            if self.err:
-                self._pop('string_1')
-                return
             self._dquote_()
             if self.err:
                 self._pop('string_1')
@@ -609,36 +603,33 @@ class Parser(object):
             p = self.pos
             self._bslash_()
             self.pos = p
-            if not self.err:
+            self.val = None
+            if self.err:
+                self.err = None
+            else:
                 self.err = "not"
-                self.val = None
-                self._pop('sqchar_2')
-                return
-            self.err = None
             if self.err:
                 self._pop('sqchar_2')
                 return
             p = self.pos
             self._squote_()
             self.pos = p
-            if not self.err:
+            self.val = None
+            if self.err:
+                self.err = None
+            else:
                 self.err = "not"
-                self.val = None
-                self._pop('sqchar_2')
-                return
-            self.err = None
             if self.err:
                 self._pop('sqchar_2')
                 return
             p = self.pos
             self._eol_()
             self.pos = p
-            if not self.err:
+            self.val = None
+            if self.err:
+                self.err = None
+            else:
                 self.err = "not"
-                self.val = None
-                self._pop('sqchar_2')
-                return
-            self.err = None
             if self.err:
                 self._pop('sqchar_2')
                 return
@@ -696,36 +687,33 @@ class Parser(object):
             p = self.pos
             self._bslash_()
             self.pos = p
-            if not self.err:
+            self.val = None
+            if self.err:
+                self.err = None
+            else:
                 self.err = "not"
-                self.val = None
-                self._pop('dqchar_2')
-                return
-            self.err = None
             if self.err:
                 self._pop('dqchar_2')
                 return
             p = self.pos
             self._dquote_()
             self.pos = p
-            if not self.err:
+            self.val = None
+            if self.err:
+                self.err = None
+            else:
                 self.err = "not"
-                self.val = None
-                self._pop('dqchar_2')
-                return
-            self.err = None
             if self.err:
                 self._pop('dqchar_2')
                 return
             p = self.pos
             self._eol_()
             self.pos = p
-            if not self.err:
+            self.val = None
+            if self.err:
+                self.err = None
+            else:
                 self.err = "not"
-                self.val = None
-                self._pop('dqchar_2')
-                return
-            self.err = None
             if self.err:
                 self._pop('dqchar_2')
                 return
@@ -1153,9 +1141,6 @@ class Parser(object):
         self.err = None
         if not self.err:
             self._set('tl', self.val)
-        if self.err:
-            self._pop('ident')
-            return
         self.val = self._join(u'', [self._get('hd')] + self._get('tl'))
         self.err = None
         self._pop('ident')
@@ -1188,23 +1173,7 @@ class Parser(object):
     def _ascii_id_start_(self):
         p = self.pos
         def choice_0():
-            i = u'a'
-            j = u'z'
-            if (self.pos == self.end or
-                ord(self.msg[self.pos]) < ord(i) or
-                ord(self.msg[self.pos]) > ord(j)):
-                self.val = None
-                self.err = True
-                if self.pos >= self.errpos:
-                    if self.pos > self.errpos:
-                        self.errset = set()
-                    self.errset.add('something between %s and %s' % (i, j))
-                    self.errpos = self.pos
-            else:
-                self.val = self.msg[self.pos]
-                self.err = False
-                self.pos += 1
-            return
+            self._range(u'a', u'z')
         choice_0()
         if not self.err:
             return
@@ -1212,23 +1181,7 @@ class Parser(object):
         self.err = False
         self.pos = p
         def choice_1():
-            i = u'A'
-            j = u'Z'
-            if (self.pos == self.end or
-                ord(self.msg[self.pos]) < ord(i) or
-                ord(self.msg[self.pos]) > ord(j)):
-                self.val = None
-                self.err = True
-                if self.pos >= self.errpos:
-                    if self.pos > self.errpos:
-                        self.errset = set()
-                    self.errset.add('something between %s and %s' % (i, j))
-                    self.errpos = self.pos
-            else:
-                self.val = self.msg[self.pos]
-                self.err = False
-                self.pos += 1
-            return
+            self._range(u'A', u'Z')
         choice_1()
         if not self.err:
             return
@@ -1542,10 +1495,7 @@ class Parser(object):
         self.err = False
         self.pos = p
         def choice_7():
-            self._bslash_()
-            if self.err:
-                return
-            self._unicode_esc_()
+            self._expect(u'\u200c')
         choice_7()
         if not self.err:
             return
@@ -1553,16 +1503,8 @@ class Parser(object):
         self.err = False
         self.pos = p
         def choice_8():
-            self._expect(u'\u200c')
-        choice_8()
-        if not self.err:
-            return
-
-        self.err = False
-        self.pos = p
-        def choice_9():
             self._expect(u'\u200d')
-        choice_9()
+        choice_8()
 
     def _num_literal_(self):
         p = self.pos
@@ -1606,12 +1548,11 @@ class Parser(object):
             p = self.pos
             self._id_start_()
             self.pos = p
-            if not self.err:
+            self.val = None
+            if self.err:
+                self.err = None
+            else:
                 self.err = "not"
-                self.val = None
-                self._pop('num_literal_1')
-                return
-            self.err = None
             if self.err:
                 self._pop('num_literal_1')
                 return
@@ -1683,13 +1624,17 @@ class Parser(object):
             if self.err:
                 self._pop('dec_literal_1')
                 return
-            self._frac_()
-            if not self.err:
-                self._set('f', self.val)
+            self._expect(u'.')
             if self.err:
                 self._pop('dec_literal_1')
                 return
-            self.val = self._get('d') + self._get('f')
+            self._exp_()
+            if not self.err:
+                self._set('e', self.val)
+            if self.err:
+                self._pop('dec_literal_1')
+                return
+            self.val = self._get('d') + u'.' + self._get('e')
             self.err = None
             self._pop('dec_literal_1')
         choice_1()
@@ -1706,13 +1651,13 @@ class Parser(object):
             if self.err:
                 self._pop('dec_literal_2')
                 return
-            self._exp_()
+            self._frac_()
             if not self.err:
-                self._set('e', self.val)
+                self._set('f', self.val)
             if self.err:
                 self._pop('dec_literal_2')
                 return
-            self.val = self._get('d') + self._get('e')
+            self.val = self._get('d') + self._get('f')
             self.err = None
             self._pop('dec_literal_2')
         choice_2()
@@ -1729,7 +1674,11 @@ class Parser(object):
             if self.err:
                 self._pop('dec_literal_3')
                 return
-            self.val = self._get('d')
+            self._expect(u'.')
+            if self.err:
+                self._pop('dec_literal_3')
+                return
+            self.val = self._get('d') + u'.'
             self.err = None
             self._pop('dec_literal_3')
         choice_3()
@@ -1740,9 +1689,9 @@ class Parser(object):
         self.pos = p
         def choice_4():
             self._push('dec_literal_4')
-            self._frac_()
+            self._dec_int_lit_()
             if not self.err:
-                self._set('f', self.val)
+                self._set('d', self.val)
             if self.err:
                 self._pop('dec_literal_4')
                 return
@@ -1752,7 +1701,7 @@ class Parser(object):
             if self.err:
                 self._pop('dec_literal_4')
                 return
-            self.val = self._get('f') + self._get('e')
+            self.val = self._get('d') + self._get('e')
             self.err = None
             self._pop('dec_literal_4')
         choice_4()
@@ -1763,16 +1712,56 @@ class Parser(object):
         self.pos = p
         def choice_5():
             self._push('dec_literal_5')
+            self._dec_int_lit_()
+            if not self.err:
+                self._set('d', self.val)
+            if self.err:
+                self._pop('dec_literal_5')
+                return
+            self.val = self._get('d')
+            self.err = None
+            self._pop('dec_literal_5')
+        choice_5()
+        if not self.err:
+            return
+
+        self.err = False
+        self.pos = p
+        def choice_6():
+            self._push('dec_literal_6')
             self._frac_()
             if not self.err:
                 self._set('f', self.val)
             if self.err:
-                self._pop('dec_literal_5')
+                self._pop('dec_literal_6')
+                return
+            self._exp_()
+            if not self.err:
+                self._set('e', self.val)
+            if self.err:
+                self._pop('dec_literal_6')
+                return
+            self.val = self._get('f') + self._get('e')
+            self.err = None
+            self._pop('dec_literal_6')
+        choice_6()
+        if not self.err:
+            return
+
+        self.err = False
+        self.pos = p
+        def choice_7():
+            self._push('dec_literal_7')
+            self._frac_()
+            if not self.err:
+                self._set('f', self.val)
+            if self.err:
+                self._pop('dec_literal_7')
                 return
             self.val = self._get('f')
             self.err = None
-            self._pop('dec_literal_5')
-        choice_5()
+            self._pop('dec_literal_7')
+        choice_7()
 
     def _dec_int_lit_(self):
         p = self.pos
@@ -1783,11 +1772,11 @@ class Parser(object):
             p = self.pos
             self._digit_()
             self.pos = p
-            if not self.err:
+            self.val = None
+            if self.err:
+                self.err = None
+            else:
                 self.err = "not"
-                self.val = None
-                return
-            self.err = None
             if self.err:
                 return
             self.val = u'0'
@@ -1818,51 +1807,16 @@ class Parser(object):
             self.err = None
             if not self.err:
                 self._set('ds', self.val)
-            if self.err:
-                self._pop('dec_int_lit_1')
-                return
             self.val = self._get('d') + self._join(u'', self._get('ds'))
             self.err = None
             self._pop('dec_int_lit_1')
         choice_1()
 
     def _digit_(self):
-        i = u'0'
-        j = u'9'
-        if (self.pos == self.end or
-            ord(self.msg[self.pos]) < ord(i) or
-            ord(self.msg[self.pos]) > ord(j)):
-            self.val = None
-            self.err = True
-            if self.pos >= self.errpos:
-                if self.pos > self.errpos:
-                    self.errset = set()
-                self.errset.add('something between %s and %s' % (i, j))
-                self.errpos = self.pos
-        else:
-            self.val = self.msg[self.pos]
-            self.err = False
-            self.pos += 1
-        return
+        self._range(u'0', u'9')
 
     def _nonzerodigit_(self):
-        i = u'1'
-        j = u'9'
-        if (self.pos == self.end or
-            ord(self.msg[self.pos]) < ord(i) or
-            ord(self.msg[self.pos]) > ord(j)):
-            self.val = None
-            self.err = True
-            if self.pos >= self.errpos:
-                if self.pos > self.errpos:
-                    self.errset = set()
-                self.errset.add('something between %s and %s' % (i, j))
-                self.errpos = self.pos
-        else:
-            self.val = self.msg[self.pos]
-            self.err = False
-            self.pos += 1
-        return
+        self._range(u'1', u'9')
 
     def _hex_literal_(self):
         self._push('hex_literal')
@@ -1885,19 +1839,17 @@ class Parser(object):
             return
         vs = []
         self._hex_()
-        if self.err:
-            self._pop('hex_literal')
-            return
-        vs.append(self.val)
-        while not self.err:
-            p = self.pos
-            self._hex_()
-            if not self.err:
-                vs.append(self.val)
-            else:
-                self.pos = p
-        self.val = vs
-        self.err = None
+        if not self.err:
+            vs.append(self.val)
+            while not self.err:
+                p = self.pos
+                self._hex_()
+                if not self.err:
+                    vs.append(self.val)
+                else:
+                    self.pos = p
+            self.val = vs
+            self.err = None
         if not self.err:
             self._set('hs', self.val)
         if self.err:
@@ -1910,23 +1862,7 @@ class Parser(object):
     def _hex_(self):
         p = self.pos
         def choice_0():
-            i = u'a'
-            j = u'f'
-            if (self.pos == self.end or
-                ord(self.msg[self.pos]) < ord(i) or
-                ord(self.msg[self.pos]) > ord(j)):
-                self.val = None
-                self.err = True
-                if self.pos >= self.errpos:
-                    if self.pos > self.errpos:
-                        self.errset = set()
-                    self.errset.add('something between %s and %s' % (i, j))
-                    self.errpos = self.pos
-            else:
-                self.val = self.msg[self.pos]
-                self.err = False
-                self.pos += 1
-            return
+            self._range(u'a', u'f')
         choice_0()
         if not self.err:
             return
@@ -1934,23 +1870,7 @@ class Parser(object):
         self.err = False
         self.pos = p
         def choice_1():
-            i = u'A'
-            j = u'F'
-            if (self.pos == self.end or
-                ord(self.msg[self.pos]) < ord(i) or
-                ord(self.msg[self.pos]) > ord(j)):
-                self.val = None
-                self.err = True
-                if self.pos >= self.errpos:
-                    if self.pos > self.errpos:
-                        self.errset = set()
-                    self.errset.add('something between %s and %s' % (i, j))
-                    self.errpos = self.pos
-            else:
-                self.val = self.msg[self.pos]
-                self.err = False
-                self.pos += 1
-            return
+            self._range(u'A', u'F')
         choice_1()
         if not self.err:
             return
@@ -1968,15 +1888,18 @@ class Parser(object):
             self._pop('frac')
             return
         vs = []
-        while not self.err:
-            p = self.pos
-            self._digit_()
-            if not self.err:
-                vs.append(self.val)
-            else:
-                self.pos = p
-        self.val = vs
-        self.err = None
+        self._digit_()
+        if not self.err:
+            vs.append(self.val)
+            while not self.err:
+                p = self.pos
+                self._digit_()
+                if not self.err:
+                    vs.append(self.val)
+                else:
+                    self.pos = p
+            self.val = vs
+            self.err = None
         if not self.err:
             self._set('ds', self.val)
         if self.err:
@@ -2027,15 +1950,18 @@ class Parser(object):
                 self._pop('exp_0')
                 return
             vs = []
-            while not self.err:
-                p = self.pos
-                self._digit_()
-                if not self.err:
-                    vs.append(self.val)
-                else:
-                    self.pos = p
-            self.val = vs
-            self.err = None
+            self._digit_()
+            if not self.err:
+                vs.append(self.val)
+                while not self.err:
+                    p = self.pos
+                    self._digit_()
+                    if not self.err:
+                        vs.append(self.val)
+                    else:
+                        self.pos = p
+                self.val = vs
+                self.err = None
             if not self.err:
                 self._set('ds', self.val)
             if self.err:
@@ -2070,15 +1996,18 @@ class Parser(object):
                 self._pop('exp_1')
                 return
             vs = []
-            while not self.err:
-                p = self.pos
-                self._digit_()
-                if not self.err:
-                    vs.append(self.val)
-                else:
-                    self.pos = p
-            self.val = vs
-            self.err = None
+            self._digit_()
+            if not self.err:
+                vs.append(self.val)
+                while not self.err:
+                    p = self.pos
+                    self._digit_()
+                    if not self.err:
+                        vs.append(self.val)
+                    else:
+                        self.pos = p
+                self.val = vs
+                self.err = None
             if not self.err:
                 self._set('ds', self.val)
             if self.err:
@@ -2097,15 +2026,6 @@ class Parser(object):
         else:
             self.val = None
             self.err = u'anything'
-
-    def _end_(self):
-        if self.pos == self.end:
-            self.val = None
-            self.err = None
-        else:
-            self.val = None
-            self.err = u'the end'
-        return
 
     def _is_unicat(self, var, cat):
         import unicodedata

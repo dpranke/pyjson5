@@ -61,7 +61,7 @@ class TestLoads(unittest.TestCase):
         self.check('{foo: 1}', 'Howdy', cls=TestDecoder)
 
     def test_empty_strings_are_errors(self):
-        self.check_fail('', 'Empty strings are not legal JSON5')
+        self.check_fail('', 'input must not be empty')
 
     def test_encoding(self):
         if is_python2:
@@ -85,8 +85,20 @@ class TestLoads(unittest.TestCase):
         self.check('0x123456', 1193046)
 
         # floats
+        self.check('1.5e3', 1500)
+        self.check('1.e3', 1000)
         self.check('1.5', 1.5)
-        self.check('1.5e3', 1500.0)
+        self.check('1.', 1)
+        self.check('1e3', 1000)
+        self.check('1e10', 10000000000)
+        self.check('0.1e3', 100)
+        self.check('0.12', 0.12)
+        self.check('.1e3', 100)
+
+        self.check('.1E3', 100)
+        self.check('1e+3', 1000)
+        self.check('1e+10', 10000000000)
+        self.check('1e-3', 0.001)
         self.check('-0.5e-2', -0.005)
 
         # names
@@ -96,12 +108,20 @@ class TestLoads(unittest.TestCase):
         self.assertTrue(math.isnan(json5.loads('-NaN')))
 
         # syntax errors
+        self.check_fail('0x')
         self.check_fail('14d', '<string>:1 Unexpected "d" at column 3')
+        self.check_fail('.1f')
+        self.check_fail('.1ef')
+        self.check_fail('1e')
+        self.check_fail('1e-')
+        self.check_fail('01')
 
     def test_identifiers(self):
         self.check('{a: 1}', {'a': 1})
         self.check('{$: 1}', {'$': 1})
         self.check('{_: 1}', {'_': 1})
+        self.check('{a3: 1}', {'a3': 1})
+        self.check('{ab: 1}', {'ab': 1})
         self.check('{a_b: 1}', {'a_b': 1})
         self.check('{a$: 1}', {'a$': 1})
 
@@ -110,7 +130,46 @@ class TestLoads(unittest.TestCase):
         self.check_fail('{1: 1}')
 
     def test_identifiers_unicode(self):
-        self.check(u'{\xc3: 1}', {u'\xc3': 1})
+        # \xe1 == LATIN SMALL LETTER A WITH ACUTE, cat Ll (Letter, Lower)
+        self.check(u'{\xe1: 1}', {u'\xe1': 1})
+        self.check(u'{a\xe1: 1}', {u'a\xe1': 1})
+
+        # \u02b0 == MODIFIER LETTER SMALL H, cat Lm (Letter, Modifier)
+        self.check(u'{\u02b0: 1}', {u'\u02b0': 1})
+
+        # \u05d0 == HEBREW ALEF, cat Lo (Letter, Other)
+        self.check(u'{\u05d0: 1}', {u'\u05d0': 1})
+
+        # \u01c8 == LATIN CAPITAL LETTER L WITH SMALL LETTER J, cat Lt
+        # (Letter, Titlecase)
+        self.check(u'{\u01c8: 1}', {u'\u01c8': 1})
+
+        # \xc1 == LATIN CAPITAL LETTER A WITH ACUTE, cat Lu (Letter, Upper)
+        self.check(u'{\xc1: 1}', {u'\xc1': 1})
+
+        # \u2160 == ROMAN NUMBER ONE, cat Nd (Number, Letter)
+        self.check(u'{\u2160: 1}', {u'\u2160': 1})
+
+        # TODO: Replace with a sensible identifier.
+        # \u0303 == COMBINING TILDE, cat Mn (Mark, Non-spacing)
+        self.check(u'{n\u0303n: 1}', {u'n\u0303n': 1})  # unicat=Mn
+
+        # TODO: Replace with a sensible identifier.
+        # \u0f3e == TIBETAN SIGN YAR TSHES, cat Mc (Mark, Spacing Combining)
+        self.check(u'{n\u0f3e: 1}', {u'n\u0f3e': 1})  # unicat=Mc
+
+        # \u0f3e == TIBETAN DIGIT ZERO, cat Nd (Number, Decimal Digit)
+        self.check(u'{n\u0f20: 1}', {u'n\u0f20': 1})
+
+        # \ufe4d == DASHED LOW LINE, cat Pc (Punctuation, Connector)
+        self.check(u'{n\ufe4d1: 1}', {u'n\ufe4d1': 1})
+
+        # \u200c == ZERO WIDTH NON-JOINER, \u200d == ZERO WIDTH JOINER
+        self.check(u'{f\u200cf: 1}', {u'f\u200cf': 1})
+        self.check(u'{A\u200de: 1}', {u'A\u200de': 1})
+
+    def test_identifiers_unicode_esc(self):
+        self.check(u'{\\u00c3: 1}', {u'\xc3': 1})
 
     def test_null(self):
         self.check('null', None)
@@ -200,12 +259,31 @@ class TestLoads(unittest.TestCase):
         self.check_fail("'\\u0j00'")
         self.check_fail("'\\uj000'")
 
+    def test_syntax_error(self):
+        self.check_fail('[}')
+        self.check_fail('[\n1,\n}')
+        self.check_fail('[\n1,\n')
+        self.check_fail('{foo: 1,]')
+        self.check_fail('{foo}')
+        self.check_fail('{fo')
+        self.check_fail('{"foo"}')
+        self.check_fail('{foo:}')
+        self.check_fail('{"foo":}')
+        self.check_fail("'foo")
+        self.check_fail('"foo')
+        self.check_fail('"foo\\')
+        self.check_fail('-')
+        self.check_fail('+')
+        self.check_fail('.')
+
     def test_whitespace(self):
         self.check('\n1', 1)
         self.check('\r1', 1)
         self.check('\r\n1', 1)
         self.check('\t1', 1)
         self.check('\v1', 1)
+        self.check('\x0c1', 1)
+        self.check(u'\u20031', 1)
         self.check(u'\uFEFF 1', 1)
         self.check(u'\u00A0 1', 1)
         self.check(u'\u2028 1', 1)

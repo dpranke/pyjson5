@@ -1,4 +1,4 @@
-grammar        = sp value:v sp end                    -> v
+grammar        = sp value:v sp                        -> v
 
 sp             = ws*
 
@@ -95,7 +95,6 @@ id_continue    = ascii_id_start
                | anything:x ?(is_unicat(x, 'Mc'))    -> x
                | anything:x ?(is_unicat(x, 'Nd'))    -> x
                | anything:x ?(is_unicat(x, 'Pc'))    -> x
-               | bslash unicode_esc
                | '\u200C'
                | '\u200D'
 
@@ -106,7 +105,9 @@ num_literal    = '-' num_literal:n                   -> '-' + n
                | 'NaN'
 
 dec_literal    = dec_int_lit:d frac:f exp:e          -> d + f + e
+               | dec_int_lit:d '.' exp:e             -> d + '.' + e
                | dec_int_lit:d frac:f                -> d + f
+               | dec_int_lit:d '.'                   -> d + '.'
                | dec_int_lit:d exp:e                 -> d + e
                | dec_int_lit:d                       -> d
                | frac:f exp:e                        -> f + e
@@ -123,7 +124,7 @@ hex_literal    = ('0x' | '0X') hex+:hs               -> '0x' + join('', hs)
 
 hex            = 'a'..'f' | 'A'..'F' | digit
 
-frac           = '.' digit*:ds                       -> '.' + join('', ds)
+frac           = '.' digit+:ds                       -> '.' + join('', ds)
 
-exp            = ('e' | 'E') ('+' | '-'):s digit*:ds -> 'e' + s + join('', ds)
-               | ('e' | 'E') digit*:ds               -> 'e' + join('', ds)
+exp            = ('e' | 'E') ('+' | '-'):s digit+:ds -> 'e' + s + join('', ds)
+               | ('e' | 'E') digit+:ds               -> 'e' + join('', ds)

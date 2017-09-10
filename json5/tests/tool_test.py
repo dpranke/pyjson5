@@ -80,9 +80,11 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
     def test_help(self):
         self.check_cmd(['--help'], returncode=0)
 
-    def test_json_switches(self):
+    def test_basic(self):
         self.check_cmd(['-c', '{"foo": 1}'], returncode=0,
                        out=u'{foo: 1}\n')
+
+    def test_as_json(self):
         self.check_cmd(['--json', '-c', '{"foo": 1}'], returncode=0,
                        out=u'{"foo": 1}\n')
 

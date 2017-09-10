@@ -17,7 +17,7 @@
 Usage::
 
     $ echo '{foo:"bar"}' | python -m json5.tool
-    { foo: "bar" }
+    {foo: "bar"}
     $
 """
 
@@ -36,6 +36,12 @@ def main(argv=None, host=None):
     parser = arg_parser.ArgumentParser(host, prog='json5')
     parser.add_argument('-c', metavar='STR', dest='cmd',
                         help='inline json5 string')
+    parser.add_argument('--compact', action='store_true')
+    parser.add_argument('--comma', action='store', default=None)
+    parser.add_argument('--colon', action='store', default=None)
+    parser.add_argument('--indent', action='store', type=int, default=None)
+    parser.add_argument('--sort-keys', action='store_true', default=False)
+    parser.add_argument('--trailing-commas', action='store_true', default=False)
     parser.add_argument('--json', dest='as_json', action='store_const',
                         const=True, default=False,
                         help='output as json')
@@ -54,8 +60,20 @@ def main(argv=None, host=None):
         inp = args.cmd
     else:
         inp = ''.join(host.fileinput(args.files))
+    obj = lib.loads(inp)
 
-    host.print_(lib.dumps(lib.loads(inp), compact=True, as_json=args.as_json))
+    if args.as_json and args.trailing_commas:
+        host.print_("Can't specify both --json and --trailing-commas")
+        return 2
+
+    s = lib.dumps(obj,
+                  separators=(args.comma, args.colon),
+                  indent=args.indent,
+                  sort_keys=args.sort_keys,
+                  compact=args.compact,
+                  as_json=args.as_json,
+                  trailing_commas=args.trailing_commas)
+    host.print_(s)
     return 0
 
 

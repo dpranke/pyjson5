@@ -12,18 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import collections
-import re
 import json
 import sys
-
-from .parser import Parser
-
 
 _is_python2 = sys.version_info[0] < 3
 if _is_python2:
     # pylint: disable=redefined-builtin
     str = unicode
+
+from .parser import Parser
 
 
 def load(fp, **kwargs):
@@ -101,14 +98,27 @@ class _Decoder(object):
             raise Exception('unknown ast node: ' + repr(ast_node))
 
 
-
 def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted string."""
     compact = kwargs.pop('compact', False)
-    as_json = kwargs.pop('as_json', not compact)
+    as_json = kwargs.pop('as_json', False)
+    trailing_commas = kwargs.pop('trailing_commas', False)
+
+    separators = kwargs.pop('separators', None)
+    if separators:
+        comma, colon = separators
+    else:
+        comma, colon = (None, None)
+    if comma is None:
+        comma = ',' if compact else ', '
+    if colon is None:
+        colon = ':' if compact else ': '
+    kwargs['separators'] = (comma, colon)
+
     if as_json:
         return json.dumps(obj, **kwargs)
     else:
+        kwargs['trailing_commas'] = trailing_commas
         return _Encoder(**kwargs).dumps(obj)
 
 
@@ -129,7 +139,7 @@ class _Encoder(object):
                  check_circular=True, allow_nan=True,
                  cls=None, indent=None, separators=None,
                  encoding='utf-8', default=None,
-                 sort_keys=False):
+                 sort_keys=False, trailing_commas=False):
         assert cls is None, 'Custom encoders are not supported'
 
         self.skipkeys = skipkeys
@@ -140,12 +150,9 @@ class _Encoder(object):
         self.encoding = encoding
         self.default = default or self._default
         self.sort_keys = sort_keys
+        self.trailing_commas = trailing_commas
 
-        if separators:
-          self._comma, self._colon = separators
-        else:
-          self._comma, self._colon = (', ', ': ')
-        self._notletter = re.compile('\W')
+        self._comma, self._colon = separators
         self._seen_objs = set()
         self._valid_key_types = [str, int, float, bool, type(None)]
         if _is_python2:
@@ -156,8 +163,13 @@ class _Encoder(object):
         raise TypeError(obj)
 
     def _esc_key(self, k):
-        if self._notletter.search(k):
-            if not squote in k:
+        needs_quotes = False
+        has_squote = False
+        for ch in k:
+            needs_quotes = needs_quotes or (not ch.isalnum() and not ch == '_')
+            has_squote = has_squote or ch == squote
+        if needs_quotes:
+            if not has_squote:
                 return squote + self._esc_str(k, esc_dquote=False) + squote
             else:
                 return dquote + self._esc_str(k, esc_squote=False) + dquote
@@ -182,6 +194,12 @@ class _Encoder(object):
             return ch
         else:
             return '\\u%04x' % o
+
+    def _indent(self):
+        if self.indent is not None:
+            return '\n' + ' ' * self.indent * self._indent_level
+        else:
+            return ''
 
     def dumps(self, obj):
         t = type(obj)
@@ -209,28 +227,26 @@ class _Encoder(object):
                 self._seen_objs.add(id(obj))
 
             keys = obj.keys()
+            if not keys:
+                return '{}'
+
             if self.sort_keys:
                 keys = sorted(keys)
             num_keys = len(keys) - 1
 
+            s = '{'
             self._indent_level += 1
-            if self.indent is not None:
-                indent += '\n' + ' ' * self.indent * self.indent_level
-            else:
-                indent = ''
-
-            s = '{' + indent
             for i, k in enumerate(keys):
                 if type(k) not in self._valid_key_types:
                     if self.skipkeys:
                         continue
                     raise TypeError(k)
+                s += self._indent()
                 s += self._esc_key(k) + self._colon + self.dumps(obj[k])
-                if i < num_keys:
-                    s += self._comma + indent
-            s += '}'
-
+                if i < num_keys or self.trailing_commas:
+                    s += self._comma
             self._indent_level -= 1
+            s += self._indent() + '}'
             return s
 
         elif t is list:
@@ -240,20 +256,18 @@ class _Encoder(object):
                 self._seen_objs.add(id(obj))
             num_els = len(obj) - 1
 
+            if not obj:
+                return '[]'
+
+            s = '['
             self._indent_level += 1
-            if self.indent is not None:
-                indent += '\n' + ' ' * self.indent * self.indent_level
-            else:
-                indent = ''
-
-            s = '[' + indent
             for i, el in enumerate(obj):
+                s += self._indent()
                 s += self.dumps(el)
-                if i < num_els:
-                    s += self._comma + indent
-            s += ']'
-
+                if i < num_els or self.trailing_commas:
+                    s += self._comma
             self._indent_level -= 1
+            s += self._indent() + ']'
             return s
         else:
             self._default(obj)

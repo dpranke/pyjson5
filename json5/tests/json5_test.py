@@ -224,7 +224,7 @@ class TestDumps(unittest.TestCase):
     maxDiff = None
 
     def check(self, obj, exp):
-        got = json5.dumps(obj, compact=True)
+        got = json5.dumps(obj)
         self.assertEqual(exp, got, msg='exp %s, got %s' % (exp, got))
 
     def test_arrays(self):

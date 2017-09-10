@@ -107,15 +107,20 @@ def dumps(obj, **kwargs):
     compact = kwargs.pop('compact', False)
     as_json = kwargs.pop('as_json', not compact)
     if as_json:
-        return str(json.dumps(obj, **kwargs))
+        return json.dumps(obj, **kwargs)
     else:
-        return str(_Encoder(**kwargs).dumps(obj))
+        return _Encoder(**kwargs).dumps(obj)
 
 
 def dump(obj, fp, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
     supporting file-like object)."""
     fp.write(dumps(obj, **kwargs))
+
+
+squote = "'"
+dquote = '"'
+bslash = '\\'
 
 
 class _Encoder(object):
@@ -126,15 +131,20 @@ class _Encoder(object):
                  encoding='utf-8', default=None,
                  sort_keys=False):
         assert cls is None, 'Custom encoders are not supported'
+
         self.skipkeys = skipkeys
         self.ensure_ascii = ensure_ascii
         self.check_circular = check_circular
         self.allow_nan = allow_nan
         self.indent = indent
-        self.separators = separators or {',': ', ', ':': ': '}
         self.encoding = encoding
         self.default = default or self._default
         self.sort_keys = sort_keys
+
+        if separators:
+          self._comma, self._colon = separators
+        else:
+          self._comma, self._colon = (', ', ': ')
         self._notletter = re.compile('\W')
         self._seen_objs = set()
         self._valid_key_types = [str, int, float, bool, type(None)]
@@ -145,29 +155,48 @@ class _Encoder(object):
     def _default(self, obj):
         raise TypeError(obj)
 
-    def _key(self, k):
+    def _esc_key(self, k):
         if self._notletter.search(k):
-            return json.dumps(k)
+            if not squote in k:
+                return squote + self._esc_str(k, esc_dquote=False) + squote
+            else:
+                return dquote + self._esc_str(k, esc_squote=False) + dquote
         else:
-            return str(k)
+            return k
+
+    def _esc_str(self, s, esc_squote=True, esc_dquote=True):
+        if not self.ensure_ascii:
+            return s
+        chars = []
+        for ch in s:
+            chars.append(self._esc_char(ch, esc_squote, esc_dquote))
+        return ''.join(chars)
+
+    def _esc_char(self, ch, esc_squote, esc_dquote):
+        o = ord(ch)
+        if ch == dquote and esc_dquote:
+            return bslash + dquote
+        if ch == squote and esc_squote:
+            return bslash + squote
+        elif 32 <= o < 128:
+            return ch
+        else:
+            return '\\u%04x' % o
 
     def dumps(self, obj):
         t = type(obj)
         if obj is True:
-            return u'true'
+            return 'true'
         elif obj is False:
-            return u'false'
+            return 'false'
         elif obj is None:
-            return u'null'
+            return 'null'
         elif t == type('') or t == type(u''):
-            single = "'" in obj
-            double = '"' in obj
-            if single and double:
-                return json.dumps(obj)
-            elif single:
-                return '"' + obj + '"'
+            has_single_quote = "'" in obj
+            if not has_single_quote:
+                return squote + self._esc_str(obj, esc_dquote=False) + squote
             else:
-                return "'" + obj + "'"
+                return dquote + self._esc_str(obj, esc_squote=False) + dquote
         elif t is float:
             if not self.allow_nan and math.isnan(obj) or math.isinf(obj):
                 raise ValueError(obj)
@@ -182,26 +211,24 @@ class _Encoder(object):
             keys = obj.keys()
             if self.sort_keys:
                 keys = sorted(keys)
-            colon = self.separators[':']
-            comma = self.separators[',']
+            num_keys = len(keys) - 1
+
+            self._indent_level += 1
             if self.indent is not None:
                 indent += '\n' + ' ' * self.indent * self.indent_level
             else:
                 indent = ''
 
-            num_keys = len(keys) - 1
-            self._indent_level += 1
-
-            s = u'{' + indent
+            s = '{' + indent
             for i, k in enumerate(keys):
                 if type(k) not in self._valid_key_types:
                     if self.skipkeys:
                         continue
                     raise TypeError(k)
-                s += self._key(k) + colon + self.dumps(obj[k])
+                s += self._esc_key(k) + self._colon + self.dumps(obj[k])
                 if i < num_keys:
-                    s += comma + indent
-            s += u'}'
+                    s += self._comma + indent
+            s += '}'
 
             self._indent_level -= 1
             return s
@@ -211,22 +238,20 @@ class _Encoder(object):
                 if id(obj) in self._seen_objs:
                     raise ValueError(obj)
                 self._seen_objs.add(id(obj))
+            num_els = len(obj) - 1
 
+            self._indent_level += 1
             if self.indent is not None:
                 indent += '\n' + ' ' * self.indent * self.indent_level
             else:
                 indent = ''
-            comma = self.separators[',']
 
-            num_els = len(obj) - 1
-            self._indent_level += 1
-
-            s = u'[' + indent
+            s = '[' + indent
             for i, el in enumerate(obj):
                 s += self.dumps(el)
                 if i < num_els:
-                    s += comma + indent
-            s += u']'
+                    s += self._comma + indent
+            s += ']'
 
             self._indent_level -= 1
             return s

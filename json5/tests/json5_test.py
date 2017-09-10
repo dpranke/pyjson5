@@ -12,11 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import math
 import os
 import sys
 import unittest
+
+is_python2 = sys.version_info[0] < 3
+if is_python2:
+    from StringIO import StringIO
+else:
+    from io import StringIO
 
 import json5
 
@@ -210,7 +215,7 @@ class TestLoads(unittest.TestCase):
 
 class TestDump(unittest.TestCase):
     def test_basic(self):
-        sio = io.StringIO()
+        sio = StringIO()
         json5.dump(True, sio)
         self.assertEqual('true', sio.getvalue())
 
@@ -218,8 +223,9 @@ class TestDump(unittest.TestCase):
 class TestDumps(unittest.TestCase):
     maxDiff = None
 
-    def check(self, obj, s):
-        self.assertEqual(json5.dumps(obj, compact=True), s)
+    def check(self, obj, exp):
+        got = json5.dumps(obj, compact=True)
+        self.assertEqual(exp, got, msg='exp %s, got %s' % (exp, got))
 
     def test_arrays(self):
         self.check([], '[]')
@@ -237,10 +243,14 @@ class TestDumps(unittest.TestCase):
 
     def test_objects(self):
         self.check({'foo': 1}, '{foo: 1}')
-        self.check({'foo bar': 1}, '{"foo bar": 1}')
+        self.check({'foo bar': 1}, "{'foo bar': 1}")
 
-    def test_strings(self):
-        self.check("'single'", '"\'single\'"')
-        self.check('"double"', "'\"double\"'")
-        self.check("'single \\' and double \"'",
-                   '"\'single \\\\\' and double \\"\'"')
+    def test_string_containing_a_single_quote(self):
+        self.check("single ' ", '"single \' "')
+
+    def test_string_containing_a_double_quote(self):
+        self.check('double " ', "'double \" '")
+
+    def test_string_containing_both_a_single_quote_and_a_double_quote(self):
+        self.check("single ' and double \" ",
+                   '"single \' and double \\" "')

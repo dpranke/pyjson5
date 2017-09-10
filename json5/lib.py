@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import sys
 
 _is_python2 = sys.version_info[0] < 3
@@ -140,8 +141,14 @@ class _Encoder(object):
             comma, colon = (None, None)
         if comma is None:
             self._comma = ',' if compact else ', '
+        else:
+            self._comma = comma
         if colon is None:
             self._colon = ':' if compact else ': '
+        else:
+            self._colon = colon
+        if self.indent:
+            self._comma = self._comma.strip()
 
         self._seen_objs = set()
         self._valid_key_types = [str, int, float, bool, type(None)]
@@ -154,7 +161,7 @@ class _Encoder(object):
 
     def _esc_key(self, k):
         if self.as_json:
-            return dquote + self._esc_str(k) + dquote
+            return dquote + self._esc_str(k, esc_dquote=True) + dquote
 
         needs_quotes = False
         has_squote = False
@@ -165,24 +172,22 @@ class _Encoder(object):
             if not has_squote:
                 return squote + self._esc_str(k, esc_dquote=False) + squote
             else:
-                return dquote + self._esc_str(k, esc_squote=False) + dquote
+                return dquote + self._esc_str(k, esc_dquote=True) + dquote
         else:
             return k
 
-    def _esc_str(self, s, esc_squote=True, esc_dquote=True):
+    def _esc_str(self, s, esc_dquote=True):
         if not self.ensure_ascii:
             return s
         chars = []
         for ch in s:
-            chars.append(self._esc_char(ch, esc_squote, esc_dquote))
+            chars.append(self._esc_char(ch, esc_dquote))
         return ''.join(chars)
 
-    def _esc_char(self, ch, esc_squote, esc_dquote):
+    def _esc_char(self, ch, esc_dquote):
         o = ord(ch)
         if ch == dquote and esc_dquote:
             return bslash + dquote
-        if ch == squote and esc_squote:
-            return bslash + squote
         elif 32 <= o < 128:
             return ch
         else:
@@ -207,10 +212,18 @@ class _Encoder(object):
             if not has_single_quote:
                 return squote + self._esc_str(obj, esc_dquote=False) + squote
             else:
-                return dquote + self._esc_str(obj, esc_squote=False) + dquote
-        elif t is float:
-            if not self.allow_nan and math.isnan(obj) or math.isinf(obj):
+                return dquote + self._esc_str(obj, esc_dquote=True) + dquote
+        elif t == float:
+            if not math.isnan(obj) and not math.isinf(obj):
+                return str(obj)
+            elif not self.allow_nan:
                 raise ValueError(obj)
+            elif math.isnan(obj):
+                return 'NaN'
+            elif obj == float('inf'):
+                return 'Infinity'
+            else:
+                return '-Infinity'
         elif t is int:
             return str(obj)
         elif t is dict:
@@ -263,4 +276,4 @@ class _Encoder(object):
             s += self._indent() + ']'
             return s
         else:
-            self._default(obj)
+            return self.default(obj)

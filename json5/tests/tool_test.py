@@ -88,6 +88,11 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
         self.check_cmd(['--json', '-c', '{"foo": 1}'], returncode=0,
                        out=u'{"foo": 1}\n')
 
+    def test_as_json_and_trailing_commas(self):
+        self.check_cmd(['--json', '--trailing-commas'], returncode=2,
+                       err=u"json5: error: can't specify both "
+                            "--json and --trailing-commas\n\n")
+
     def test_read_command(self):
         self.check_cmd(['-c', '"foo"'], returncode=0, out=u"'foo'\n")
 

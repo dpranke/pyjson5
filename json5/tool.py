@@ -56,15 +56,16 @@ def main(argv=None, host=None):
         host.print_(VERSION)
         return 0
 
+    if args.as_json and args.trailing_commas:
+        host.print_("json5: error: can't specify both --json and "
+                    "--trailing-commas\n", stream=host.stderr)
+        return 2
+
     if args.cmd:
         inp = args.cmd
     else:
         inp = ''.join(host.fileinput(args.files))
     obj = lib.loads(inp)
-
-    if args.as_json and args.trailing_commas:
-        host.print_("Can't specify both --json and --trailing-commas")
-        return 2
 
     s = lib.dumps(obj,
                   separators=(args.comma, args.colon),

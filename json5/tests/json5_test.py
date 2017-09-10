@@ -57,13 +57,12 @@ class TestLoads(unittest.TestCase):
         self.check_fail('', 'Empty strings are not legal JSON5')
 
     def test_encoding(self):
-        if sys.version_info[0] < 3:
+        if is_python2:
           s = '"\xf6"'
         else:
           s = b'"\xf6"'
         self.assertEqual(json5.loads(s, encoding='iso-8859-1'),
                          u"\xf6")
-
 
     def test_numbers(self):
         # decimal literals
@@ -223,9 +222,9 @@ class TestDump(unittest.TestCase):
 class TestDumps(unittest.TestCase):
     maxDiff = None
 
-    def check(self, obj, exp):
-        got = json5.dumps(obj)
-        self.assertEqual(exp, got, msg='exp %s, got %s' % (exp, got))
+    def check(self, obj, exp, **kwargs):
+        got = json5.dumps(obj, **kwargs)
+        self.assertMultiLineEqual(exp, got)
 
     def test_arrays(self):
         self.check([], '[]')
@@ -235,7 +234,59 @@ class TestDumps(unittest.TestCase):
         self.check(True, 'true')
         self.check(False, 'false')
 
-    def test_numbers(self):
+    def test_circular_array(self):
+        o = []
+        o.append(o)
+        self.assertRaises(ValueError, self.check, o, '', check_circular=True)
+
+    def test_circular_object(self):
+        o = {}
+        o['self'] = o
+        self.assertRaises(ValueError, self.check, o, '', check_circular=True)
+
+    def test_empty_array(self):
+        self.check([], '[]')
+
+    def test_empty_object(self):
+        self.check({}, '{}')
+
+    def test_ensure_ascii(self):
+        self.check(u'\u00e9', "'\\u00e9'")
+
+    def test_float(self):
+        self.check(1.0, '1.0')
+
+    def test_nan(self):
+        self.check(float('nan'), 'NaN')
+        self.assertRaises(ValueError, self.check, float('nan'), '',
+                          allow_nan=False)
+
+    def test_minus_infinity(self):
+        self.check(float('-inf'), '-Infinity')
+        self.assertRaises(ValueError, self.check, float('-inf'), '',
+                          allow_nan=False)
+
+    def test_infinity(self):
+        self.check(float('inf'), 'Infinity')
+        self.assertRaises(ValueError, self.check, float('inf'), '',
+                          allow_nan=False)
+
+    def test_key_is_ident(self):
+        self.check({'foo': 1}, '{foo: 1}')
+
+    def test_key_with_dquote(self):
+        self.check({'foo"': 1}, "{'foo\"': 1}")
+
+    def test_key_with_space(self):
+        self.check({'foo ': 1}, "{'foo ': 1}")
+
+    def test_key_with_squote(self):
+        self.check({"foo'": 1}, '{"foo\'": 1}')
+
+    def test_no_ensure_ascii(self):
+        self.check(u'foobar', u"'foobar'", ensure_ascii=False)
+
+    def test_int(self):
         self.check(15, '15')
 
     def test_null(self):
@@ -248,9 +299,53 @@ class TestDumps(unittest.TestCase):
     def test_string_containing_a_single_quote(self):
         self.check("single ' ", '"single \' "')
 
+    def test_string_containing_a_single_quote_as_json(self):
+        self.check("single ' ", '"single \' "')
+
     def test_string_containing_a_double_quote(self):
         self.check('double " ', "'double \" '")
 
     def test_string_containing_both_a_single_quote_and_a_double_quote(self):
         self.check("single ' and double \" ",
                    '"single \' and double \\" "')
+
+    def test_as_json(self):
+        self.check({'foo': 1, 'bar': 3, 'baz': 2},
+                   '{"bar": 3, "baz": 2, "foo": 1}',
+                   sort_keys=True, as_json=True)
+
+    def test_compact(self):
+        self.check({'foo': 1, 'bar': 3, 'baz': 2},
+                   '{bar:3,baz:2,foo:1}',
+                   sort_keys=True, compact=True)
+
+    def test_default(self):
+        self.check({1}, 'Hi', default=lambda obj: 'Hi')
+
+    def test_indented(self):
+        self.check({'foo': 1, 'bar': 2},
+                   '{\n  foo: 1,\n  bar: 2\n}', indent=2)
+        self.check([1, 2],
+                   '[\n  1,\n  2\n]', indent=2)
+
+    def test_no_default(self):
+        self.assertRaises(TypeError, self.check, {1}, '')
+
+    def test_separators(self):
+        self.check({'foo': 1, 'bar': 3, 'baz': 2},
+                   '{bar=3;baz=2;foo=1}',
+                   sort_keys=True, separators=(';', "="))
+
+    def test_skipkeys(self):
+        self.check({(1, 2): True}, '{}', skipkeys=True)
+        self.assertRaises(TypeError, self.check, {(1, 2): True}, '')
+
+    def test_sort_keys(self):
+        self.check({'foo': 1, 'bar': 3, 'baz': 2},
+                   "{bar: 3, baz: 2, foo: 1}", sort_keys=True)
+
+    def test_trailing_commas(self):
+        self.check({'foo': 1, 'bar': 2},
+                   '{foo: 1, bar: 2, }', trailing_commas=True)
+        self.check([1, 2],
+                   '[1, 2, ]', trailing_commas=True)

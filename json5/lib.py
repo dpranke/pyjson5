@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
 import sys
 
 _is_python2 = sys.version_info[0] < 3
@@ -100,26 +99,7 @@ class _Decoder(object):
 
 def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted string."""
-    compact = kwargs.pop('compact', False)
-    as_json = kwargs.pop('as_json', False)
-    trailing_commas = kwargs.pop('trailing_commas', False)
-
-    separators = kwargs.pop('separators', None)
-    if separators:
-        comma, colon = separators
-    else:
-        comma, colon = (None, None)
-    if comma is None:
-        comma = ',' if compact else ', '
-    if colon is None:
-        colon = ':' if compact else ': '
-    kwargs['separators'] = (comma, colon)
-
-    if as_json:
-        return json.dumps(obj, **kwargs)
-    else:
-        kwargs['trailing_commas'] = trailing_commas
-        return _Encoder(**kwargs).dumps(obj)
+    return _Encoder(**kwargs).dumps(obj)
 
 
 def dump(obj, fp, **kwargs):
@@ -139,7 +119,8 @@ class _Encoder(object):
                  check_circular=True, allow_nan=True,
                  cls=None, indent=None, separators=None,
                  encoding='utf-8', default=None,
-                 sort_keys=False, trailing_commas=False):
+                 sort_keys=False, compact=False, as_json=False,
+                 trailing_commas=False):
         assert cls is None, 'Custom encoders are not supported'
 
         self.skipkeys = skipkeys
@@ -151,8 +132,17 @@ class _Encoder(object):
         self.default = default or self._default
         self.sort_keys = sort_keys
         self.trailing_commas = trailing_commas
+        self.as_json = as_json
 
-        self._comma, self._colon = separators
+        if separators:
+            comma, colon = separators
+        else:
+            comma, colon = (None, None)
+        if comma is None:
+            self._comma = ',' if compact else ', '
+        if colon is None:
+            self._colon = ':' if compact else ': '
+
         self._seen_objs = set()
         self._valid_key_types = [str, int, float, bool, type(None)]
         if _is_python2:
@@ -163,6 +153,9 @@ class _Encoder(object):
         raise TypeError(obj)
 
     def _esc_key(self, k):
+        if self.as_json:
+            return dquote + self._esc_str(k) + dquote
+
         needs_quotes = False
         has_squote = False
         for ch in k:

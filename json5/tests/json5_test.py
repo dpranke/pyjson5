@@ -29,8 +29,8 @@ import json5
 class TestLoads(unittest.TestCase):
     maxDiff = None
 
-    def check(self, s, obj):
-        self.assertEqual(json5.loads(s), obj)
+    def check(self, s, obj, **kwargs):
+        self.assertEqual(json5.loads(s, **kwargs), obj)
 
     def check_fail(self, s, err=None):
         try:
@@ -50,8 +50,15 @@ class TestLoads(unittest.TestCase):
         self.check('true', True)
         self.check('false', False)
 
-    def test_cls_is_not_supported(self):
-        self.assertRaises(AssertionError, json5.loads, '1', cls=lambda x: x)
+    def test_cls(self):
+        class TestDecoder(object):
+            def __init__(self, **kwargs):
+                pass
+
+            def decode(self, s):
+                return 'Howdy'
+
+        self.check('{foo: 1}', 'Howdy', cls=TestDecoder)
 
     def test_empty_strings_are_errors(self):
         self.check_fail('', 'Empty strings are not legal JSON5')
@@ -109,15 +116,12 @@ class TestLoads(unittest.TestCase):
         self.check('null', None)
 
     def test_object_hook(self):
-        hook = lambda d: [d]
-        self.assertEqual(json5.loads('{foo: 1}', object_hook=hook),
-                         [{"foo": 1}])
+        self.check('{foo: 1}', [{"foo": 1}],
+                   object_hook=lambda d: [d]),
 
     def test_object_pairs_hook(self):
-        hook = lambda pairs: pairs
-        self.assertEqual(json5.loads('{foo: 1, bar: 2}',
-                                     object_pairs_hook=hook),
-                         [('foo', 1), ('bar', 2)])
+        self.check('{foo: 1, bar: 2}', [('foo', 1), ('bar', 2)],
+                   object_pairs_hook=lambda pairs: pairs),
 
     def test_objects(self):
         self.check('{}', {})
@@ -126,19 +130,15 @@ class TestLoads(unittest.TestCase):
         self.check('{ "foo" : 0 , "bar" : 1 }', {"foo": 0, "bar": 1})
 
     def test_parse_constant(self):
-        hook = lambda x: x
-        self.assertEqual(json5.loads('-Infinity', parse_constant=hook),
-                         '-Infinity')
-        self.assertEqual(json5.loads('NaN', parse_constant=hook),
-                         'NaN')
+        self.check('-Infinity', '-Infinity', parse_constant=lambda x: x)
+        self.check('NaN', 'NaN', parse_constant=lambda x: x)
 
     def test_parse_float(self):
-        hook = lambda x: x
-        self.assertEqual(json5.loads('1.0', parse_float=hook), '1.0')
+        self.check('1.0', '1.0', parse_float=lambda x: x)
 
     def test_parse_int(self):
         hook = lambda x, base=10: x
-        self.assertEqual(json5.loads('1', parse_int=hook), '1')
+        self.check('1', '1', parse_int=lambda x, base=10: x)
 
     def test_sample_file(self):
         path = os.path.join(os.path.dirname(__file__), '..', '..',
@@ -243,6 +243,16 @@ class TestDumps(unittest.TestCase):
     def test_bools(self):
         self.check(True, 'true')
         self.check(False, 'false')
+
+    def test_cls(self):
+        class TestEncoder(object):
+            def __init__(self, **kwargs):
+                pass
+
+            def encode(self, obj):
+                return 'Howdy'
+
+        self.check({'foo': 1}, 'Howdy', cls=TestEncoder)
 
     def test_compact(self):
         self.check({'foo': 1, 'bar': 3, 'baz': 2},

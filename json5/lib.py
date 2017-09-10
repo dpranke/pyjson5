@@ -26,26 +26,23 @@ from .parser import Parser
 def load(fp, **kwargs):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object."""
-    return Decoder(**kwargs).decode(fp.read())
+    return loads(fp.read())
 
 
 def loads(s, **kwargs):
     """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
     JSON5 document) to a Python object."""
-    return Decoder(**kwargs).decode(s)
+    cls = kwargs.pop('cls', Decoder)
+    return cls(**kwargs).decode(s)
 
 
 class Decoder(object):
 
-    def __init__(self, encoding=None, cls=None, object_hook=None,
-                 parse_float=None, parse_int=None, parse_constant=None,
-                 object_pairs_hook=None):
-        assert cls is None, 'Custom decoders are not supported'
-
+    def __init__(self, encoding=None, object_hook=None, parse_float=None,
+                 parse_int=None, parse_constant=None, object_pairs_hook=None):
         self.encoding = encoding or 'utf-8'
-        self.cls = cls
         self.parse_float = parse_float or float
-        self.parse_int = parse_int or int
+        self.parse_int = parse_int or self._default_parse_int
         self.parse_constant = parse_constant or self._default_parse_constant
         self.object_pairs_hook = object_pairs_hook
         if object_pairs_hook:
@@ -76,13 +73,19 @@ class Decoder(object):
     def _default_parse_constant(self, s):
         return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
 
+    def _default_parse_int(self, node_val):
+        if node_val.startswith('0x') or node_val.startswith('0X'):
+            return int(node_val, base=16)
+        else:
+            return int(node_val)
+
     def _walk(self, ast_node):
         node_type, node_val = ast_node
         if node_type in ('null', 'true', 'false', 'string'):
             return node_val
         elif node_type == 'number':
             if node_val.startswith('0x') or node_val.startswith('0X'):
-                return self.parse_int(node_val, base=16)
+                return self.parse_int(node_val)
             elif '.' in node_val or 'e' in node_val or 'E' in node_val:
                 return self.parse_float(node_val)
             elif 'Infinity' in node_val or 'NaN' in node_val:
@@ -98,15 +101,16 @@ class Decoder(object):
             raise Exception('unknown ast node: ' + repr(ast_node))
 
 
-def dumps(obj, **kwargs):
-    """Serialize ``obj`` to a JSON5-formatted string."""
-    return Encoder(**kwargs).encode(obj)
-
-
 def dump(obj, fp, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
     supporting file-like object)."""
     fp.write(dumps(obj, **kwargs))
+
+
+def dumps(obj, **kwargs):
+    """Serialize ``obj`` to a JSON5-formatted string."""
+    cls = kwargs.pop('cls', Encoder)
+    return cls(**kwargs).encode(obj)
 
 
 squote = "'"
@@ -118,12 +122,10 @@ class Encoder(object):
 
     def __init__(self, skipkeys=False, ensure_ascii=True,
                  check_circular=True, allow_nan=True,
-                 cls=None, indent=None, separators=None,
+                 indent=None, separators=None,
                  encoding='utf-8', default=None,
                  sort_keys=False, compact=False, as_json=False,
                  trailing_commas=False):
-        assert cls is None, 'Custom encoders are not supported'
-
         self.skipkeys = skipkeys
         self.ensure_ascii = ensure_ascii
         self.check_circular = check_circular

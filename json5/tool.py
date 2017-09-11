@@ -14,11 +14,20 @@
 
 """Command-line tool to validate and pretty-print JSON5.
 
-Usage::
+Usage:
 
-    $ echo '{foo:"bar"}' | python -m json5.tool
+    $ echo '{"foo": "bar"}' | python -m json5.tool
     {foo: "bar"}
+    $ echo '{"foo": "bar"}' | python -m json5.tool --compact
+    {foo:"bar"}
+    $ echo '{"foo": "bar"}' | python -m json5.tool --indent=2 --trailing-commas
+    {
+      foo: "bar",
+    }
+    $ echo '{foo: "bar"}' | python -m json5.tool --json
+    {"foo": "bar"}
     $
+
 """
 
 import os

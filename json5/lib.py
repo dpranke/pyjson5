@@ -25,24 +25,66 @@ if _is_python2:
 from .parser import Parser
 
 
-def load(fp, **kwargs):
+def load(fp, cls=None, encoding='utf-8', object_hook=None, parse_float=None,
+         parse_int=None, parse_constant=None, object_pairs_hook=None):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
-    containing a JSON document) to a Python object."""
-    return loads(fp.read())
+    containing a JSON document) to a Python object.
+
+    For help on the keyword args, see the docstring for json5.loads()."""
+
+    return loads(fp.read(), cls=cls, encoding=encoding,
+                 object_hook=object_hook, parse_float=parse_float,
+                 parse_int=parse_int, parse_constant=parse_constant,
+                 object_pairs_hook=object_pairs_hook)
 
 
-def loads(s, **kwargs):
+def loads(s, cls=None, encoding='utf-8', object_hook=None, parse_float=None,
+          parse_int=None, parse_constant=None, object_pairs_hook=None):
     """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
-    JSON5 document) to a Python object."""
-    cls = kwargs.pop('cls', Decoder)
-    return cls(**kwargs).decode(s)
+    JSON5 document) to a Python object.
+
+    If ``cls`` is specified, it will be used to encode the object instead
+    of the standard Decoder class.
+
+    In Python2, ``encoding`` determines the encoding used to used to
+    interpret an object of type ``str``; if the object is a unicode
+    string, the encoding is ignored. In Python3, the same applies if the
+    object is a byte string and not a string.
+
+    If ``object_hook`` is not none, it will be used to convert an dict
+    into a custom Python value.
+
+    If ``parse_float`` is not none, it will be used to convert the
+    string representation of a floating-point number into a custom
+    Python value.
+
+    If ``parse_int`` is not none, it will be used to convert the string
+    representation of an integer number into a custom Python value.
+
+    If ``parse_constant`` is not none, it will be used to convert the
+    string representation of a Nan, -Infinity, and Infinity JSON5
+    values into Python values.
+
+    If ``object_pairs_hook`` is not none, it will be used to convert an
+    object into a custom Python value; it is passed a list of key-value
+    pairs. If object_pairs_hook and object_hook are both passed,
+    object_pairs_hook takes precedence.
+    """
+    cls = cls or Decoder
+    return cls(encoding=encoding, object_hook=object_hook,
+               parse_float=parse_float, parse_int=parse_int,
+               parse_constant=parse_constant,
+               object_pairs_hook=object_pairs_hook).decode(s)
 
 
 class Decoder(object):
+    """Simple JSON5 <http://json5.org> decoder."""
 
-    def __init__(self, encoding=None, object_hook=None, parse_float=None,
+    def __init__(self, encoding='utf-8', object_hook=None, parse_float=None,
                  parse_int=None, parse_constant=None, object_pairs_hook=None):
-        self.encoding = encoding or 'utf-8'
+        'For help on the keyword args, see the docstring for json5.loads().'
+
+        self.encoding = encoding
         self.parse_float = parse_float or float
         self.parse_int = parse_int or self._default_parse_int
         self.parse_constant = parse_constant or self._default_parse_constant
@@ -55,6 +97,7 @@ class Decoder(object):
             self.object_pairs_hook = dict
 
     def decode(self, s):
+        'Returns the string decoded into a Python object.'
         if _is_python2:
             decodable_type = type('')
         else:
@@ -100,16 +143,94 @@ class Decoder(object):
             raise Exception('unknown ast node: ' + repr(ast_node))
 
 
-def dump(obj, fp, **kwargs):
+
+def dump(obj, fp, cls=None, skipkeys=False, ensure_ascii=True,
+         check_circular=True, allow_nan=True, indent=None, separators=None,
+         encoding='utf-8', default=None, sort_keys=False,
+         compact=False, as_json=False, trailing_commas=False):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
-    supporting file-like object)."""
-    fp.write(dumps(obj, **kwargs))
+    supporting file-like object).
+
+    For help on the keyword args, see the docstring for json5.dumps."""
+
+    fp.write(dumps(obj, cls=cls, skipkeys=skipkeys, ensure_ascii=ensure_ascii,
+                   check_circular=check_circular, allow_nan=allow_nan,
+                   indent=indent, separators=separators, encoding=encoding,
+                   default=default, sort_keys=sort_keys, compact=compact,
+                   as_json=as_json, trailing_commas=trailing_commas))
 
 
-def dumps(obj, **kwargs):
-    """Serialize ``obj`` to a JSON5-formatted string."""
-    cls = kwargs.pop('cls', Encoder)
-    return cls(**kwargs).encode(obj)
+def dumps(obj, cls=None, skipkeys=False, ensure_ascii=True,
+         check_circular=True, allow_nan=True, indent=None, separators=None,
+         encoding='utf-8', default=None, sort_keys=False,
+         compact=False, as_json=False, trailing_commas=False):
+    """Returns ``obj`` serialized as a JSON5-formatted string.
+
+    If ``cls`` is specified, it will be used to encode the object instead
+    of the standard Encoder class.
+
+    ``skipkeys``, if true, will tell the encoder to skip any keys in a
+    dict that are not of type str, int, float, or None; if false (the
+    default), a TypeError will be raised instead.
+
+    If ``ensure_ascii`` is true (the default), all non-ASCII characters
+    in the output are encoded as \\uXXXX sequences instead; if false, the
+    string will be rendered into unicode instead.
+
+    If ``check_circular`` is true (the default), if the encoder tries to
+    encode an object that contains circular references, a ValueError will
+    be raised; if it is false, the encoder will be slightly faster, but
+    unpredictable things will happen if an object contains cycles.
+
+    If ``allow_nan`` is true (the default), floating point values of NaN,
+    -Infinity, and +Infinity are allowed, otherwise a ValueError is
+    raised.
+
+    If ``indent`` is None (the default), the encoding will contain no
+    newlines or indentation; if indent is zero, the encoding will contain
+    newlines but not be indented and if indent is greater than zero, each
+    line will be indented by that many spaces as appropriate.
+
+    If ``separators`` is non-None, it must be a tuple of two strings, the
+    first of which is used to separate items in objects and lists, and the
+    second of which is used to separate a key from its value in an object.
+    If it is None, the default value of (', ', ': ') will be used (unless
+    compact=True is passed, see below).
+
+    In Python2, ``encoding`` determines the encoding used to used to
+    interpret an object of type ``str``; if the object is a unicode string,
+    the encoding is ignored. In Python3, the same applies if the object is
+    a byte string instead of a string.
+
+    If ``default`` is non-None, it will be invoked whenever the object is
+    of a non-standard type; it must return an equivalent standard
+    representation.
+
+    If ``sort_keys`` is true; an object will be encoded with its keys and
+    values in lexicographic order; if false, the keys may show up in an
+    arbitrary order.
+
+    If ``compact`` is true, the object will be rendered in the most
+    compact way possible; this is the same as passing
+    separators=(',',':'), indent=None, as_json=False, and
+    trailing_commas=False. However, if any of those arguments are also
+    passed, they will override the compact value. This field is an
+    extension to the standard JSON API.
+
+    If ``as_json`` is true, the object will be encoded as JSON, not
+    JSON5. This is an extension to the standard JSON API.
+
+    If ``trailing_commas`` is true, then objects and lists will be
+    encoded with a comma on the end. For example, you'd get [1,2,]
+    instead of [1,2]. This is an extension to the standard JSON API.
+    """
+
+    cls = cls or Encoder
+    return cls(skipkeys=skipkeys, ensure_ascii=ensure_ascii,
+               check_circular=check_circular, allow_nan=allow_nan,
+               indent=indent, separators=separators, encoding=encoding,
+               default=default, sort_keys=sort_keys, compact=compact,
+               as_json=as_json, trailing_commas=trailing_commas).encode(obj)
 
 
 squote = "'"
@@ -118,6 +239,7 @@ bslash = '\\'
 
 
 class Encoder(object):
+    """Simple JSON5 <http://json5.org> encoder."""
 
     def __init__(self, skipkeys=False, ensure_ascii=True,
                  check_circular=True, allow_nan=True,
@@ -125,6 +247,8 @@ class Encoder(object):
                  encoding='utf-8', default=None,
                  sort_keys=False, compact=False, as_json=False,
                  trailing_commas=False):
+        'For help on the keyword args, see the docstring for json5.dumps().'
+
         self.skipkeys = skipkeys
         self.ensure_ascii = ensure_ascii
         self.check_circular = check_circular
@@ -158,6 +282,8 @@ class Encoder(object):
         self._indent_level = 0
 
     def encode(self, obj):
+        """Return the obj serialized into a string."""
+
         t = type(obj)
         if obj is True:
             return 'true'

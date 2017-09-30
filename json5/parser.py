@@ -194,7 +194,7 @@ class Parser(object):
         self._ch('\u00a0')
 
     def _ws__c7_(self):
-        self._ch('\ufeff')
+        self._ch(u'\ufeff')
 
     def _ws__c8_(self):
         self._push('ws__c8')
@@ -223,10 +223,10 @@ class Parser(object):
         self._ch('\n')
 
     def _eol__c3_(self):
-        self._ch('\u2028')
+        self._ch(u'\u2028')
 
     def _eol__c4_(self):
-        self._ch('\u2029')
+        self._ch(u'\u2029')
 
     def _comment_(self):
         self._choose([self._comment__c0_, self._comment__c1_])
@@ -705,10 +705,10 @@ class Parser(object):
         self._seq([self._bslash_, self._unicode_esc_])
 
     def _id_continue__c8_(self):
-        self._ch('\u200c')
+        self._ch(u'\u200c')
 
     def _id_continue__c9_(self):
-        self._ch('\u200d')
+        self._ch(u'\u200d')
 
     def _num_literal_(self):
         self._choose([self._num_literal__c0_, self._num_literal__c1_,

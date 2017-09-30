@@ -59,13 +59,9 @@ hex_esc        = 'x' hex:h1 hex:h2                   -> xtou(h1 + h2)
 
 unicode_esc    = 'u' hex:a hex:b hex:c hex:d         -> xtou(a + b + c + d)
 
-element_list   = value:v sp ',' sp element_list:vs   -> [v] + vs
-               | value:v sp ','                      -> [v]
-               | value:v                             -> [v]
+element_list   = value:v (sp ',' sp value)*:vs sp ','?   -> [v] + vs
 
-member_list    = member:m sp ',' sp member_list:ms   -> [m] + ms
-               | member:m sp ','                     -> [m]
-               | member:m                            -> [m]
+member_list    = member:m (sp ',' sp member)*:ms sp ','? -> [m] + ms
 
 member         = string:k sp ':' sp value:v          -> [k, v]
                | ident:k sp ':' sp value:v           -> [k, v]

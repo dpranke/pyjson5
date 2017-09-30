@@ -54,7 +54,7 @@ def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
     if not s:
         raise ValueError('Empty strings are not legal JSON5')
     parser = Parser(s, '<string>')
-    ast, err = parser.parse()
+    ast, err, newpos = parser.parse()
     if err:
         raise ValueError(err)
 

@@ -1,5 +1,5 @@
 pyjson5
-=======
+-------
 
 A Python implementation of the JSON5 data format.
 
@@ -28,7 +28,7 @@ This is an early release. It has been reasonably well-tested, but it is
 and is 200x slower (or more) than the pure Python JSON module.
 
 Known issues
-============
+------------
 
 * The `cls` keyword argument that json.load()/json.loads() accepts to
   specify a custom subclass of JSONDecoder is not and will not be supported,

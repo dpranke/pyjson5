@@ -393,7 +393,8 @@ class Parser(object):
                       self._esc_char__c4_, self._esc_char__c5_,
                       self._esc_char__c6_, self._esc_char__c7_,
                       self._esc_char__c8_, self._esc_char__c9_,
-                      self._esc_char__c10_])
+                      self._esc_char__c10_, self._esc_char__c11_,
+                      self._esc_char__c12_])
 
     def _esc_char__c0_(self):
         self._seq([lambda: self._ch('b'), lambda: self._succeed('\b')])
@@ -402,10 +403,20 @@ class Parser(object):
         self._seq([lambda: self._ch('f'), lambda: self._succeed('\f')])
 
     def _esc_char__c10_(self):
-        self._push('esc_char__c10')
+        self._seq([lambda: self._ch('0'), lambda: self._not(self._digit_),
+                   lambda: self._succeed('\x00')])
+
+    def _esc_char__c11_(self):
+        self._push('esc_char__c11')
+        self._seq([lambda: self._bind(self._hex_esc_, 'c'),
+                   lambda: self._succeed(self._get('c'))])
+        self._pop('esc_char__c11')
+
+    def _esc_char__c12_(self):
+        self._push('esc_char__c12')
         self._seq([lambda: self._bind(self._unicode_esc_, 'c'),
                    lambda: self._succeed(self._get('c'))])
-        self._pop('esc_char__c10')
+        self._pop('esc_char__c12')
 
     def _esc_char__c2_(self):
         self._seq([lambda: self._ch('n'), lambda: self._succeed('\n')])
@@ -430,9 +441,25 @@ class Parser(object):
 
     def _esc_char__c9_(self):
         self._push('esc_char__c9')
-        self._seq([lambda: self._bind(self._hex_esc_, 'c'),
+        self._seq([self._esc_char__c9__s0_,
+                   lambda: self._bind(self._anything_, 'c'),
                    lambda: self._succeed(self._get('c'))])
         self._pop('esc_char__c9')
+
+    def _esc_char__c9__s0_(self):
+        self._not(lambda: (self._esc_char__c9__s0_n_g_)())
+
+    def _esc_char__c9__s0_n_g_(self):
+        self._choose([self._esc_char__c9__s0_n_g__c0_,
+                      self._esc_char__c9__s0_n_g__c1_,
+                      lambda: self._seq([self._digit_]),
+                      lambda: self._seq([self._eol_])])
+
+    def _esc_char__c9__s0_n_g__c0_(self):
+        self._seq([lambda: self._ch('x')])
+
+    def _esc_char__c9__s0_n_g__c1_(self):
+        self._seq([lambda: self._ch('u')])
 
     def _hex_esc_(self):
         self._push('hex_esc')

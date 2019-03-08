@@ -196,6 +196,12 @@ class TestLoads(unittest.TestCase):
         self.check_fail("'\\u0j00'")
         self.check_fail("'\\uj000'")
 
+    def test_unrecognized_escape_char(self):
+        self.check(r'"\/"', '/')
+
+    def test_nul(self):
+        self.check(r'"\0"', '\x00')
+
     def test_whitespace(self):
         self.check('\n1', 1)
         self.check('\r1', 1)

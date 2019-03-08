@@ -191,7 +191,7 @@ class Parser(object):
         self._ch('\f')
 
     def _ws__c6_(self):
-        self._ch('\u00a0')
+        self._ch('\xa0')
 
     def _ws__c7_(self):
         self._ch(u'\ufeff')

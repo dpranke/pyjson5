@@ -117,16 +117,13 @@ def _dumpkey(k):
         return str(k)
 
 
-def dumps(obj, compact=False, as_json=False, **kwargs):
+def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``."""
 
-    if as_json or not compact:
-        return json.dumps(obj, **kwargs)
-
     t = type(obj)
-    if obj == True:
+    if obj is True:
         return u'true'
-    elif obj == False:
+    elif obj is False:
         return u'false'
     elif obj == None:
         return u'null'

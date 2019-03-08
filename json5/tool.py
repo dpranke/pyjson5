@@ -21,6 +21,7 @@ Usage::
     $
 """
 
+import json
 import os
 import sys
 
@@ -36,7 +37,7 @@ def main(argv=None, host=None):
     parser = arg_parser.ArgumentParser(host, prog='json5')
     parser.add_argument('-c', metavar='STR', dest='cmd',
                         help='inline json5 string')
-    parser.add_argument('--json', dest='as_json', action='store_const',
+    parser.add_argument('--as-json', dest='as_json', action='store_const',
                         const=True, default=False,
                         help='output as json')
     parser.add_argument('files', nargs='*', default=[],
@@ -55,7 +56,12 @@ def main(argv=None, host=None):
     else:
         inp = ''.join(host.fileinput(args.files))
 
-    host.print_(lib.dumps(lib.loads(inp), compact=True, as_json=args.as_json))
+    obj = lib.loads(inp)
+    if args.as_json:
+        s = json.dumps(obj)
+    else:
+        s = lib.dumps(obj)
+    host.print_(s)
     return 0
 
 

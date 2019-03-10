@@ -150,6 +150,10 @@ def dumps(obj, **kwargs):
         return str(obj)
 
     indent = kwargs.get('indent', None)
+    if indent is None:
+        separators = kwargs.get('separators', (u', ', u': '))
+    else:
+        separators = kwargs.get('separators', (u',', u': '))
     if indent is not None:
         level = kwargs.get('level', 1)
         nl = '\n'
@@ -163,10 +167,6 @@ def dumps(obj, **kwargs):
         level = 0
         nl = ''
 
-    if indent is None:
-        separators = kwargs.get('separators', (u', ', u': '))
-    else:
-        separators = kwargs.get('separators', (u',', u': '))
 
     item_sep, kv_sep = separators
     indent_str = nl + indent * level

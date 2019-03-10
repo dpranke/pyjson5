@@ -40,6 +40,7 @@ def main(argv=None, host=None):
     parser.add_argument('--as-json', dest='as_json', action='store_const',
                         const=True, default=False,
                         help='output as json')
+    parser.add_argument('--indent', dest='indent', type=int),
     parser.add_argument('files', nargs='*', default=[],
                         help=parser.SUPPRESS)
     args = parser.parse_args(argv)
@@ -58,9 +59,9 @@ def main(argv=None, host=None):
 
     obj = lib.loads(inp)
     if args.as_json:
-        s = json.dumps(obj)
+        s = json.dumps(obj, indent=args.indent)
     else:
-        s = lib.dumps(obj)
+        s = lib.dumps(obj, indent=args.indent)
     host.print_(s)
     return 0
 

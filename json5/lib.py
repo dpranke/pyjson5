@@ -15,6 +15,7 @@
 import re
 import json
 import sys
+import unicodedata
 
 from .parser import Parser
 
@@ -107,27 +108,35 @@ def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
     raise Exception('unknown el: ' + el)  # pragma: no cover
 
 
-_notletter = re.compile('\W')
+_ident = re.compile('')
 
 
 def _dumpkey(k):
-    if _notletter.search(k):
+    k = str(k)
+    if (unicodedata.category(k[0]) not in (
+            'Lu', 'Ll', 'Li', 'Lt', 'Lm', 'Lo', 'Nl') and
+            k[0] not in (u'$', u'_')):
         return json.dumps(k)
-    else:
-        return str(k)
+    for ch in k[1:]:
+        if (unicodedata.category(ch) not in (
+                'Lu', 'Ll', 'Li', 'Lt', 'Lm', 'Nl', 'Nd', 'Mn', 'Mc', 'Pc') and
+                ch not in (u'$', u'_')):
+            return json.dumps(k)
+    return k
 
 
 def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``."""
 
-    t = type(obj)
     if obj is True:
         return u'true'
-    elif obj is False:
+    if obj is False:
         return u'false'
-    elif obj == None:
+    if obj == None:
         return u'null'
-    elif t == type('') or t == type(u''):
+
+    t = type(obj)
+    if t == type('') or t == type(u''):
         single = "'" in obj
         double = '"' in obj
         if single and double:
@@ -136,16 +145,46 @@ def dumps(obj, **kwargs):
             return '"' + obj + '"'
         else:
             return "'" + obj + "'"
-    elif t is float or t is int:
+
+    if t is float or t is int:
         return str(obj)
-    elif t is dict:
-        return u'{' + u','.join([
-            _dumpkey(k) + u':' + dumps(v) for k, v in obj.items()
-        ]) + '}'
-    elif t is list:
-        return u'[' + ','.join([dumps(el) for el in obj]) + u']'
-    else:  # pragma: no cover
-        return u''
+
+    indent = kwargs.get('indent', None)
+    if indent is not None:
+        level = kwargs.get('level', 1)
+        nl = '\n'
+        if type(indent) == int:
+            if indent > 0:
+                indent = ' ' * indent
+            else:
+                indent = ''
+    else:
+        indent = ''
+        level = 0
+        nl = ''
+
+    if indent is None:
+        separators = kwargs.get('separators', (u', ', u': '))
+    else:
+        separators = kwargs.get('separators', (u',', u': '))
+
+    item_sep, kv_sep = separators
+    indent_str = nl + indent * level
+    end_str = nl + indent * (level - 1)
+    item_sep += indent_str
+    kwargs['level'] = level + 1
+    if t is dict:
+        return u'{' + indent_str + item_sep.join([
+            _dumpkey(k) + kv_sep + dumps(v, **kwargs) for k, v in obj.items()
+        ]) + end_str + '}'
+
+    if t is list:
+        return (u'[' + indent_str +
+                item_sep.join([dumps(el, **kwargs) for el in obj]) +
+                end_str + u']')
+
+    # pragma: no cover
+    return u''
 
 
 def dump(obj, fp, **kwargs):

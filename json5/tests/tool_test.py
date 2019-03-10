@@ -82,8 +82,8 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
 
     def test_json_switches(self):
         self.check_cmd(['-c', '{"foo": 1}'], returncode=0,
-                       out=u'{foo:1}\n')
-        self.check_cmd(['--json', '-c', '{"foo": 1}'], returncode=0,
+                       out=u'{foo: 1}\n')
+        self.check_cmd(['--as-json', '-c', '{"foo": 1}'], returncode=0,
                        out=u'{"foo": 1}\n')
 
     def test_read_command(self):

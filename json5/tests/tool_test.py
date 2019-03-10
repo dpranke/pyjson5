@@ -15,10 +15,9 @@
 import sys
 import unittest
 
-import json5
+import json5.tool
 
 from ..fakes.host_fake import FakeHost
-from ..host import Host
 from ..version import VERSION
 
 
@@ -81,10 +80,10 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
         self.check_cmd(['--help'], returncode=0)
 
     def test_json_switches(self):
-        self.check_cmd(['-c', '{"foo": 1}'], returncode=0,
-                       out=u'{foo: 1}\n')
-        self.check_cmd(['--as-json', '-c', '{"foo": 1}'], returncode=0,
-                       out=u'{"foo": 1}\n')
+        self.check_cmd(['-c', '{foo: 1}'], returncode=0,
+                       out=u'{\n    foo: 1,\n}\n')
+        self.check_cmd(['--as-json', '-c', '{foo: 1}'], returncode=0,
+                       out=u'{\n    "foo": 1\n}\n')
 
     def test_read_command(self):
         self.check_cmd(['-c', '"foo"'], returncode=0, out=u"'foo'\n")

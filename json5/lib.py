@@ -108,23 +108,6 @@ def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
     raise Exception('unknown el: ' + el)  # pragma: no cover
 
 
-_ident = re.compile('')
-
-
-def _dumpkey(k):
-    k = str(k)
-    if (unicodedata.category(k[0]) not in (
-            'Lu', 'Ll', 'Li', 'Lt', 'Lm', 'Lo', 'Nl') and
-            k[0] not in (u'$', u'_')):
-        return json.dumps(k)
-    for ch in k[1:]:
-        if (unicodedata.category(ch) not in (
-                'Lu', 'Ll', 'Li', 'Lt', 'Lm', 'Nl', 'Nd', 'Mn', 'Mc', 'Pc') and
-                ch not in (u'$', u'_')):
-            return json.dumps(k)
-    return k
-
-
 def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``."""
 
@@ -170,7 +153,11 @@ def dumps(obj, **kwargs):
 
     item_sep, kv_sep = separators
     indent_str = nl + indent * level
-    end_str = nl + indent * (level - 1)
+    if nl:
+        end_str = ',' + nl + indent * (level - 1)
+    else:
+        end_str = nl + indent * (level - 1)
+
     item_sep += indent_str
     kwargs['level'] = level + 1
     if t is dict:
@@ -193,3 +180,28 @@ def dump(obj, fp, **kwargs):
 
     s = dumps(obj, **kwargs)
     fp.write(str(s))
+
+
+def _dumpkey(k):
+    if _is_ident(k):
+        return k
+    return json.dumps(k)
+
+
+def _is_ident(k):
+    k = str(k)
+    if not _is_id_start(k[0]) and k[0] not in (u'$', u'_'):
+        return False
+    for ch in k[1:]:
+        if not _is_id_continue(ch) and ch not in (u'$', u'_'):
+            return False
+    return True
+
+def _is_id_start(ch):
+    return unicodedata.category(ch) in (
+        'Lu', 'Ll', 'Li', 'Lt', 'Lm', 'Lo', 'Nl')
+
+
+def _is_id_continue(ch):
+    return unicodedata.category(ch) in (
+        'Lu', 'Ll', 'Li', 'Lt', 'Lm', 'Lo', 'Nl', 'Nd', 'Mn', 'Mc', 'Pc')

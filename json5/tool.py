@@ -12,13 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Command-line tool to validate and pretty-print JSON5.
+"""A tool to parse and pretty-print JSON5.
 
-Usage::
+Usage:
 
     $ echo '{foo:"bar"}' | python -m json5.tool
-    { foo: "bar" }
-    $
+    {
+        foo: 'bar',
+    }
+    $ echo '{foo:"bar"}' | python -m json5.tool --as-json
+    {
+        "foo": "bar"
+    }
 """
 
 import json
@@ -34,13 +39,13 @@ from .version import VERSION
 def main(argv=None, host=None):
     host = host or Host()
 
-    parser = arg_parser.ArgumentParser(host, prog='json5')
+    parser = arg_parser.ArgumentParser(host, prog='json5', desc=__doc__)
     parser.add_argument('-c', metavar='STR', dest='cmd',
                         help='inline json5 string')
     parser.add_argument('--as-json', dest='as_json', action='store_const',
                         const=True, default=False,
                         help='output as json')
-    parser.add_argument('--indent', dest='indent', type=int),
+    parser.add_argument('--indent', dest='indent', default=4),
     parser.add_argument('files', nargs='*', default=[],
                         help=parser.SUPPRESS)
     args = parser.parse_args(argv)
@@ -56,6 +61,14 @@ def main(argv=None, host=None):
         inp = args.cmd
     else:
         inp = ''.join(host.fileinput(args.files))
+
+    if args.indent == 'None':
+        args.indent = None
+    else:
+        try:
+            args.indent = int(args.indent)
+        except ValueError:
+            pass
 
     obj = lib.loads(inp)
     if args.as_json:

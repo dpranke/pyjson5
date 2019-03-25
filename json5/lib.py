@@ -111,6 +111,15 @@ def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
 def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``."""
 
+    unsupported_kwargs = set()
+    for kw in ('skipkeys', 'ensure_ascii', 'check_circular', 'allow_nan', 'cls',
+               'encoding', 'default'):
+        if kw in kwargs:
+            unsupported_kwargs.add(kw)
+    if unsupported_kwargs:
+        raise NotImplementedError("Haven't implemented these kwargs yet: %s" %
+                                  ', '.join(unsupported_kwargs))
+
     if obj is True:
         return u'true'
     if obj is False:
@@ -160,12 +169,21 @@ def dumps(obj, **kwargs):
 
     item_sep += indent_str
     kwargs['level'] = level + 1
-    if t is dict:
+
+    # In Python3, we'd check if this was an abc.Mapping.
+    # For now, just check for the attrs we need to iterate over the object.
+    if hasattr(t, 'keys') and hasattr(t, '__getitem__'):
+        if kwargs.get('sort_keys', False):
+            keys = sorted(obj.keys())
+        else:
+            keys = obj.keys()
         return u'{' + indent_str + item_sep.join([
-            _dumpkey(k) + kv_sep + dumps(v, **kwargs) for k, v in obj.items()
+            _dumpkey(k) + kv_sep + dumps(obj[k], **kwargs) for k in keys
         ]) + end_str + '}'
 
-    if t is list:
+    # In Python3, we'd check if this was an abc.Sequence.
+    # For now, just check for the attrs we need to iterate over the object.
+    if hasattr(t, '__getitem__') and hasattr(t, '__iter__'):
         return (u'[' + indent_str +
                 item_sep.join([dumps(el, **kwargs) for el in obj]) +
                 end_str + u']')
@@ -183,7 +201,7 @@ def dump(obj, fp, **kwargs):
 
 
 def _dumpkey(k):
-    if _is_ident(k):
+    if _is_ident(k) and not _is_reserved_word(k):
         return k
     return json.dumps(k)
 
@@ -205,3 +223,40 @@ def _is_id_start(ch):
 def _is_id_continue(ch):
     return unicodedata.category(ch) in (
         'Lu', 'Ll', 'Li', 'Lt', 'Lm', 'Lo', 'Nl', 'Nd', 'Mn', 'Mc', 'Pc')
+
+
+_reserved_word_re = None
+
+def _is_reserved_word(k):
+    global _reserved_word_re
+
+    if _reserved_word_re is None:
+        _reserved_word_re = re.compile('|'.join([
+            'break',
+            'case',
+            'catch',
+            'continue',
+            'debugger',
+            'default',
+            'delete',
+            'do',
+            'else',
+            'finally',
+            'for',
+            'function',
+            'if',
+            'in',
+            'instanceof',
+            'new',
+            'return',
+            'switch',
+            'this',
+            'throw',
+            'try',
+            'typeof',
+            'var',
+            'void',
+            'while',
+            'with',
+        ]))
+    return _reserved_word_re.match(k) is not None

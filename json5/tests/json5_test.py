@@ -18,6 +18,8 @@ import os
 import sys
 import unittest
 
+from collections import OrderedDict
+
 import json5
 
 
@@ -245,8 +247,18 @@ class TestDumps(unittest.TestCase):
         self.check({'foo': 1}, '{foo: 1}')
         self.check({'foo bar': 1}, '{"foo bar": 1}')
 
+    def test_reserved_words_in_object_keys_are_quoted(self):
+        self.check({'new': 1}, '{"new": 1}')
+
     def test_strings(self):
         self.check("'single'", '"\'single\'"')
         self.check('"double"', "'\"double\"'")
         self.check("'single \\' and double \"'",
                    '"\'single \\\\\' and double \\"\'"')
+
+    def test_sort_keys(self):
+        od = OrderedDict()
+        od['foo'] = 1
+        od['bar'] = 2
+        self.assertEqual(json5.dumps(od, sort_keys=True),
+                         '{bar: 2, foo: 1}')

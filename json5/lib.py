@@ -112,7 +112,7 @@ def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``."""
 
     unsupported_kwargs = set()
-    for kw in ('skipkeys', 'ensure_ascii', 'check_circular', 'allow_nan', 'cls',
+    for kw in ('ensure_ascii', 'check_circular', 'allow_nan', 'cls',
                'encoding', 'default'):
         if kw in kwargs:
             unsupported_kwargs.add(kw)
@@ -173,13 +173,7 @@ def dumps(obj, **kwargs):
     # In Python3, we'd check if this was an abc.Mapping.
     # For now, just check for the attrs we need to iterate over the object.
     if hasattr(t, 'keys') and hasattr(t, '__getitem__'):
-        if kwargs.get('sort_keys', False):
-            keys = sorted(obj.keys())
-        else:
-            keys = obj.keys()
-        return u'{' + indent_str + item_sep.join([
-            _dumpkey(k) + kv_sep + dumps(obj[k], **kwargs) for k in keys
-        ]) + end_str + '}'
+        return _dump_dict(obj, item_sep, kv_sep, indent_str, end_str, **kwargs)
 
     # In Python3, we'd check if this was an abc.Sequence.
     # For now, just check for the attrs we need to iterate over the object.
@@ -200,10 +194,35 @@ def dump(obj, fp, **kwargs):
     fp.write(str(s))
 
 
+def _dump_dict(obj, item_sep, kv_sep, indent_str, end_str, **kwargs):
+    if kwargs.get('sort_keys', False):
+        keys = sorted(obj.keys())
+    else:
+        keys = obj.keys()
+
+    s = u'{' + indent_str
+
+    skipkeys = kwargs.get('skipkeys', False)
+    for i, k in enumerate(keys):
+        valid_key, key_str = _dumpkey(k)
+        if valid_key:
+            s += key_str + kv_sep + dumps(obj[k], **kwargs)
+            if i < len(keys) - 1:
+                s += item_sep
+        elif skipkeys:
+            continue
+        else:
+            raise TypeError('invalid key %s' % str(k))
+    s += end_str + u'}'
+    return s
+
+
 def _dumpkey(k):
-    if _is_ident(k) and not _is_reserved_word(k):
-        return k
-    return json.dumps(k)
+    if type(k) in (int, float, type(''), long, type(u'')) or k == None:
+        if _is_ident(k) and not _is_reserved_word(k):
+            return True, k
+        return True, json.dumps(k)
+    return False, ''
 
 
 def _is_ident(k):

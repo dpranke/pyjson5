@@ -256,6 +256,11 @@ class TestDumps(unittest.TestCase):
         self.check("'single \\' and double \"'",
                    '"\'single \\\\\' and double \\"\'"')
 
+    def test_skip_keys(self):
+        self.assertRaises(TypeError, json5.dumps, {"foo": 1, (1, 2): 2})
+        self.assertEqual(json5.dumps({"foo": 1, (1, 2): 2}, skipkeys=True),
+                         '{foo: 1}')
+
     def test_sort_keys(self):
         od = OrderedDict()
         od['foo'] = 1

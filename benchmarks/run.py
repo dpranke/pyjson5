@@ -22,11 +22,11 @@ import sys
 import time
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-REPO_DIR  = os.path.dirname(THIS_DIR)
+REPO_DIR = os.path.dirname(THIS_DIR)
 if not REPO_DIR in sys.path:
     sys.path.insert(0, REPO_DIR)
 
-import json5
+import json5  # pylint: disable=wrong-import-position
 
 ALL_BENCHMARKS = (
     'ios-simulator.json',
@@ -54,12 +54,14 @@ def main():
 
 
     # json.decoder.c_scanstring = py_scanstring
-    def py_maker(*_args, **_kwargs):
-      decoder = json.JSONDecoder()
-      decoder.scan_once = json.scanner.py_make_scanner(decoder)
-      decoder.parse_string = json.decoder.py_scanstring
-      json.decoder.scanstring = decoder.parse_string
-      return decoder
+    def py_maker(*args, **kwargs):
+        del args
+        del kwargs
+        decoder = json.JSONDecoder()
+        decoder.scan_once = json.scanner.py_make_scanner(decoder)
+        decoder.parse_string = json.decoder.py_scanstring
+        json.decoder.scanstring = decoder.parse_string
+        return decoder
 
     maker = py_maker if args.pure else json.JSONDecoder
 
@@ -76,7 +78,7 @@ def main():
             json_time = mid - start
             json5_time = end - mid
             times.append((json_time, json5_time))
-            assert(json5_obj == json_obj)
+            assert json5_obj == json_obj
         all_times.append(times)
 
     for i, times in enumerate(all_times):

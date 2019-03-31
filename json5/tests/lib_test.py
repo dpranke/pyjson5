@@ -55,11 +55,11 @@ class TestLoads(unittest.TestCase):
 
     def test_encoding(self):
         if sys.version_info[0] < 3:
-          s = '"\xf6"'
+            s = '"\xf6"'
         else:
-          s = b'"\xf6"'
+            s = b'"\xf6"'
         self.assertEqual(json5.loads(s, encoding='iso-8859-1'),
-                         u"\xf6")
+                         u'\xf6')
 
     def test_numbers(self):
         # decimal literals
@@ -238,7 +238,7 @@ class TestDumps(unittest.TestCase):
 
     def test_check_circular(self):
         l = [1, 2, 3]
-        l[2]  = l
+        l[2] = l
         self.assertRaises(ValueError, json5.dumps, l)
         try:
             json5.dumps(l, check_circular=False)
@@ -249,6 +249,7 @@ class TestDumps(unittest.TestCase):
     def test_default(self):
 
         def _custom_serializer(obj):
+            del obj
             return 'something'
 
         self.assertRaises(TypeError, json5.dumps, set())
@@ -261,17 +262,17 @@ class TestDumps(unittest.TestCase):
                          u'"\u00fc"')
 
     def test_indent(self):
-        self.assertEqual(json5.dumps([1,2,3], indent=None),
+        self.assertEqual(json5.dumps([1, 2, 3], indent=None),
                          u'[1, 2, 3]')
-        self.assertEqual(json5.dumps([1,2,3], indent=-1),
+        self.assertEqual(json5.dumps([1, 2, 3], indent=-1),
                          u'[\n1,\n2,\n3,\n]')
-        self.assertEqual(json5.dumps([1,2,3], indent=0),
+        self.assertEqual(json5.dumps([1, 2, 3], indent=0),
                          u'[\n1,\n2,\n3,\n]')
-        self.assertEqual(json5.dumps([1,2,3], indent=2),
+        self.assertEqual(json5.dumps([1, 2, 3], indent=2),
                          u'[\n  1,\n  2,\n  3,\n]')
-        self.assertEqual(json5.dumps([1,2,3], indent=' '),
+        self.assertEqual(json5.dumps([1, 2, 3], indent=' '),
                          u'[\n 1,\n 2,\n 3,\n]')
-        self.assertEqual(json5.dumps([1,2,3], indent='++'),
+        self.assertEqual(json5.dumps([1, 2, 3], indent='++'),
                          u'[\n++1,\n++2,\n++3,\n]')
 
     def test_numbers(self):
@@ -281,7 +282,7 @@ class TestDumps(unittest.TestCase):
         self.check(float('-inf'), '-Infinity')
         self.check(float('nan'), 'NaN')
 
-        self.assertRaises(ValueError, json5.dumps, 
+        self.assertRaises(ValueError, json5.dumps,
                           float('inf'), allow_nan=False)
 
     def test_null(self):

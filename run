@@ -91,7 +91,6 @@ def run_install(args):
 
 def run_lint(args):
     call('pylint --rcfile=pylintrc */*.py */*/*.py', shell=True)
-    call('pep8 *.py */*.py */*/*.py', shell=True)
 
 
 def run_tests(args):

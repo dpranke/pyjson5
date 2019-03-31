@@ -26,7 +26,6 @@ Usage:
     }
 """
 
-import os
 import sys
 
 from . import arg_parser
@@ -47,7 +46,7 @@ def main(argv=None, host=None):
                              '(same as --quote-keys --no-trailing-commas)')
     parser.add_argument('--indent', dest='indent', default=4,
                         help='amount to indent each line '
-                             '(default is 4 spaces)'),
+                             '(default is 4 spaces)')
     parser.add_argument('--quote-keys', action='store_true', default=False,
                         help='quote all object keys')
     parser.add_argument('--no-quote-keys', action='store_false',

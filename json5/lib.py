@@ -21,10 +21,9 @@ from .parser import Parser
 
 
 if sys.version_info[0] < 3:
-    # pylint: disable=redefined-builtin
-    str = unicode
+    str = unicode  # pylint: disable=redefined-builtin, invalid-name
 else:
-    long = int
+    long = int  # pylint: disable=redefined-builtin, invalid-name
 
 
 def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
@@ -65,7 +64,7 @@ def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
     if not s:
         raise ValueError('Empty strings are not legal JSON5')
     parser = Parser(s, '<string>')
-    ast, err, newpos = parser.parse()
+    ast, err, _ = parser.parse()
     if err:
         raise ValueError(err)
 
@@ -77,7 +76,7 @@ def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
     elif object_hook:
         dictify = lambda pairs: object_hook(dict(pairs))
     else:
-        dictify = dict
+        dictify = lambda pairs: dict(pairs) # pylint: disable=unnecessary-lambda
 
     parse_float = parse_float or float
     parse_int = parse_int or int
@@ -174,7 +173,7 @@ def _dumps(obj, seen, **kwargs):
         return u'true'
     if obj is False:
         return u'false'
-    if obj == None:
+    if obj is None:
         return u'null'
 
     t = type(obj)
@@ -278,7 +277,7 @@ def _dump_float(obj, allow_nan):
 
 
 def _dumpkey(k, ensure_ascii, quote_keys):
-    if type(k) in (int, float, type(''), long, type(u'')) or k == None:
+    if type(k) in (int, float, type(''), long, type(u'')) or k is None:
         if not quote_keys and _is_ident(k) and not _is_reserved_word(k):
             return True, k
         return True, _dump_str(k, ensure_ascii)

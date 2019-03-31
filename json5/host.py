@@ -20,7 +20,7 @@ import tempfile
 
 
 if sys.version_info[0] < 3:
-    # pylint: disable=redefined-builtin
+    # pylint: disable=redefined-builtin, invalid-name
     str = unicode
 
 

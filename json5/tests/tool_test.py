@@ -22,7 +22,7 @@ from ..version import VERSION
 
 
 if sys.version_info[0] < 3:
-    # pylint: disable=redefined-builtin
+    # pylint: disable=redefined-builtin, invalid-name
     str = unicode
 
 
@@ -45,9 +45,9 @@ class CheckMixin(object):
             actual_ret, actual_out, actual_err = rv
         finally:
             if tmpdir:
-              host.rmtree(tmpdir)
+                host.rmtree(tmpdir)
             if orig_wd:
-              host.chdir(orig_wd)
+                host.chdir(orig_wd)
 
         return actual_ret, actual_out, actual_err
 
@@ -85,11 +85,11 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
 
     def test_indent(self):
         self.check_cmd(['--indent=None', '-c', '[1]'], returncode=0,
-                        out=u'[1]\n')
+                       out=u'[1]\n')
         self.check_cmd(['--indent=2', '-c', '[1]'], returncode=0,
-                        out=u'[\n  1,\n]\n')
+                       out=u'[\n  1,\n]\n')
         self.check_cmd(['--indent=  ', '-c', '[1]'], returncode=0,
-                        out=u'[\n  1,\n]\n')
+                       out=u'[\n  1,\n]\n')
 
     def test_as_json(self):
         self.check_cmd(['--as-json', '-c', '{foo: 1}'], returncode=0,
@@ -133,7 +133,8 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
 
     def test_unknown_switch(self):
         self.check_cmd(['--unknown-switch'], returncode=2,
-            err=u'json5: error: unrecognized arguments: --unknown-switch\n\n')
+                       err=u'json5: error: unrecognized arguments: '
+                       '--unknown-switch\n\n')
 
     def test_version(self):
         self.check_cmd(['--version'], returncode=0,

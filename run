@@ -3,7 +3,6 @@
 from __future__ import print_function
 
 import argparse
-import os
 import subprocess
 import sys
 
@@ -64,14 +63,17 @@ def main(argv):
 
 
 def run_build(args):
+    del args
     call([sys.executable, 'setup.py', 'build', '--quiet'])
 
 
 def run_clean(args):
+    del args
     call(['git', 'clean', '-fxd'])
 
 
 def run_format(args):
+    del args
     call('autopep8 --in-place *.py */*.py */*/*.py', shell=True)
 
 
@@ -90,10 +92,12 @@ def run_install(args):
 
 
 def run_lint(args):
+    del args
     call('pylint --rcfile=pylintrc */*.py */*/*.py', shell=True)
 
 
 def run_tests(args):
+    del args
     call([sys.executable, '-m', 'unittest', 'discover',
           '-p', '*_test.py'])
 

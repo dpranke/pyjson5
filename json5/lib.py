@@ -274,7 +274,10 @@ def _dump_str(obj, ensure_ascii):
         elif ord(ch) < 65536:
             ret.append('\u' + '%04x' % ord(ch))
         else:
-            ret.append('\U' + '%08x' % ord(ch))
+            val = ord(ch) - 0x10000
+            high = 0xd800 + val >> 10
+            low = 0xdc00 + val & 0x3ff
+            ret.append('\\u%04x\\u%04x' % (high, low))
     return u''.join(ret) + '"'
 
 

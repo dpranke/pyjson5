@@ -112,19 +112,21 @@ def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
 def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``."""
 
-    unsupported_kwargs = set()
-    for kw in ('cls', 'encoding', 'default'):
-        if kw in kwargs:
-            unsupported_kwargs.add(kw)
-    if unsupported_kwargs:
-        raise NotImplementedError("Haven't implemented these kwargs yet: %s" %
-                                  ', '.join(unsupported_kwargs))
+    assert kwargs.get('cls', None) is None, 'Custom encoders are not supported'
 
     if kwargs.get('check_circular', True):
         seen = set()
     else:
         seen = None
     return _dumps(obj, seen, **kwargs)
+
+
+def dump(obj, fp, **kwargs):
+    """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
+    supporting file-like object)."""
+
+    s = dumps(obj, **kwargs)
+    fp.write(str(s))
 
 
 def _dumps(obj, seen, **kwargs):
@@ -191,16 +193,7 @@ def _dumps(obj, seen, **kwargs):
                 item_sep.join([_dumps(el, seen, **kwargs) for el in obj]) +
                 end_str + u']')
 
-    # pragma: no cover
-    return u''
-
-
-def dump(obj, fp, **kwargs):
-    """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
-    supporting file-like object)."""
-
-    s = dumps(obj, **kwargs)
-    fp.write(str(s))
+    return kwargs.get('default', _raise_type_error)(obj)
 
 
 def _dump_dict(obj, seen, item_sep, kv_sep, indent_str, end_str, **kwargs):
@@ -326,3 +319,7 @@ def _is_reserved_word(k):
             'with',
         ]))
     return _reserved_word_re.match(k) is not None
+
+
+def _raise_type_error(obj):
+    raise TypeError('%s is not JSON5 serializable' % repr(obj))

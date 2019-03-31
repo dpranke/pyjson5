@@ -61,7 +61,6 @@ class TestLoads(unittest.TestCase):
         self.assertEqual(json5.loads(s, encoding='iso-8859-1'),
                          u"\xf6")
 
-
     def test_numbers(self):
         # decimal literals
         self.check('1', 1)
@@ -248,6 +247,15 @@ class TestDumps(unittest.TestCase):
             self.assertNotEqual(e.msg, 'Circular reference detected')
         except:
             pass
+
+    def test_default(self):
+
+        def _custom_serializer(obj):
+            return 'something'
+
+        self.assertRaises(TypeError, json5.dumps, set())
+        self.assertEqual(json5.dumps(set(), default=_custom_serializer),
+                         'something')
 
     def test_ensure_ascii(self):
         self.check(u'\u00fc', '"\\u00fc"')

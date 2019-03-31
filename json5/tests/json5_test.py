@@ -237,6 +237,18 @@ class TestDumps(unittest.TestCase):
         self.check(True, 'true')
         self.check(False, 'false')
 
+    def test_check_circular(self):
+        l = [1, 2, 3]
+        l[2]  = l
+        self.assertRaises(ValueError, json5.dumps, l)
+        try:
+            json5.dumps(l, check_circular=False)
+            self.fail()
+        except ValueError as e:
+            self.assertNotEqual(e.msg, 'Circular reference detected')
+        except:
+            pass
+
     def test_ensure_ascii(self):
         self.check(u'\u00fc', '"\\u00fc"')
         self.assertEquals(json5.dumps(u'\u00fc', ensure_ascii=False),

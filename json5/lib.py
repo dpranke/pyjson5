@@ -113,13 +113,21 @@ def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``."""
 
     unsupported_kwargs = set()
-    for kw in ('check_circular', 'cls', 'encoding', 'default'):
+    for kw in ('cls', 'encoding', 'default'):
         if kw in kwargs:
             unsupported_kwargs.add(kw)
     if unsupported_kwargs:
         raise NotImplementedError("Haven't implemented these kwargs yet: %s" %
                                   ', '.join(unsupported_kwargs))
 
+    if kwargs.get('check_circular', True):
+        seen = set()
+    else:
+        seen = None
+    return _dumps(obj, seen, **kwargs)
+
+
+def _dumps(obj, seen, **kwargs):
     if obj is True:
         return u'true'
     if obj is False:
@@ -134,6 +142,13 @@ def dumps(obj, **kwargs):
         return _dump_float(obj, kwargs.get('allow_nan', True))
     if t is int:
         return str(obj)
+
+    if seen is not None:
+        i = id(obj)
+        if i in seen:
+            raise ValueError('Circular reference detected.')
+        else:
+            seen.add(i)
 
     indent = kwargs.get('indent', None)
     if indent is None:
@@ -166,13 +181,14 @@ def dumps(obj, **kwargs):
     # In Python3, we'd check if this was an abc.Mapping.
     # For now, just check for the attrs we need to iterate over the object.
     if hasattr(t, 'keys') and hasattr(t, '__getitem__'):
-        return _dump_dict(obj, item_sep, kv_sep, indent_str, end_str, **kwargs)
+        return _dump_dict(obj, seen, item_sep, kv_sep, indent_str, end_str,
+                          **kwargs)
 
     # In Python3, we'd check if this was an abc.Sequence.
     # For now, just check for the attrs we need to iterate over the object.
     if hasattr(t, '__getitem__') and hasattr(t, '__iter__'):
         return (u'[' + indent_str +
-                item_sep.join([dumps(el, **kwargs) for el in obj]) +
+                item_sep.join([_dumps(el, seen, **kwargs) for el in obj]) +
                 end_str + u']')
 
     # pragma: no cover
@@ -187,7 +203,7 @@ def dump(obj, fp, **kwargs):
     fp.write(str(s))
 
 
-def _dump_dict(obj, item_sep, kv_sep, indent_str, end_str, **kwargs):
+def _dump_dict(obj, seen, item_sep, kv_sep, indent_str, end_str, **kwargs):
     if kwargs.get('sort_keys', False):
         keys = sorted(obj.keys())
     else:
@@ -200,7 +216,7 @@ def _dump_dict(obj, item_sep, kv_sep, indent_str, end_str, **kwargs):
     for i, k in enumerate(keys):
         valid_key, key_str = _dumpkey(k, ensure_ascii)
         if valid_key:
-            s += key_str + kv_sep + dumps(obj[k], **kwargs)
+            s += key_str + kv_sep + _dumps(obj[k], seen, **kwargs)
             if i < len(keys) - 1:
                 s += item_sep
         elif skipkeys:
@@ -243,6 +259,7 @@ def _dump_str(obj, ensure_ascii):
     elif double:
         return "'" + obj + "'"
     return '"' + obj + '"'
+
 
 def _is_ident(k):
     k = str(k)

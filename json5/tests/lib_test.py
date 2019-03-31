@@ -242,7 +242,7 @@ class TestDumps(unittest.TestCase):
         self.assertRaises(ValueError, json5.dumps, l)
         try:
             json5.dumps(l, check_circular=False)
-            self.fail()
+            self.fail()  # pragma: no cover
         except Exception as e:
             self.assertNotIn(str(e), 'Circular reference detected')
 

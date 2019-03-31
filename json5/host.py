@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import fileinput
 import os
 import shutil
 import sys
@@ -33,11 +32,6 @@ class Host(object):
     def chdir(self, *comps):
         return os.chdir(self.join(*comps))
 
-    def fileinput(self, files=None):
-        if not files:
-            return self.stdin.readlines()
-        return fileinput.input(files)
-
     def getcwd(self):
         return os.getcwd()
 
@@ -54,6 +48,10 @@ class Host(object):
 
     def rmtree(self, path):
         shutil.rmtree(path, ignore_errors=True)
+
+    def read_text_file(self, path):
+        with open(path, 'rb') as fp:
+            return fp.read().decode('utf8')
 
     def write_text_file(self, path, contents):
         with open(path, 'wb') as f:

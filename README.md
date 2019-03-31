@@ -59,6 +59,9 @@ and is 200x slower (or more) than the pure Python JSON module.
       `--[no-]quote-keys`, and `--[no-]trailing-commas` flags to allow
       for more control over the output, in addition to the existing
       `--as-json` flag.
+    * The `json5.tool` command line tool no longer supports reading from
+      multiple files, you can now only read from a single file or
+      from standard input.
     * The implementation no longer relies on the standard `json` module
       for anything. The output should still match the json module (except
       as noted above) and discrepancies should be reported as bugs.

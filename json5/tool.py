@@ -39,7 +39,8 @@ def main(argv=None, host=None):
 
     parser = arg_parser.ArgumentParser(host, prog='json5', desc=__doc__)
     parser.add_argument('-c', metavar='STR', dest='cmd',
-                        help='inline json5 string to parse and print')
+                        help='inline json5 string to read instead of '
+                             'reading from a file')
     parser.add_argument('--as-json', dest='as_json', action='store_const',
                         const=True, default=False,
                         help='output as JSON '
@@ -61,8 +62,10 @@ def main(argv=None, host=None):
                         action='store_false',
                         help='do not add commas after the last item in '
                              'multi-line lists and objects')
-    parser.add_argument('files', nargs='*', default=[],
-                        help=parser.SUPPRESS)
+    parser.add_argument('file', metavar='FILE', nargs='?', default='-',
+                        help='optional file to read JSON5 document from; if '
+                             'not specified or "-", will read from stdin '
+                             'instead')
     args = parser.parse_args(argv)
 
     if parser.exit_status is not None:
@@ -74,8 +77,10 @@ def main(argv=None, host=None):
 
     if args.cmd:
         inp = args.cmd
+    elif args.file == '-':
+        inp = host.stdin.read()
     else:
-        inp = ''.join(host.fileinput(args.files))
+        inp = host.read_text_file(args.file)
 
     if args.indent == 'None':
         args.indent = None

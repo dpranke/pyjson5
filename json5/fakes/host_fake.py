@@ -55,15 +55,6 @@ class FakeHost(object):
     def dirname(self, path):
         return '/'.join(path.split('/')[:-1])
 
-    def fileinput(self, files=None):
-        if files:
-            for f in files:
-                for l in self.read_text_file(f).splitlines():
-                    yield l
-        else:
-            for l in self.stdin.readlines():
-                yield l
-
     def getcwd(self):
         return self.cwd
 

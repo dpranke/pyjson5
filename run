@@ -29,6 +29,10 @@ def main(argv):
     subp = subps.add_parser('clean', help='Remove any local files.')
     subp.set_defaults(func=run_clean)
 
+    subp = subps.add_parser('coverage',
+                            help='Run tests and report code coverage.')
+    subp.set_defaults(func=run_coverage)
+
     subp = subps.add_parser('format',
                             help='Reformat the source code.')
     subp.set_defaults(func=run_format)
@@ -71,6 +75,14 @@ def run_clean(args):
     del args
     call(['git', 'clean', '-fxd'])
 
+
+def run_coverage(args):
+    del args
+    call(['python', '-m', 'coverage', 'run', '-m', 'unittest',
+          'discover', '-p', '*_test.py'])
+    call(['python3', '-m', 'coverage', 'run', '--append', '-m', 'unittest',
+          'discover', '-p', '*_test.py'])
+    call([sys.executable, '-m', 'coverage', 'report', '--show-missing'])
 
 def run_format(args):
     del args

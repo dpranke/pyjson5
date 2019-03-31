@@ -14,7 +14,6 @@
 
 import math
 import re
-import json
 import sys
 import unicodedata
 
@@ -244,14 +243,39 @@ def _dumpkey(k, ensure_ascii):
 
 
 def _dump_str(obj, ensure_ascii):
-    return json.dumps(obj, ensure_ascii)
-    single = "'" in obj
-    double = '"' in obj
-    if single and double:
-        return json.dumps(obj, ensure_ascii=ensure_ascii)
-    elif double:
-        return "'" + obj + "'"
-    return '"' + obj + '"'
+    ret = ['"']
+    for ch in obj:
+        if ch == '\\':
+            ret.append('\\\\')
+        elif ch == '"':
+            ret.append('\\"')
+        elif ch == u'\u2028':
+            ret.append('\\u2028')
+        elif ch == u'\u2029':
+            ret.append('\\u2029')
+        elif ch == '\n':
+            ret.append('\\n')
+        elif ch == '\r':
+            ret.append('\\r')
+        elif ch == '\b':
+            ret.append('\\b')
+        elif ch == '\f':
+            ret.append('\\f')
+        elif ch == '\t':
+            ret.append('\\t')
+        elif ch == '\v':
+            ret.append('\\v')
+        elif ch == '\0':
+            ret.append('\\0')
+        elif not ensure_ascii:
+            ret.append(ch)
+        elif ord(ch) < 128:
+            ret.append(ch)
+        elif ord(ch) < 65536:
+            ret.append('\u' + '%04x' % ord(ch))
+        else:
+            ret.append('\U' + '%08x' % ord(ch))
+    return u''.join(ret) + '"'
 
 
 def _is_ident(k):

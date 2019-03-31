@@ -260,7 +260,7 @@ class TestDumps(unittest.TestCase):
     def test_ensure_ascii(self):
         self.check(u'\u00fc', '"\\u00fc"')
         self.assertEquals(json5.dumps(u'\u00fc', ensure_ascii=False),
-                          '"\u00fc"')
+                          u'"\u00fc"')
 
     def test_numbers(self):
         self.check(15, '15')

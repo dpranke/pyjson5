@@ -343,4 +343,3 @@ class TestDumps(unittest.TestCase):
             # Python2 doesn't support supplemental unicode planes, so
             # we can't test this there.
             pass
-

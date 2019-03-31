@@ -79,11 +79,33 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
     def test_help(self):
         self.check_cmd(['--help'], returncode=0)
 
-    def test_json_switches(self):
+    def test_inline_expression(self):
         self.check_cmd(['-c', '{foo: 1}'], returncode=0,
                        out=u'{\n    foo: 1,\n}\n')
+
+    def test_indent(self):
+        self.check_cmd(['--indent=None', '-c', '[1]'], returncode=0,
+                        out=u'[1]\n')
+        self.check_cmd(['--indent=2', '-c', '[1]'], returncode=0,
+                        out=u'[\n  1,\n]\n')
+        self.check_cmd(['--indent=  ', '-c', '[1]'], returncode=0,
+                        out=u'[\n  1,\n]\n')
+
+    def test_as_json(self):
         self.check_cmd(['--as-json', '-c', '{foo: 1}'], returncode=0,
                        out=u'{\n    "foo": 1\n}\n')
+
+    def test_quote_keys(self):
+        self.check_cmd(['--quote-keys', '-c', '{foo: 1}'], returncode=0,
+                       out=u'{\n    "foo": 1,\n}\n')
+
+    def test_no_quote_keys(self):
+        self.check_cmd(['--no-quote-keys', '-c', '{foo: 1}'], returncode=0,
+                       out=u'{\n    foo: 1,\n}\n')
+
+    def test_keys_are_quoted_by_default(self):
+        self.check_cmd(['-c', '{foo: 1}'], returncode=0,
+                       out=u'{\n    foo: 1,\n}\n')
 
     def test_read_command(self):
         self.check_cmd(['-c', '"foo"'], returncode=0, out=u'"foo"\n')
@@ -96,6 +118,18 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
             'foo.json5': '"foo"\n',
         }
         self.check_cmd(['foo.json5'], files=files, returncode=0, out=u'"foo"\n')
+
+    def test_trailing_commas(self):
+        self.check_cmd(['--trailing-commas', '-c', '{foo: 1}'], returncode=0,
+                       out=u'{\n    foo: 1,\n}\n')
+
+    def test_no_trailing_commas(self):
+        self.check_cmd(['--no-trailing-commas', '-c', '{foo: 1}'], returncode=0,
+                       out=u'{\n    foo: 1\n}\n')
+
+    def test_trailing_commas_are_there_by_default(self):
+        self.check_cmd(['-c', '{foo: 1}'], returncode=0,
+                       out=u'{\n    foo: 1,\n}\n')
 
     def test_unknown_switch(self):
         self.check_cmd(['--unknown-switch'], returncode=2,

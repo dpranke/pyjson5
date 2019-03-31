@@ -243,10 +243,8 @@ class TestDumps(unittest.TestCase):
         try:
             json5.dumps(l, check_circular=False)
             self.fail()
-        except ValueError as e:
-            self.assertNotEqual(e.msg, 'Circular reference detected')
-        except:
-            pass
+        except Exception as e:
+            self.assertNotIn(str(e), 'Circular reference detected')
 
     def test_default(self):
 
@@ -259,11 +257,32 @@ class TestDumps(unittest.TestCase):
 
     def test_ensure_ascii(self):
         self.check(u'\u00fc', '"\\u00fc"')
-        self.assertEquals(json5.dumps(u'\u00fc', ensure_ascii=False),
-                          u'"\u00fc"')
+        self.assertEqual(json5.dumps(u'\u00fc', ensure_ascii=False),
+                         u'"\u00fc"')
+
+    def test_indent(self):
+        self.assertEqual(json5.dumps([1,2,3], indent=None),
+                         u'[1, 2, 3]')
+        self.assertEqual(json5.dumps([1,2,3], indent=-1),
+                         u'[\n1,\n2,\n3,\n]')
+        self.assertEqual(json5.dumps([1,2,3], indent=0),
+                         u'[\n1,\n2,\n3,\n]')
+        self.assertEqual(json5.dumps([1,2,3], indent=2),
+                         u'[\n  1,\n  2,\n  3,\n]')
+        self.assertEqual(json5.dumps([1,2,3], indent=' '),
+                         u'[\n 1,\n 2,\n 3,\n]')
+        self.assertEqual(json5.dumps([1,2,3], indent='++'),
+                         u'[\n++1,\n++2,\n++3,\n]')
 
     def test_numbers(self):
         self.check(15, '15')
+        self.check(1.0, '1.0')
+        self.check(float('inf'), 'Infinity')
+        self.check(float('-inf'), '-Infinity')
+        self.check(float('nan'), 'NaN')
+
+        self.assertRaises(ValueError, json5.dumps, 
+                          float('inf'), allow_nan=False)
 
     def test_null(self):
         self.check(None, 'null')
@@ -271,6 +290,7 @@ class TestDumps(unittest.TestCase):
     def test_objects(self):
         self.check({'foo': 1}, '{foo: 1}')
         self.check({'foo bar': 1}, '{"foo bar": 1}')
+        self.check({'1': 1}, '{"1": 1}')
 
     def test_reserved_words_in_object_keys_are_quoted(self):
         self.check({'new': 1}, '{"new": 1}')
@@ -284,6 +304,10 @@ class TestDumps(unittest.TestCase):
         self.check('"double"', '"\\"double\\""')
         self.check("'single \\' and double \"'",
                    '"\'single \\\\\' and double \\"\'"')
+
+    def test_string_escape_sequences(self):
+        self.check(u'\u2028\u2029\b\t\f\n\r\v\\\0',
+                   '"\\u2028\\u2029\\b\\t\\f\\n\\r\\v\\\\\\0"')
 
     def test_skip_keys(self):
         self.assertRaises(TypeError, json5.dumps, {"foo": 1, (1, 2): 2})
@@ -310,3 +334,13 @@ class TestDumps(unittest.TestCase):
                          '{\n  foo: 1\n}')
         self.assertEqual(json5.dumps([1], indent=2, trailing_commas=False),
                          '[\n  1\n]')
+
+    def test_supplemental_unicode(self):
+        try:
+            s = chr(0x10000)
+            self.check(s, '"\\ud800\\udc00"')
+        except ValueError:
+            # Python2 doesn't support supplemental unicode planes, so
+            # we can't test this there.
+            pass
+

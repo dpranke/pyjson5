@@ -30,7 +30,7 @@ class ArgumentParser(argparse.ArgumentParser):
         self._host = host
         self.exit_status = None
         self.add_argument('-V', '--version', action='store_true',
-                          help='Print the version and exit.')
+                          help='print the version and exit')
 
     def parse_args(self, args=None, namespace=None):
         try:

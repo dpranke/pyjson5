@@ -40,15 +40,26 @@ def main(argv=None, host=None):
 
     parser = arg_parser.ArgumentParser(host, prog='json5', desc=__doc__)
     parser.add_argument('-c', metavar='STR', dest='cmd',
-                        help='inline json5 string')
+                        help='inline json5 string to parse and print')
     parser.add_argument('--as-json', dest='as_json', action='store_const',
                         const=True, default=False,
-                        help='output as json')
-    parser.add_argument('--indent', dest='indent', default=4),
+                        help='output as JSON '
+                             '(same as --quote-keys --no-trailing-commas)')
+    parser.add_argument('--indent', dest='indent', default=4,
+                        help='amount to indent each line '
+                             '(default is 4 spaces)'),
     parser.add_argument('--quote-keys', action='store_true', default=False,
                         help='quote all object keys')
+    parser.add_argument('--no-quote-keys', action='store_false',
+                        dest='quote_keys',
+                        help="don't quote object keys that are identifiers"
+                             " (this is the default)")
+    parser.add_argument('--trailing-commas', action='store_true',
+                        default=True,
+                        help='add commas after the last item in multi-line '
+                             'objects and arrays (this is the default)')
     parser.add_argument('--no-trailing-commas', dest='trailing_commas',
-                        action='store_false', default=True,
+                        action='store_false',
                         help='do not add commas after the last item in '
                              'multi-line lists and objects')
     parser.add_argument('files', nargs='*', default=[],

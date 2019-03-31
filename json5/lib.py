@@ -23,6 +23,8 @@ from .parser import Parser
 if sys.version_info[0] < 3:
     # pylint: disable=redefined-builtin
     str = unicode
+else:
+    long = int
 
 
 def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
@@ -245,23 +247,23 @@ def _dump_dict(obj, seen, item_sep, kv_sep, indent_str, end_str, **kwargs):
     skipkeys = kwargs.get('skipkeys', False)
     ensure_ascii = kwargs.get('ensure_ascii', True)
     quote_keys = kwargs.get('quote_keys', False)
-    last_idx = len(keys) - 1
-    for i, k in enumerate(keys):
-        valid_key, key_str = _dumpkey(k, ensure_ascii, quote_keys)
+    first_item = True
+    for key in keys:
+        valid_key, key_str = _dumpkey(key, ensure_ascii, quote_keys)
         if valid_key:
-            s += key_str + kv_sep + _dumps(obj[k], seen, **kwargs)
-            if i < last_idx:
+            if not first_item:
                 s += item_sep
+            s += key_str + kv_sep + _dumps(obj[key], seen, **kwargs)
+            first_item = False
         elif skipkeys:
             continue
         else:
-            raise TypeError('invalid key %s' % str(k))
+            raise TypeError('invalid key %s' % repr(key))
     s += end_str + u'}'
     return s
 
 
 def _dump_float(obj, allow_nan):
-    allow_nan = kwargs.get('allow_nan', True)
     if allow_nan:
         if math.isnan(obj):
             return 'NaN'
@@ -314,12 +316,12 @@ def _dump_str(obj, ensure_ascii):
             o = ord(ch)
             if o >= 32 and o < 128:
                 ret.append(ch)
-            elif ord(ch) < 65536:
-                ret.append('\u' + '%04x' % ord(ch))
+            elif o < 65536:
+                ret.append('\\u' + '%04x' % o)
             else:
-                val = ord(ch) - 0x10000
-                high = 0xd800 + val >> 10
-                low = 0xdc00 + val & 0x3ff
+                val = o - 0x10000
+                high = 0xd800 + (val >> 10)
+                low = 0xdc00 + (val & 0x3ff)
                 ret.append('\\u%04x\\u%04x' % (high, low))
     return u''.join(ret) + '"'
 

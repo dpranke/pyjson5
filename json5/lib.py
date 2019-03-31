@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import math
 import re
 import json
 import sys
@@ -112,8 +113,7 @@ def dumps(obj, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``."""
 
     unsupported_kwargs = set()
-    for kw in ('ensure_ascii', 'check_circular', 'allow_nan', 'cls',
-               'encoding', 'default'):
+    for kw in ('check_circular', 'cls', 'encoding', 'default'):
         if kw in kwargs:
             unsupported_kwargs.add(kw)
     if unsupported_kwargs:
@@ -129,16 +129,10 @@ def dumps(obj, **kwargs):
 
     t = type(obj)
     if t == type('') or t == type(u''):
-        single = "'" in obj
-        double = '"' in obj
-        if single and double:
-            return json.dumps(obj)
-        elif single:
-            return '"' + obj + '"'
-        else:
-            return "'" + obj + "'"
-
-    if t is float or t is int:
+        return _dump_str(obj, kwargs.get('ensure_ascii', True))
+    if t is float:
+        return _dump_float(obj, kwargs.get('allow_nan', True))
+    if t is int:
         return str(obj)
 
     indent = kwargs.get('indent', None)
@@ -158,7 +152,6 @@ def dumps(obj, **kwargs):
         indent = ''
         level = 0
         nl = ''
-
 
     item_sep, kv_sep = separators
     indent_str = nl + indent * level
@@ -203,8 +196,9 @@ def _dump_dict(obj, item_sep, kv_sep, indent_str, end_str, **kwargs):
     s = u'{' + indent_str
 
     skipkeys = kwargs.get('skipkeys', False)
+    ensure_ascii = kwargs.get('ensure_ascii', True)
     for i, k in enumerate(keys):
-        valid_key, key_str = _dumpkey(k)
+        valid_key, key_str = _dumpkey(k, ensure_ascii)
         if valid_key:
             s += key_str + kv_sep + dumps(obj[k], **kwargs)
             if i < len(keys) - 1:
@@ -217,13 +211,38 @@ def _dump_dict(obj, item_sep, kv_sep, indent_str, end_str, **kwargs):
     return s
 
 
-def _dumpkey(k):
+def _dump_float(obj, allow_nan):
+    allow_nan = kwargs.get('allow_nan', True)
+    if allow_nan:
+        if math.isnan(obj):
+            return 'NaN'
+        if obj == float('inf'):
+            return 'Infinity'
+        if obj == float('-inf'):
+            return '-Infinity'
+    elif math.isnan(obj) or obj == float('inf') or obj == float('-inf'):
+        raise ValueError('Out of range float values '
+                         'are not JSON compliant')
+    return str(obj)
+
+
+def _dumpkey(k, ensure_ascii):
     if type(k) in (int, float, type(''), long, type(u'')) or k == None:
         if _is_ident(k) and not _is_reserved_word(k):
             return True, k
-        return True, json.dumps(k)
+        return True, _dump_str(k, ensure_ascii)
     return False, ''
 
+
+def _dump_str(obj, ensure_ascii):
+    return json.dumps(obj, ensure_ascii)
+    single = "'" in obj
+    double = '"' in obj
+    if single and double:
+        return json.dumps(obj, ensure_ascii=ensure_ascii)
+    elif double:
+        return "'" + obj + "'"
+    return '"' + obj + '"'
 
 def _is_ident(k):
     k = str(k)

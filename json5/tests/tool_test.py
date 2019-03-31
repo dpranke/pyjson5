@@ -86,16 +86,16 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
                        out=u'{\n    "foo": 1\n}\n')
 
     def test_read_command(self):
-        self.check_cmd(['-c', '"foo"'], returncode=0, out=u"'foo'\n")
+        self.check_cmd(['-c', '"foo"'], returncode=0, out=u'"foo"\n')
 
     def test_read_from_stdin(self):
-        self.check_cmd([], stdin='"foo"\n', returncode=0, out=u"'foo'\n")
+        self.check_cmd([], stdin='"foo"\n', returncode=0, out=u'"foo"\n')
 
     def test_read_from_a_file(self):
         files = {
             'foo.json5': '"foo"\n',
         }
-        self.check_cmd(['foo.json5'], files=files, returncode=0, out=u"'foo'\n")
+        self.check_cmd(['foo.json5'], files=files, returncode=0, out=u'"foo"\n')
 
     def test_unknown_switch(self):
         self.check_cmd(['--unknown-switch'], returncode=2,

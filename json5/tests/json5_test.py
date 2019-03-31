@@ -237,6 +237,11 @@ class TestDumps(unittest.TestCase):
         self.check(True, 'true')
         self.check(False, 'false')
 
+    def test_ensure_ascii(self):
+        self.check(u'\u00fc', '"\\u00fc"')
+        self.assertEquals(json5.dumps(u'\u00fc', ensure_ascii=False),
+                          '"\u00fc"')
+
     def test_numbers(self):
         self.check(15, '15')
 
@@ -252,7 +257,7 @@ class TestDumps(unittest.TestCase):
 
     def test_strings(self):
         self.check("'single'", '"\'single\'"')
-        self.check('"double"', "'\"double\"'")
+        self.check('"double"', '"\\"double\\""')
         self.check("'single \\' and double \"'",
                    '"\'single \\\\\' and double \\"\'"')
 

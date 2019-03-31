@@ -23,15 +23,14 @@ if here not in sys.path:
 
 import json5
 
-with open(os.path.join(here, 'README.rst')) as fp:
-    readme = fp.read().strip()
+with open(os.path.join(here, 'README.md')) as fp:
+    long_description = fp.read()
 
-readme_lines = readme.splitlines()
 
 setup(
     name='json5',
     packages=find_packages(),
-    package_data={'': ['../README.rst']},
+    package_data={'': ['../README.md']},
     entry_points={
         'console_scripts': [
             'pyjson5=json5.tool:main',
@@ -43,7 +42,8 @@ setup(
     author='Dirk Pranke',
     author_email='dpranke@chromium.org',
     description=readme_lines[3],
-    long_description=('\n' + '\n'.join(readme_lines)),
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/dpranke/pyjson5',
     license='Apache',
     classifiers=[

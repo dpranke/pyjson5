@@ -26,7 +26,6 @@ Usage:
     }
 """
 
-import json
 import os
 import sys
 
@@ -46,6 +45,12 @@ def main(argv=None, host=None):
                         const=True, default=False,
                         help='output as json')
     parser.add_argument('--indent', dest='indent', default=4),
+    parser.add_argument('--quote-keys', action='store_true', default=False,
+                        help='quote all object keys')
+    parser.add_argument('--no-trailing-commas', dest='trailing_commas',
+                        action='store_false', default=True,
+                        help='do not add commas after the last item in '
+                             'multi-line lists and objects')
     parser.add_argument('files', nargs='*', default=[],
                         help=parser.SUPPRESS)
     args = parser.parse_args(argv)
@@ -70,11 +75,15 @@ def main(argv=None, host=None):
         except ValueError:
             pass
 
-    obj = lib.loads(inp)
     if args.as_json:
-        s = json.dumps(obj, indent=args.indent)
-    else:
-        s = lib.dumps(obj, indent=args.indent)
+        args.quote_keys = True
+        args.trailing_commas = False
+
+    obj = lib.loads(inp)
+    s = lib.dumps(obj,
+                  indent=args.indent,
+                  quote_keys=args.quote_keys,
+                  trailing_commas=args.trailing_commas)
     host.print_(s)
     return 0
 

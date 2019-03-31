@@ -28,7 +28,11 @@ if sys.version_info[0] < 3:
 def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
          parse_int=None, parse_constant=None, object_pairs_hook=None):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
-    containing a JSON document) to a Python object."""
+    containing a JSON document) to a Python object.
+
+    Supports the same arguments as ``json.load()`` except that the
+    `cls` keyword is ignored.
+    """
 
     s = fp.read()
     return loads(s, encoding=encoding, cls=cls, object_hook=object_hook,
@@ -40,7 +44,11 @@ def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
 def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
           parse_int=None, parse_constant=None, object_pairs_hook=None):
     """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
-    JSON5 document) to a Python object."""
+    JSON5 document) to a Python object.
+
+    Supports the same arguments as ``json.load()`` except that the
+    `cls` keyword is ignored.
+    """
 
     assert cls is None, 'Custom decoders are not supported'
 
@@ -108,8 +116,22 @@ def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
     raise Exception('unknown el: ' + el)  # pragma: no cover
 
 
-def dumps(obj, **kwargs):
-    """Serialize ``obj`` to a JSON5-formatted ``str``."""
+def dumps(obj, quote_keys=False, trailing_commas=True, **kwargs):
+    """Serialize ``obj`` to a JSON5-formatted ``str``.
+
+    Supports the same arguments as ``json.dumps()``, except that:
+
+    - The ``cls`` keyword is not supported.
+    - The ``encoding`` keyword is ignored; Unicode strings are always returned.
+    - By default, object keys that are legal identifiers are not quoted;
+      if you pass quote_keys=True, they will be.
+    - By default, if lists and objects span multiple lines of output (i.e.,
+      when ``indent`` >=0), the last item will have a trailing comma
+      after it. If you pass ``trailing_commas=False, it will not.
+
+    Calling ``dumps(obj, quote_keys=True, trailing_commas=False)`` should
+    produce exactly the same output as ``json.dumps(obj).``
+    """
 
     assert kwargs.get('cls', None) is None, 'Custom encoders are not supported'
 
@@ -117,14 +139,31 @@ def dumps(obj, **kwargs):
         seen = set()
     else:
         seen = None
-    return _dumps(obj, seen, **kwargs)
+    return _dumps(obj, seen, quote_keys=quote_keys,
+                  trailing_commas=trailing_commas,
+                  **kwargs)
 
 
-def dump(obj, fp, **kwargs):
+def dump(obj, fp, quote_keys=False, trailing_commas=True, **kwargs):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
-    supporting file-like object)."""
+    supporting file-like object).
 
-    s = dumps(obj, **kwargs)
+    Supports the same arguments as ``json.dumps()``, except that:
+
+    - The ``cls`` keyword is not supported.
+    - The ``encoding`` keyword is ignored; Unicode strings are always written.
+    - By default, object keys that are legal identifiers are not quoted;
+      if you pass quote_keys=True, they will be.
+    - By default, if lists and objects span multiple lines of output (i.e.,
+      when ``indent`` >=0), the last item will have a trailing comma
+      after it. If you pass ``trailing_commas=False, it will not.
+
+    Calling ``dumps(obj, fp, quote_keys=True, trailing_commas=False)`` should
+    produce exactly the same output as ``json.dumps(obj, fp).``
+    """
+
+    s = dumps(obj, quote_keys=quote_keys, trailing_commas=trailing_commas,
+              **kwargs)
     fp.write(str(s))
 
 
@@ -171,7 +210,7 @@ def _dumps(obj, seen, **kwargs):
 
     item_sep, kv_sep = separators
     indent_str = nl + indent * level
-    if nl:
+    if nl and kwargs.get('trailing_commas', True):
         end_str = ',' + nl + indent * (level - 1)
     else:
         end_str = nl + indent * (level - 1)
@@ -205,11 +244,13 @@ def _dump_dict(obj, seen, item_sep, kv_sep, indent_str, end_str, **kwargs):
 
     skipkeys = kwargs.get('skipkeys', False)
     ensure_ascii = kwargs.get('ensure_ascii', True)
+    quote_keys = kwargs.get('quote_keys', False)
+    last_idx = len(keys) - 1
     for i, k in enumerate(keys):
-        valid_key, key_str = _dumpkey(k, ensure_ascii)
+        valid_key, key_str = _dumpkey(k, ensure_ascii, quote_keys)
         if valid_key:
             s += key_str + kv_sep + _dumps(obj[k], seen, **kwargs)
-            if i < len(keys) - 1:
+            if i < last_idx:
                 s += item_sep
         elif skipkeys:
             continue
@@ -234,9 +275,9 @@ def _dump_float(obj, allow_nan):
     return str(obj)
 
 
-def _dumpkey(k, ensure_ascii):
+def _dumpkey(k, ensure_ascii, quote_keys):
     if type(k) in (int, float, type(''), long, type(u'')) or k == None:
-        if _is_ident(k) and not _is_reserved_word(k):
+        if not quote_keys and _is_ident(k) and not _is_reserved_word(k):
             return True, k
         return True, _dump_str(k, ensure_ascii)
     return False, ''

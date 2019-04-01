@@ -18,7 +18,7 @@ import unittest
 import json5
 import json5.tool
 
-from host_fake import FakeHost
+from .host_fake import FakeHost
 
 
 if sys.version_info[0] < 3:

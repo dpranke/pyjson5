@@ -84,6 +84,7 @@ def run_coverage(args):
           'discover', '-p', '*_test.py'])
     call([sys.executable, '-m', 'coverage', 'report', '--show-missing'])
 
+
 def run_format(args):
     del args
     call('autopep8 --in-place *.py */*.py', shell=True)

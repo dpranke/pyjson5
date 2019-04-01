@@ -138,8 +138,7 @@ class TestLoads(unittest.TestCase):
         self.assertEqual(json5.loads('1', parse_int=hook), '1')
 
     def test_sample_file(self):
-        path = os.path.join(os.path.dirname(__file__), '..', '..',
-                            'sample.json5')
+        path = os.path.join(os.path.dirname(__file__), '..', 'sample.json5')
         with open(path) as fp:
             obj = json5.load(fp)
         self.assertEqual({
@@ -344,3 +343,7 @@ class TestDumps(unittest.TestCase):
             # Python2 doesn't support supplemental unicode planes, so
             # we can't test this there.
             pass
+
+
+if __name__ == '__main__':  # pragma: no cover
+    unittest.main()

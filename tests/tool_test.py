@@ -15,10 +15,10 @@
 import sys
 import unittest
 
+import json5
 import json5.tool
 
-from ..fakes.host_fake import FakeHost
-from ..version import VERSION
+from host_fake import FakeHost
 
 
 if sys.version_info[0] < 3:
@@ -138,7 +138,7 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
 
     def test_version(self):
         self.check_cmd(['--version'], returncode=0,
-                       out=str(VERSION) + '\n')
+                       out=str(json5.VERSION) + '\n')
 
 
 if __name__ == '__main__':  # pragma: no cover

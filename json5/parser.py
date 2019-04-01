@@ -1,10 +1,10 @@
-# pylint: disable=line-too-long
+# pylint: disable=line-too-long,unnecessary-lambda
 
 import sys
 
 
 if sys.version_info[0] < 3:
-    # pylint: disable=redefined-builtin
+    # pylint: disable=redefined-builtin,invalid-name
     chr = unichr
     range = xrange
     str = unicode
@@ -191,7 +191,7 @@ class Parser(object):
         self._ch('\f')
 
     def _ws__c6_(self):
-        self._ch(u'\u00a0')
+        self._ch(u'\xa0')
 
     def _ws__c7_(self):
         self._ch(u'\ufeff')
@@ -528,22 +528,6 @@ class Parser(object):
                    lambda: self._succeed([self._get('k'), self._get('v')])])
         self._pop('member__c1')
 
-    def _member_list_(self):
-        self._push('member_list')
-        self._seq([lambda: self._bind(self._member_, 'm'),
-                   self._member_list__s1_, self._sp_, self._member_list__s3_,
-                   lambda: self._succeed([self._get('m')] + self._get('ms'))])
-        self._pop('member_list')
-
-    def _member_list__s1_(self):
-        self._bind(lambda: self._star(self._member_list__s1_l_p_), 'ms')
-
-    def _member_list__s1_l_p_(self):
-        self._seq([self._sp_, lambda: self._ch(','), self._sp_, self._member_])
-
-    def _member_list__s3_(self):
-        self._opt(lambda: self._ch(','))
-
     def _ident_(self):
         self._push('ident')
         self._seq([lambda: self._bind(self._id_start_, 'hd'), self._ident__s1_,
@@ -855,25 +839,6 @@ class Parser(object):
 
     def _hex__c1_(self):
         self._range('A', 'F')
-
-    def _hex_esc_(self):
-        self._push('hex_esc')
-        self._seq([lambda: self._ch('x'), lambda: self._bind(self._hex_, 'h1'),
-                   lambda: self._bind(self._hex_, 'h2'),
-                   lambda: self._succeed(self._xtou(self._get('h1') + self._get('h2')))])
-        self._pop('hex_esc')
-
-    def _hex_literal_(self):
-        self._push('hex_literal')
-        self._seq([self._hex_literal__s0_, self._hex_literal__s1_,
-                   lambda: self._succeed('0x' + self._join('', self._get('hs')))])
-        self._pop('hex_literal')
-
-    def _hex_literal__s0_(self):
-        self._choose([lambda: self._str('0x', 2), lambda: self._str('0X', 2)])
-
-    def _hex_literal__s1_(self):
-        self._bind(lambda: self._plus(self._hex_), 'hs')
 
     def _frac_(self):
         self._push('frac')

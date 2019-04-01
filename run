@@ -86,7 +86,7 @@ def run_coverage(args):
 
 def run_format(args):
     del args
-    call('autopep8 --in-place *.py */*.py */*/*.py', shell=True)
+    call('autopep8 --in-place *.py */*.py', shell=True)
 
 
 def run_help(args):
@@ -105,7 +105,7 @@ def run_install(args):
 
 def run_lint(args):
     del args
-    call('pylint --rcfile=pylintrc */*.py */*/*.py', shell=True)
+    call('pylint --rcfile=pylintrc */*.py', shell=True)
 
 
 def run_tests(args):

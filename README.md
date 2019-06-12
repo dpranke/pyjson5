@@ -22,6 +22,11 @@ where possible, it mirrors the
 [standard Python JSON API](https://docs.python.org/library/json.html)
 package for ease of use.
 
+There is one notable difference from the JSON api: the `load()` and
+`loads()` methods support optionally checking for (and rejecting) duplicate
+object keys; pass `allow_duplicate_keys=False` to do so (duplicates are
+allowed by default).
+
 This is an early release. It has been reasonably well-tested, but it is
 **SLOW**. It can be 1000-6000x slower than the C-optimized JSON module,
 and is 200x slower (or more) than the pure Python JSON module.

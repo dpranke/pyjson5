@@ -47,8 +47,12 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 ## Version History / Release Notes
 
+* v0.8.2 (2019-06-11)
+    * Actually bump the version properly, to 0.8.2.
+
 * v0.8.1 (2019-06-11)
-    * Fix bug in setup.py that messed up the description.
+    * Fix bug in setup.py that messed up the description. Unfortunately,
+      I forgot to bump the version for this, so this also identifies as 0.8.0.
 
 * v0.8.0 (2019-06-11)
     * Add `allow_duplicate_keys=True` as a default argument to

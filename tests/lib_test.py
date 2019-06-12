@@ -50,6 +50,18 @@ class TestLoads(unittest.TestCase):
     def test_cls_is_not_supported(self):
         self.assertRaises(AssertionError, json5.loads, '1', cls=lambda x: x)
 
+    def test_duplicate_keys_should_be_allowed(self):
+        self.assertEqual(json5.loads('{foo: 1, foo: 2}',
+                                     allow_duplicate_keys=True),
+                         {"foo": 2})
+
+    def test_duplicate_keys_should_be_allowed_by_default(self):
+        self.check('{foo: 1, foo: 2}', {"foo": 2})
+
+    def test_duplicate_keys_should_not_be_allowed(self):
+        self.assertRaises(ValueError, json5.loads, '{foo: 1, foo: 2}',
+                          allow_duplicate_keys=False)
+
     def test_empty_strings_are_errors(self):
         self.check_fail('', 'Empty strings are not legal JSON5')
 

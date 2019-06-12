@@ -42,10 +42,18 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 * The `cls` keyword argument that `json.dump()`/`json.dumps()` accepts
   is also not supported, for consistency with `json5.load()`. The `default`
-  keyword *is* supported, though, and might be able to serve as a 
+  keyword *is* supported, though, and might be able to serve as a
   workaround.
 
 ## Version History / Release Notes
+
+* v0.8
+    * Add `allow_duplicate_keys=True` as a default argument to
+      `json5.load()`/`json5.loads()`. If you set the key to `False`, duplicate
+      keys in a single dict will be rejected. The default is set to `True`
+      for compatibility with `json.load()`, earlier versions of json5, and
+      because it's simply not clear if people would want duplicate checking
+      enabled by default.
 
 * v0.7 (2019-03-31)
     * Changes dump()/dumps() to not quote object keys by default if they are

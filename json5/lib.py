@@ -27,28 +27,39 @@ else:
 
 
 def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
-         parse_int=None, parse_constant=None, object_pairs_hook=None):
+         parse_int=None, parse_constant=None, object_pairs_hook=None,
+         allow_duplicate_keys=True):
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object.
 
-    Supports the same arguments as ``json.load()`` except that the
-    `cls` keyword is ignored.
+    Supports almost the same arguments as ``json.load()`` except that:
+        - the `cls` keyword is ignored.
+        - an extra `allow_duplicate_keys` parameter supports checking for
+          duplicate keys in a object; by default, this is True for
+          compatibility with ``json.load()``, but if set to False and
+          the object contains duplicate keys, a ValueError will be raised.
     """
 
     s = fp.read()
     return loads(s, encoding=encoding, cls=cls, object_hook=object_hook,
                  parse_float=parse_float, parse_int=parse_int,
                  parse_constant=parse_constant,
-                 object_pairs_hook=object_pairs_hook)
+                 object_pairs_hook=object_pairs_hook,
+                 allow_duplicate_keys=allow_duplicate_keys)
 
 
 def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
-          parse_int=None, parse_constant=None, object_pairs_hook=None):
+          parse_int=None, parse_constant=None, object_pairs_hook=None,
+          allow_duplicate_keys=True):
     """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
     JSON5 document) to a Python object.
 
-    Supports the same arguments as ``json.load()`` except that the
-    `cls` keyword is ignored.
+    Supports the same arguments as ``json.load()`` except that:
+        - the `cls` keyword is ignored.
+        - an extra `allow_duplicate_keys` parameter supports checking for
+          duplicate keys in a object; by default, this is True for
+          compatibility with ``json.load()``, but if set to False and
+          the object contains duplicate keys, a ValueError will be raised.
     """
 
     assert cls is None, 'Custom decoders are not supported'
@@ -78,12 +89,24 @@ def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
     else:
         dictify = lambda pairs: dict(pairs) # pylint: disable=unnecessary-lambda
 
+    if not allow_duplicate_keys:
+        _orig_dictify = dictify
+        dictify = lambda pairs: _reject_duplicate_keys(pairs, _orig_dictify)
+
     parse_float = parse_float or float
     parse_int = parse_int or int
     parse_constant = parse_constant or _fp_constant_parser
 
     return _walk_ast(ast, dictify, parse_float, parse_int, parse_constant)
 
+
+def _reject_duplicate_keys(pairs, dictify):
+    keys = set()
+    for key, _ in pairs:
+        if key in keys:
+            raise ValueError('Duplicate key "%s" found in object', key)
+        keys.add(key)
+    return dictify(pairs)
 
 def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
     if el == 'None':

@@ -47,7 +47,10 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 ## Version History / Release Notes
 
-* v0.8
+* v0.8.1 (2019-06-11)
+    * Fix bug in setup.py that messed up the description.
+
+* v0.8.0 (2019-06-11)
     * Add `allow_duplicate_keys=True` as a default argument to
       `json5.load()`/`json5.loads()`. If you set the key to `False`, duplicate
       keys in a single dict will be rejected. The default is set to `True`

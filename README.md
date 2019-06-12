@@ -52,6 +52,11 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 ## Version History / Release Notes
 
+* v0.8.4 (2019-06-11)
+    * Updated the version history, too.
+* v0.8.3 (2019-06-11)
+    * Tweaked the README, bumped the version, forgot to update the version
+      history :).
 * v0.8.2 (2019-06-11)
     * Actually bump the version properly, to 0.8.2.
 

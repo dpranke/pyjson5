@@ -251,6 +251,8 @@ def _dumps(obj, seen, **kwargs):
     # In Python3, we'd check if this was an abc.Sequence.
     # For now, just check for the attrs we need to iterate over the object.
     if hasattr(t, '__getitem__') and hasattr(t, '__iter__'):
+        if not obj:
+            return u'[]'
         return (u'[' + indent_str +
                 item_sep.join([_dumps(el, seen, **kwargs) for el in obj]) +
                 end_str + u']')
@@ -259,6 +261,9 @@ def _dumps(obj, seen, **kwargs):
 
 
 def _dump_dict(obj, seen, item_sep, kv_sep, indent_str, end_str, **kwargs):
+    if not obj:
+        return u'{}'
+
     if kwargs.get('sort_keys', False):
         keys = sorted(obj.keys())
     else:

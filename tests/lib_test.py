@@ -279,12 +279,19 @@ class TestDumps(unittest.TestCase):
                          u'[\n1,\n2,\n3,\n]')
         self.assertEqual(json5.dumps([1, 2, 3], indent=0),
                          u'[\n1,\n2,\n3,\n]')
+        self.assertEqual(json5.dumps([], indent=2),
+                         u'[]')
         self.assertEqual(json5.dumps([1, 2, 3], indent=2),
                          u'[\n  1,\n  2,\n  3,\n]')
         self.assertEqual(json5.dumps([1, 2, 3], indent=' '),
                          u'[\n 1,\n 2,\n 3,\n]')
         self.assertEqual(json5.dumps([1, 2, 3], indent='++'),
                          u'[\n++1,\n++2,\n++3,\n]')
+
+        self.assertEqual(json5.dumps({}, indent=2),
+                         u'{}')
+        self.assertEqual(json5.dumps({'foo': 'bar', 'baz': 'quux'}, indent=2),
+                         u'{\n  foo: "bar",\n  baz: "quux",\n}')
 
     def test_numbers(self):
         self.check(15, '15')

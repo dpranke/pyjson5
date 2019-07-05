@@ -43,6 +43,12 @@ class TestLoads(unittest.TestCase):
         self.check('[0,1]', [0, 1])
         self.check('[ 0 , 1 ]', [0, 1])
 
+        try:
+            json5.loads('[ ,]')
+            self.fail()
+        except ValueError as e:
+            self.assertIn('Unexpected "," at column 3', str(e))
+
     def test_bools(self):
         self.check('true', True)
         self.check('false', False)

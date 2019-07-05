@@ -100,6 +100,8 @@ class Parser(object):
             rule()
             if self.failed:
                 self._rewind(p)
+                if p < self.errpos:
+                    self.errpos = p
                 break
             else:
                 vs.append(self.val)
@@ -127,12 +129,12 @@ class Parser(object):
         else:
             self._fail()
 
-    def _str(self, s, l):
-        p = self.pos
-        if (p + l <= self.end) and self.msg[p:p + l] == s:
-            self._succeed(s, self.pos + l)
-        else:
-            self._fail()
+    def _str(self, s):
+        for ch in s:
+            self._ch(ch)
+            if self.failed:
+                return
+        self.val = s
 
     def _range(self, i, j):
         p = self.pos
@@ -232,21 +234,21 @@ class Parser(object):
         self._choose([self._comment__c0_, self._comment__c1_])
 
     def _comment__c0_(self):
-        self._seq([lambda: self._str('//', 2),
+        self._seq([lambda: self._str('//'),
                    lambda: self._star(self._comment__c0__s1_p_)])
 
     def _comment__c0__s1_p_(self):
         self._seq([lambda: self._not(self._eol_), self._anything_])
 
     def _comment__c1_(self):
-        self._seq([lambda: self._str('/*', 2), self._comment__c1__s1_,
-                   lambda: self._str('*/', 2)])
+        self._seq([lambda: self._str('/*'), self._comment__c1__s1_,
+                   lambda: self._str('*/')])
 
     def _comment__c1__s1_(self):
         self._star(lambda: self._seq([self._comment__c1__s1_p__s0_, self._anything_]))
 
     def _comment__c1__s1_p__s0_(self):
-        self._not(lambda: self._str('*/', 2))
+        self._not(lambda: self._str('*/'))
 
     def _value_(self):
         self._choose([self._value__c0_, self._value__c1_, self._value__c2_,
@@ -254,14 +256,13 @@ class Parser(object):
                       self._value__c6_])
 
     def _value__c0_(self):
-        self._seq([lambda: self._str('null', 4), lambda: self._succeed('None')])
+        self._seq([lambda: self._str('null'), lambda: self._succeed('None')])
 
     def _value__c1_(self):
-        self._seq([lambda: self._str('true', 4), lambda: self._succeed('True')])
+        self._seq([lambda: self._str('true'), lambda: self._succeed('True')])
 
     def _value__c2_(self):
-        self._seq([lambda: self._str('false', 5),
-                   lambda: self._succeed('False')])
+        self._seq([lambda: self._str('false'), lambda: self._succeed('False')])
 
     def _value__c3_(self):
         self._push('value__c3')
@@ -745,10 +746,10 @@ class Parser(object):
         self._opt(lambda: self._ch('+'))
 
     def _num_literal__c3_(self):
-        self._str('Infinity', 8)
+        self._str('Infinity')
 
     def _num_literal__c4_(self):
-        self._str('NaN', 3)
+        self._str('NaN')
 
     def _dec_literal_(self):
         self._choose([self._dec_literal__c0_, self._dec_literal__c1_,
@@ -826,7 +827,7 @@ class Parser(object):
         self._pop('hex_literal')
 
     def _hex_literal__s0_(self):
-        self._choose([lambda: self._str('0x', 2), lambda: self._str('0X', 2)])
+        self._choose([lambda: self._str('0x'), lambda: self._str('0X')])
 
     def _hex_literal__s1_(self):
         self._bind(lambda: self._plus(self._hex_), 'hs')

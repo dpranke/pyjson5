@@ -52,6 +52,12 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 ## Version History / Release Notes
 
+* v0.8.5 (2019-07-04)
+     * [GitHub issue #25](https://github.com/dpranke/pyjson5/issues/25):
+       Add LICENSE and README.md to the dist.
+     * [GitHub issue #26](https://github.com/dpranke/pyjson5/issues/26):
+       Fix printing of empty arrays and objects with indentation, fix
+       misreporting of the position on parse failures in some cases.
 * v0.8.4 (2019-06-11)
     * Updated the version history, too.
 * v0.8.3 (2019-06-11)

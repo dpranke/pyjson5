@@ -459,7 +459,7 @@ def _is_reserved_word(k):
 
     if _reserved_word_re is None:
         # List taken from section 7.6.1 of ECMA-262.
-        _reserved_word_re = re.compile('|'.join([
+        _reserved_word_re = re.compile('(' + '|'.join([
             'break',
             'case',
             'catch',
@@ -496,7 +496,7 @@ def _is_reserved_word(k):
             'void',
             'while',
             'with',
-        ]))
+        ]) + ')$')
     return _reserved_word_re.match(k) is not None
 
 

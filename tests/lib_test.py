@@ -331,6 +331,9 @@ class TestDumps(unittest.TestCase):
     def test_reserved_words_in_object_keys_are_quoted(self):
         self.check({'new': 1}, '{"new": 1}')
 
+    def test_identifiers_only_starting_with_reserved_words_are_not_quoted(self):
+        self.check({'newbie': 1}, '{newbie: 1}')
+
     def test_non_string_keys(self):
         self.assertEqual(json5.dumps({False: 'a', 1: 'b', 2.0: 'c', None: 'd'}),
                          '{"false": "a", "1": "b", "2.0": "c", "null": "d"}')

@@ -30,7 +30,6 @@ with open(os.path.join(here, 'README.md')) as fp:
 setup(
     name='json5',
     packages=find_packages(),
-    package_data={'': ['../README.md']},
     entry_points={
         'console_scripts': [
             'pyjson5=json5.tool:main',

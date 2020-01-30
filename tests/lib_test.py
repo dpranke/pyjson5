@@ -248,6 +248,8 @@ class TestDumps(unittest.TestCase):
     def test_arrays(self):
         self.check([], '[]')
         self.check([1, 2, 3], '[1, 2, 3]')
+        self.check([{'foo': 'bar'}, {'baz': 'quux'}],
+                    '[{foo: "bar"}, {baz: "quux"}]')
 
     def test_bools(self):
         self.check(True, 'true')
@@ -319,6 +321,10 @@ class TestDumps(unittest.TestCase):
 
     def test_reserved_words_in_object_keys_are_quoted(self):
         self.check({'new': 1}, '{"new": 1}')
+
+    def test_non_string_keys(self):
+        self.assertEqual(json5.dumps({False: 'a', 1: 'b', 2.0: 'c', None: 'd'}),
+                         '{"false": "a", "1": "b", "2.0": "c", "null": "d"}')
 
     def test_quote_keys(self):
         self.assertEqual(json5.dumps({"foo": 1}, quote_keys=True),

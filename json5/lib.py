@@ -140,7 +140,38 @@ def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
     raise Exception('unknown el: ' + el)  # pragma: no cover
 
 
-def dumps(obj, quote_keys=False, trailing_commas=True, **kwargs):
+def dump(obj, fp, skipkeys=False, ensure_ascii=True, check_circular=True,
+         allow_nan=True, cls=None, indent=None, separators=None,
+         default=None, sort_keys=False,
+         quote_keys=False, trailing_commas=True,
+         **kwargs):
+    """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
+    supporting file-like object).
+
+    Supports the same arguments as ``json.dumps()``, except that:
+
+    - The ``cls`` keyword is not supported.
+    - The ``encoding`` keyword is ignored; Unicode strings are always written.
+    - By default, object keys that are legal identifiers are not quoted;
+      if you pass quote_keys=True, they will be.
+    - By default, if lists and objects span multiple lines of output (i.e.,
+      when ``indent`` >=0), the last item will have a trailing comma
+      after it. If you pass ``trailing_commas=False, it will not.
+
+    Calling ``dumps(obj, fp, quote_keys=True, trailing_commas=False)`` should
+    produce exactly the same output as ``json.dumps(obj, fp).``
+    """
+
+    fp.write(str(dumps(obj, skipkeys, ensure_ascii, check_circular,
+                       allow_nan, indent, separators, default, sort_keys,
+                       quote_keys, trailing_commas)))
+
+
+def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
+          allow_nan=True, cls=None, indent=None, separators=None,
+          default=None, sort_keys=False,
+          quote_keys=False, trailing_commas=True,
+          **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``.
 
     Supports the same arguments as ``json.dumps()``, except that:
@@ -159,53 +190,59 @@ def dumps(obj, quote_keys=False, trailing_commas=True, **kwargs):
 
     assert kwargs.get('cls', None) is None, 'Custom encoders are not supported'
 
-    if kwargs.get('check_circular', True):
+    if separators is None:
+        if indent is None:
+            separators = (u', ', u': ')
+        else:
+            separators = (u',', u': ')
+
+    default = default or _raise_type_error
+
+    if check_circular:
         seen = set()
     else:
         seen = None
-    return _dumps(obj, seen, quote_keys=quote_keys,
-                  trailing_commas=trailing_commas,
-                  **kwargs)
+
+    level = 1
+    is_key = False
+
+    _, v = _dumps(obj, skipkeys, ensure_ascii, check_circular,
+                  allow_nan, indent, separators, default, sort_keys,
+                  quote_keys, trailing_commas, seen, level, is_key)
+    return v
 
 
-def dump(obj, fp, quote_keys=False, trailing_commas=True, **kwargs):
-    """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
-    supporting file-like object).
-
-    Supports the same arguments as ``json.dumps()``, except that:
-
-    - The ``cls`` keyword is not supported.
-    - The ``encoding`` keyword is ignored; Unicode strings are always written.
-    - By default, object keys that are legal identifiers are not quoted;
-      if you pass quote_keys=True, they will be.
-    - By default, if lists and objects span multiple lines of output (i.e.,
-      when ``indent`` >=0), the last item will have a trailing comma
-      after it. If you pass ``trailing_commas=False, it will not.
-
-    Calling ``dumps(obj, fp, quote_keys=True, trailing_commas=False)`` should
-    produce exactly the same output as ``json.dumps(obj, fp).``
-    """
-
-    s = dumps(obj, quote_keys=quote_keys, trailing_commas=trailing_commas,
-              **kwargs)
-    fp.write(str(s))
-
-
-def _dumps(obj, seen, **kwargs):
+def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
+           separators, default, sort_keys,
+           quote_keys, trailing_commas, seen, level, is_key):
+    s = None
     if obj is True:
-        return u'true'
+        s = u'true'
     if obj is False:
-        return u'false'
+        s = u'false'
     if obj is None:
-        return u'null'
+        s = u'null'
 
     t = type(obj)
     if t == type('') or t == type(u''):
-        return _dump_str(obj, kwargs.get('ensure_ascii', True))
+        if (is_key and _is_ident(obj) and not quote_keys
+            and not _is_reserved_word(obj)):
+            return True, obj
+        return True, _dump_str(obj, ensure_ascii)
     if t is float:
-        return _dump_float(obj, kwargs.get('allow_nan', True))
+        s = _dump_float(obj,allow_nan)
     if t is int:
-        return str(obj)
+        s = str(obj)
+
+    if is_key:
+        if s is not None:
+            return True, '"%s"' % s
+        if skipkeys:
+            return False, None
+        raise TypeError('invalid key %s' % repr(obj))
+
+    if s is not None:
+        return True, s
 
     if seen is not None:
         i = id(obj)
@@ -214,80 +251,99 @@ def _dumps(obj, seen, **kwargs):
         else:
             seen.add(i)
 
-    indent = kwargs.get('indent', None)
-    if indent is None:
-        separators = kwargs.get('separators', (u', ', u': '))
-    else:
-        separators = kwargs.get('separators', (u',', u': '))
     if indent is not None:
-        level = kwargs.get('level', 1)
-        nl = '\n'
+        end_str = ''
+        if trailing_commas:
+            end_str = ','
         if type(indent) == int:
             if indent > 0:
-                indent = ' ' * indent
+                indent_str = '\n' + ' ' * indent * level
             else:
-                indent = ''
+                indent_str = '\n'
+        else:
+            indent_str = '\n' + indent * level
+        end_str += '\n'
     else:
-        indent = ''
-        level = 0
-        nl = ''
+        indent_str = ''
+        end_str = ''
 
     item_sep, kv_sep = separators
-    indent_str = nl + indent * level
-    if nl and kwargs.get('trailing_commas', True):
-        end_str = ',' + nl + indent * (level - 1)
-    else:
-        end_str = nl + indent * (level - 1)
-
     item_sep += indent_str
-    kwargs['level'] = level + 1
+    level += 1
 
     # In Python3, we'd check if this was an abc.Mapping.
     # For now, just check for the attrs we need to iterate over the object.
     if hasattr(t, 'keys') and hasattr(t, '__getitem__'):
-        return _dump_dict(obj, seen, item_sep, kv_sep, indent_str, end_str,
-                          **kwargs)
+        return False, _dump_dict(obj, skipkeys, ensure_ascii,
+                                 check_circular, allow_nan, indent,
+                                 separators, default, sort_keys,
+                                 quote_keys, trailing_commas, seen, level,
+                                 item_sep, kv_sep, indent_str, end_str)
+
 
     # In Python3, we'd check if this was an abc.Sequence.
     # For now, just check for the attrs we need to iterate over the object.
     if hasattr(t, '__getitem__') and hasattr(t, '__iter__'):
-        if not obj:
-            return u'[]'
-        return (u'[' + indent_str +
-                item_sep.join([_dumps(el, seen, **kwargs) for el in obj]) +
-                end_str + u']')
+        return False, _dump_array(obj, skipkeys, ensure_ascii,
+                                  check_circular, allow_nan, indent,
+                                  separators, default, sort_keys,
+                                  quote_keys, trailing_commas, seen, level,
+                                  item_sep, indent_str, end_str)
 
-    return kwargs.get('default', _raise_type_error)(obj)
+    return False, default(obj)
 
 
-def _dump_dict(obj, seen, item_sep, kv_sep, indent_str, end_str, **kwargs):
+def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
+               indent, separators, default, sort_keys,
+               quote_keys, trailing_commas, seen, level,
+               item_sep, kv_sep, indent_str, end_str):
     if not obj:
         return u'{}'
 
-    if kwargs.get('sort_keys', False):
+    if sort_keys:
         keys = sorted(obj.keys())
     else:
         keys = obj.keys()
 
     s = u'{' + indent_str
 
-    skipkeys = kwargs.get('skipkeys', False)
-    ensure_ascii = kwargs.get('ensure_ascii', True)
-    quote_keys = kwargs.get('quote_keys', False)
-    first_item = True
+    l = len(keys)
     for key in keys:
-        valid_key, key_str = _dumpkey(key, ensure_ascii, quote_keys)
+        valid_key, key_str = _dumps(key, skipkeys, ensure_ascii, check_circular,
+                                    allow_nan, indent, separators, default,
+                                    sort_keys,
+                                    quote_keys, trailing_commas, seen, level,
+                                    is_key=True)
         if valid_key:
-            if not first_item:
+            s += key_str + kv_sep + _dumps(obj[key], skipkeys, ensure_ascii,
+                                           check_circular, allow_nan, indent,
+                                           separators, default, sort_keys,
+                                           quote_keys, trailing_commas,
+                                           seen, level, is_key=False)[1]
+            l -= 1
+            if l:
                 s += item_sep
-            s += key_str + kv_sep + _dumps(obj[key], seen, **kwargs)
-            first_item = False
-        elif skipkeys:
-            continue
-        else:
+        elif not skipkeys:
             raise TypeError('invalid key %s' % repr(key))
+        else:
+            l -= 1
+
     s += end_str + u'}'
     return s
+
+
+def _dump_array(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
+                indent, separators, default, sort_keys,
+                quote_keys, trailing_commas, seen, level,
+                item_sep, indent_str, end_str):
+    if not obj:
+        return u'[]'
+    return (u'[' + indent_str +
+            item_sep.join([_dumps(el, skipkeys, ensure_ascii, check_circular,
+                                  allow_nan, indent, separators, default,
+                                  sort_keys, quote_keys, trailing_commas,
+                                  seen, level, False)[1] for el in obj]) +
+            end_str + u']')
 
 
 def _dump_float(obj, allow_nan):
@@ -302,14 +358,6 @@ def _dump_float(obj, allow_nan):
         raise ValueError('Out of range float values '
                          'are not JSON compliant')
     return str(obj)
-
-
-def _dumpkey(k, ensure_ascii, quote_keys):
-    if type(k) in (int, float, type(''), long, type(u'')) or k is None:
-        if not quote_keys and _is_ident(k) and not _is_reserved_word(k):
-            return True, k
-        return True, _dump_str(k, ensure_ascii)
-    return False, ''
 
 
 def _dump_str(obj, ensure_ascii):
@@ -361,6 +409,7 @@ def _is_ident(k):
         if not _is_id_continue(ch) and ch not in (u'$', u'_'):
             return False
     return True
+
 
 def _is_id_start(ch):
     return unicodedata.category(ch) in (

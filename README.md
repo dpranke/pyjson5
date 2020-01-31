@@ -54,8 +54,9 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 * v0.9.0 (2020-01-30)
      * [GitHub issue #25](https://github.com/dpranke/pyjson5/issues/32):
-       Allow for non-string keys in dicts.
-
+       Allow for non-string keys in dicts passed to ``dump()``/``dumps()``.
+       Add an ``allow_duplicate_keys=False`` to prevent possible
+       ill-formed JSON that might result.
 * v0.8.5 (2019-07-04)
      * [GitHub issue #25](https://github.com/dpranke/pyjson5/issues/25):
        Add LICENSE and README.md to the dist.

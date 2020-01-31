@@ -245,6 +245,15 @@ class TestDumps(unittest.TestCase):
     def check(self, obj, s):
         self.assertEqual(json5.dumps(obj), s)
 
+    def test_allow_duplicate_keys(self):
+        self.assertIn(json5.dumps({1: "foo", "1": "bar"}),
+                      {'{"1": "foo", "1": "bar"}',
+                       '{"1": "bar", "1": "foo"}'})
+
+        self.assertRaises(ValueError, json5.dumps,
+                          {1: "foo", "1": "bar"},
+                           allow_duplicate_keys=False)
+
     def test_arrays(self):
         self.check([], '[]')
         self.check([1, 2, 3], '[1, 2, 3]')

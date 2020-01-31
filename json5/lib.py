@@ -144,6 +144,7 @@ def dump(obj, fp, skipkeys=False, ensure_ascii=True, check_circular=True,
          allow_nan=True, cls=None, indent=None, separators=None,
          default=None, sort_keys=False,
          quote_keys=False, trailing_commas=True,
+         allow_duplicate_keys=True,
          **kwargs):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
     supporting file-like object).
@@ -157,20 +158,29 @@ def dump(obj, fp, skipkeys=False, ensure_ascii=True, check_circular=True,
     - By default, if lists and objects span multiple lines of output (i.e.,
       when ``indent`` >=0), the last item will have a trailing comma
       after it. If you pass ``trailing_commas=False, it will not.
+    - If you use a number, a boolean, or None as a key value in a dict,
+      it will be converted to the corresponding json string value, e.g.
+      "1", "true", or "null". By default, dump() will match the `json`
+      modules behavior and produce ill-formed JSON if you mix keys of
+      different types that have the same converted value, e.g.:
+      {1: "foo", "1": "bar"} produces '{"1": "foo", "1": "bar"}', an
+      object with duplicated keys. If you pass allow_duplicate_keys=False,
+      an exception will be raised instead.
 
-    Calling ``dumps(obj, fp, quote_keys=True, trailing_commas=False)`` should
-    produce exactly the same output as ``json.dumps(obj, fp).``
+    Calling ``dumps(obj, fp, quote_keys=True, trailing_commas=False,
+                    allow_duplicate_keys=True)``
+    should produce exactly the same output as ``json.dumps(obj, fp).``
     """
 
     fp.write(str(dumps(obj, skipkeys, ensure_ascii, check_circular,
                        allow_nan, indent, separators, default, sort_keys,
-                       quote_keys, trailing_commas)))
+                       quote_keys, trailing_commas, allow_duplicate_keys)))
 
 
 def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
           allow_nan=True, cls=None, indent=None, separators=None,
           default=None, sort_keys=False,
-          quote_keys=False, trailing_commas=True,
+          quote_keys=False, trailing_commas=True, allow_duplicate_keys=True,
           **kwargs):
     """Serialize ``obj`` to a JSON5-formatted ``str``.
 
@@ -183,9 +193,19 @@ def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
     - By default, if lists and objects span multiple lines of output (i.e.,
       when ``indent`` >=0), the last item will have a trailing comma
       after it. If you pass ``trailing_commas=False, it will not.
+    - If you use a number, a boolean, or None as a key value in a dict,
+      it will be converted to the corresponding json string value, e.g.
+      "1", "true", or "null". By default, dump() will match the ``json``
+      module's behavior and produce ill-formed JSON if you mix keys of
+      different types that have the same converted value, e.g.:
+      {1: "foo", "1": "bar"} produces '{"1": "foo", "1": "bar"}', an
+      object with duplicated keys. If you pass ``allow_duplicate_keys=False``,
+      an exception will be raised instead.
 
-    Calling ``dumps(obj, quote_keys=True, trailing_commas=False)`` should
-    produce exactly the same output as ``json.dumps(obj).``
+
+    Calling ``dumps(obj, quote_keys=True, trailing_commas=False,
+                    allow_duplicate_keys=True)``
+    should produce exactly the same output as ``json.dumps(obj).``
     """
 
     assert kwargs.get('cls', None) is None, 'Custom encoders are not supported'
@@ -208,13 +228,15 @@ def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
 
     _, v = _dumps(obj, skipkeys, ensure_ascii, check_circular,
                   allow_nan, indent, separators, default, sort_keys,
-                  quote_keys, trailing_commas, seen, level, is_key)
+                  quote_keys, trailing_commas, allow_duplicate_keys,
+                  seen, level, is_key)
     return v
 
 
 def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
            separators, default, sort_keys,
-           quote_keys, trailing_commas, seen, level, is_key):
+           quote_keys, trailing_commas, allow_duplicate_keys,
+           seen, level, is_key):
     s = None
     if obj is True:
         s = u'true'
@@ -277,7 +299,8 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
         return False, _dump_dict(obj, skipkeys, ensure_ascii,
                                  check_circular, allow_nan, indent,
                                  separators, default, sort_keys,
-                                 quote_keys, trailing_commas, seen, level,
+                                 quote_keys, trailing_commas,
+                                 allow_duplicate_keys, seen, level,
                                  item_sep, kv_sep, indent_str, end_str)
 
 
@@ -287,7 +310,8 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
         return False, _dump_array(obj, skipkeys, ensure_ascii,
                                   check_circular, allow_nan, indent,
                                   separators, default, sort_keys,
-                                  quote_keys, trailing_commas, seen, level,
+                                  quote_keys, trailing_commas,
+                                  allow_duplicate_keys, seen, level,
                                   item_sep, indent_str, end_str)
 
     return False, default(obj)
@@ -295,8 +319,8 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
 
 def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
                indent, separators, default, sort_keys,
-               quote_keys, trailing_commas, seen, level,
-               item_sep, kv_sep, indent_str, end_str):
+               quote_keys, trailing_commas, allow_duplicate_keys,
+               seen, level, item_sep, kv_sep, indent_str, end_str):
     if not obj:
         return u'{}'
 
@@ -308,17 +332,23 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
     s = u'{' + indent_str
 
     l = len(keys)
+    new_keys = set()
     for key in keys:
         valid_key, key_str = _dumps(key, skipkeys, ensure_ascii, check_circular,
                                     allow_nan, indent, separators, default,
                                     sort_keys,
-                                    quote_keys, trailing_commas, seen, level,
-                                    is_key=True)
+                                    quote_keys, trailing_commas,
+                                    allow_duplicate_keys,
+                                    seen, level, is_key=True)
         if valid_key:
+            if key_str in new_keys and not allow_duplicate_keys:
+                raise ValueError('duplicate key %s' % repr(key))
+            new_keys.add(key_str)
             s += key_str + kv_sep + _dumps(obj[key], skipkeys, ensure_ascii,
                                            check_circular, allow_nan, indent,
                                            separators, default, sort_keys,
                                            quote_keys, trailing_commas,
+                                           allow_duplicate_keys,
                                            seen, level, is_key=False)[1]
             l -= 1
             if l:
@@ -334,14 +364,15 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
 
 def _dump_array(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
                 indent, separators, default, sort_keys,
-                quote_keys, trailing_commas, seen, level,
-                item_sep, indent_str, end_str):
+                quote_keys, trailing_commas, allow_duplicate_keys,
+                seen, level, item_sep, indent_str, end_str):
     if not obj:
         return u'[]'
     return (u'[' + indent_str +
             item_sep.join([_dumps(el, skipkeys, ensure_ascii, check_circular,
                                   allow_nan, indent, separators, default,
                                   sort_keys, quote_keys, trailing_commas,
+                                  allow_duplicate_keys,
                                   seen, level, False)[1] for el in obj]) +
             end_str + u']')
 

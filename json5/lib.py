@@ -266,13 +266,6 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
     if s is not None:
         return True, s
 
-    if seen is not None:
-        i = id(obj)
-        if i in seen:
-            raise ValueError('Circular reference detected.')
-        else:
-            seen.add(i)
-
     if indent is not None:
         end_str = ''
         if trailing_commas:
@@ -293,28 +286,35 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
     item_sep += indent_str
     level += 1
 
-    # In Python3, we'd check if this was an abc.Mapping.
+    if seen is not None:
+        i = id(obj)
+        if i in seen:
+            raise ValueError('Circular reference detected.')
+        else:
+            seen.add(i)
+
+    # In Python3, we'd check if this was an abc.Mapping or an abc.Sequence.
     # For now, just check for the attrs we need to iterate over the object.
     if hasattr(t, 'keys') and hasattr(t, '__getitem__'):
-        return False, _dump_dict(obj, skipkeys, ensure_ascii,
-                                 check_circular, allow_nan, indent,
-                                 separators, default, sort_keys,
-                                 quote_keys, trailing_commas,
-                                 allow_duplicate_keys, seen, level,
-                                 item_sep, kv_sep, indent_str, end_str)
+        s = _dump_dict(obj, skipkeys, ensure_ascii,
+                       check_circular, allow_nan, indent,
+                       separators, default, sort_keys,
+                       quote_keys, trailing_commas,
+                       allow_duplicate_keys, seen, level,
+                       item_sep, kv_sep, indent_str, end_str)
+    elif hasattr(t, '__getitem__') and hasattr(t, '__iter__'):
+        s = _dump_array(obj, skipkeys, ensure_ascii,
+                        check_circular, allow_nan, indent,
+                        separators, default, sort_keys,
+                        quote_keys, trailing_commas,
+                        allow_duplicate_keys, seen, level,
+                        item_sep, indent_str, end_str)
+    else:
+        s = default(obj)
 
-
-    # In Python3, we'd check if this was an abc.Sequence.
-    # For now, just check for the attrs we need to iterate over the object.
-    if hasattr(t, '__getitem__') and hasattr(t, '__iter__'):
-        return False, _dump_array(obj, skipkeys, ensure_ascii,
-                                  check_circular, allow_nan, indent,
-                                  separators, default, sort_keys,
-                                  quote_keys, trailing_commas,
-                                  allow_duplicate_keys, seen, level,
-                                  item_sep, indent_str, end_str)
-
-    return False, default(obj)
+    if seen is not None:
+        seen.remove(i)
+    return False, s
 
 
 def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,

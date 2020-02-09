@@ -374,9 +374,21 @@ class TestDumps(unittest.TestCase):
                    '"\\u2028\\u2029\\b\\t\\f\\n\\r\\v\\\\\\0"')
 
     def test_skip_keys(self):
-        self.assertRaises(TypeError, json5.dumps, {"foo": 1, (1, 2): 2})
-        self.assertEqual(json5.dumps({"foo": 1, (1, 2): 2}, skipkeys=True),
-                         '{foo: 1}')
+        od = OrderedDict()
+        od[(1, 2)] = 2
+        self.assertRaises(TypeError, json5.dumps, od)
+        self.assertEqual(json5.dumps(od, skipkeys=True), '{}')
+
+        od['foo'] = 1
+        self.assertEqual(json5.dumps(od, skipkeys=True), '{foo: 1}')
+
+        # Also test that having an invalid key as the last element
+        # doesn't incorrectly add a trailing comma (see
+        # https://github.com/dpranke/pyjson5/issues/33).
+        od = OrderedDict()
+        od['foo'] = 1
+        od[(1, 2)] = 2
+        self.assertEqual(json5.dumps(od, skipkeys=True), '{foo: 1}')
 
     def test_sort_keys(self):
         od = OrderedDict()

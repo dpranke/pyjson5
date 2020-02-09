@@ -331,7 +331,7 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
 
     s = u'{' + indent_str
 
-    l = len(keys)
+    num_items_added = 0
     new_keys = set()
     for key in keys:
         valid_key, key_str = _dumps(key, skipkeys, ensure_ascii, check_circular,
@@ -341,22 +341,22 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
                                     allow_duplicate_keys,
                                     seen, level, is_key=True)
         if valid_key:
-            if key_str in new_keys and not allow_duplicate_keys:
-                raise ValueError('duplicate key %s' % repr(key))
-            new_keys.add(key_str)
+            if not allow_duplicate_keys:
+                if key_str in new_keys:
+                    raise ValueError('duplicate key %s' % repr(key))
+                else:
+                    new_keys.add(key_str)
+            if num_items_added:
+                s += item_sep
             s += key_str + kv_sep + _dumps(obj[key], skipkeys, ensure_ascii,
                                            check_circular, allow_nan, indent,
                                            separators, default, sort_keys,
                                            quote_keys, trailing_commas,
                                            allow_duplicate_keys,
                                            seen, level, is_key=False)[1]
-            l -= 1
-            if l:
-                s += item_sep
+            num_items_added += 1
         elif not skipkeys:
             raise TypeError('invalid key %s' % repr(key))
-        else:
-            l -= 1
 
     s += end_str + u'}'
     return s

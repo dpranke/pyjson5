@@ -52,8 +52,12 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 ## Version History / Release Notes
 
+* v0.9.1 (2020-02-09)
+    * [GitHub issue #33](https://github.com/dpranke/pyjson5/issues/33):
+       Fix stray trailing comma when dumping an object with an invalid key.
+
 * v0.9.0 (2020-01-30)
-    * [GitHub issue #29](https://github.com/dprnake/pyjson5/issues/29):
+    * [GitHub issue #29](https://github.com/dpranke/pyjson5/issues/29):
        Fix an issue where objects keys that started with a reserved
        word were incorrectly quoted.
     * [GitHub issue #30](https://github.com/dpranke/pyjson5/issues/30):
@@ -70,11 +74,14 @@ and is 200x slower (or more) than the pure Python JSON module.
     * [GitHub issue #26](https://github.com/dpranke/pyjson5/issues/26):
       Fix printing of empty arrays and objects with indentation, fix
       misreporting of the position on parse failures in some cases.
+
 * v0.8.4 (2019-06-11)
     * Updated the version history, too.
+
 * v0.8.3 (2019-06-11)
     * Tweaked the README, bumped the version, forgot to update the version
       history :).
+
 * v0.8.2 (2019-06-11)
     * Actually bump the version properly, to 0.8.2.
 

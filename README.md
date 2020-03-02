@@ -52,6 +52,10 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 ## Version History / Release Notes
 
+* v0.9.2 (2020-03-02)
+    * [GitHub pull #34)(https://github.com/dpranke/pyjson5/pull/34)
+      Fix from roosephu@ for a badly formatted nested list.
+
 * v0.9.1 (2020-02-09)
     * [GitHub issue #33](https://github.com/dpranke/pyjson5/issues/33):
        Fix stray trailing comma when dumping an object with an invalid key.

@@ -273,11 +273,13 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
         if type(indent) == int:
             if indent > 0:
                 indent_str = '\n' + ' ' * indent * level
+                end_str += '\n' + ' ' * indent * (level - 1)
             else:
                 indent_str = '\n'
+                end_str += '\n'
         else:
             indent_str = '\n' + indent * level
-        end_str += '\n'
+            end_str += '\n' + indent * (level - 1)
     else:
         indent_str = ''
         end_str = ''

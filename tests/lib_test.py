@@ -325,6 +325,8 @@ class TestDumps(unittest.TestCase):
                          u'[\n 1,\n 2,\n 3,\n]')
         self.assertEqual(json5.dumps([1, 2, 3], indent='++'),
                          u'[\n++1,\n++2,\n++3,\n]')
+        self.assertEqual(json5.dumps([[1, 2, 3]], indent=2), 
+                         u'[\n  [\n    1,\n    2,\n    3,\n  ],\n]')
 
         self.assertEqual(json5.dumps({}, indent=2),
                          u'{}')

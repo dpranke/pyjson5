@@ -52,8 +52,14 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 ## Version History / Release Notes
 
+* v0.9.3 (2020-03-17)
+    * [GitHub pull #35](https://github.com/dpranke/pyjson5/pull/35)
+      Fix from pastelmind@ for dump() not passing the right args to dumps().
+    * Fix from p.skouzos@novafutur.com to remove the tests directory from
+      the setup call, making the package a bit smaller.
+
 * v0.9.2 (2020-03-02)
-    * [GitHub pull #34)(https://github.com/dpranke/pyjson5/pull/34)
+    * [GitHub pull #34](https://github.com/dpranke/pyjson5/pull/34)
       Fix from roosephu@ for a badly formatted nested list.
 
 * v0.9.1 (2020-02-09)

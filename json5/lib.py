@@ -172,9 +172,12 @@ def dump(obj, fp, skipkeys=False, ensure_ascii=True, check_circular=True,
     should produce exactly the same output as ``json.dumps(obj, fp).``
     """
 
-    fp.write(str(dumps(obj, skipkeys, ensure_ascii, check_circular,
-                       allow_nan, indent, separators, default, sort_keys,
-                       quote_keys, trailing_commas, allow_duplicate_keys)))
+    fp.write(str(dumps(obj=obj, skipkeys=skipkeys, ensure_ascii=ensure_ascii,
+                       check_circular=check_circular, allow_nan=allow_nan,
+                       cls=cls, indent=indent, separators=separators,
+                       default=default, sort_keys=sort_keys,
+                       quote_keys=quote_keys, trailing_commas=trailing_commas,
+                       allow_duplicate_keys=allow_duplicate_keys)))
 
 
 def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,

@@ -52,6 +52,11 @@ and is 200x slower (or more) than the pure Python JSON module.
 
 ## Version History / Release Notes
 
+* v0.9.4 (2020-03-26)
+    * [GitHub pull #38](https://github.com/dpranke/pyjson5/pull/38)
+      Fix from fredrik@fornwall.net for dumps() crashing when passed
+      an empty string as a key in an object.
+
 * v0.9.3 (2020-03-17)
     * [GitHub pull #35](https://github.com/dpranke/pyjson5/pull/35)
       Fix from pastelmind@ for dump() not passing the right args to dumps().

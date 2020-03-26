@@ -422,6 +422,9 @@ class TestDumps(unittest.TestCase):
             # we can't test this there.
             pass
 
+    def test_empty_key(self):
+        self.assertEqual(json5.dumps({'': 'value'}), '{"": "value"}')
+
 
 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

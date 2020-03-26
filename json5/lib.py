@@ -439,7 +439,7 @@ def _dump_str(obj, ensure_ascii):
 
 def _is_ident(k):
     k = str(k)
-    if not _is_id_start(k[0]) and k[0] not in (u'$', u'_'):
+    if not k or not _is_id_start(k[0]) and k[0] not in (u'$', u'_'):
         return False
     for ch in k[1:]:
         if not _is_id_continue(ch) and ch not in (u'$', u'_'):

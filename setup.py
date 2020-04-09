@@ -37,6 +37,11 @@ setup(
     },
     install_requires=[
     ],
+    extras_require={
+        'dev': [
+            'hypothesis'
+        ]
+    },
     version=json5.VERSION,
     author='Dirk Pranke',
     author_email='dpranke@chromium.org',

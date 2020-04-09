@@ -50,6 +50,11 @@ and is 200x slower (or more) than the pure Python JSON module.
   keyword *is* supported, though, and might be able to serve as a
   workaround.
 
+## Running the tests
+To run the tests, setup a venv and install the required dependencies with
+`pip install -e '.[dev]'`, then run the tests with `python setup.py test`.
+
+
 ## Version History / Release Notes
 
 * v0.9.4 (2020-03-26)

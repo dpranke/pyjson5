@@ -28,6 +28,7 @@ if not REPO_DIR in sys.path:
 
 import json5  # pylint: disable=wrong-import-position
 
+
 ALL_BENCHMARKS = (
     'ios-simulator.json',
     'mb_config.json',
@@ -35,7 +36,9 @@ ALL_BENCHMARKS = (
     'chromium.perf.json',
 )
 
-DEFAULT_ITERATIONS = 1
+
+DEFAULT_ITERATIONS = 3
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -67,7 +70,8 @@ def main():
 
     all_times = []
     for i, c in enumerate(file_contents):
-        times = []
+        json_time = 0.0
+        json5_time = 0.0
         for _ in range(args.num_iterations):
             start = time.time()
             json_obj = json.loads(c, cls=maker)
@@ -75,16 +79,30 @@ def main():
             json5_obj = json5.loads(c)
             end = time.time()
 
-            json_time = mid - start
-            json5_time = end - mid
-            times.append((json_time, json5_time))
+            json_time += mid - start
+            json5_time += end - mid
             assert json5_obj == json_obj
-        all_times.append(times)
+        all_times.append((json_time, json5_time))
 
-    for i, times in enumerate(all_times):
-        avg = sum((json5_time / json_time)
-                  for json_time, json5_time in times) / args.num_iterations
-        print("%-20s: %5.1f" % (args.benchmarks[i], avg))
+    for i, (json_time, json5_time) in enumerate(all_times):
+        fname = os.path.basename(args.benchmarks[i])
+        if json5_time and json_time:
+            if json5_time > json_time:
+                avg = json5_time / json_time
+                print("%-20s: JSON was %5.1fx faster (%.6fs to %.6fs)" % (
+                      fname, avg, json_time, json5_time))
+            else:
+                avg = json_time / json5_time
+                print("%-20s: JSON5 was %5.1fx faster (%.6fs to %.6fs)" % (
+                      fname, avg, json5_time, json_time))
+        elif json5_time:
+            print("%-20s: JSON5 took %.6f secs, JSON was too fast to measure" %
+                  (fname, json5_time))
+        elif json_time:
+            print("%-20s: JSON took %.6f secs, JSON5 was too fast to measure" %
+                  (fname, json_time))
+        else:
+            print("%-20s: both were too fast to measure" % (fname,))
 
     return 0
 

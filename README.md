@@ -57,6 +57,11 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.5 (2020-05-26)
+    * Miscellaneous non-source cleanups in the repo, including setting
+      up GitHub Actions for a CI system. No changes to the library from
+      v0.9.4, other than updating the version.
+
 * v0.9.4 (2020-03-26)
     * [GitHub pull #38](https://github.com/dpranke/pyjson5/pull/38)
       Fix from fredrik@fornwall.net for dumps() crashing when passed

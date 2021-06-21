@@ -23,18 +23,28 @@ from collections import OrderedDict
 from string import printable
 
 import json5
-import hypothesis.strategies as some
 
-from hypothesis import given
+try:
+    # Make the `hypothesis` library optional, so that the other tests will
+    # still run if it isn't installed.
+    import hypothesis.strategies as some
 
-some_json = some.recursive(
-    some.none() |
-    some.booleans() |
-    some.floats(allow_nan=False) |
-    some.text(printable),
-    lambda children: some.lists(children, min_size=1)
-    | some.dictionaries(some.text(printable), children, min_size=1),
-)
+    from hypothesis import given
+
+    some_json = some.recursive(
+        some.none() |
+        some.booleans() |
+        some.floats(allow_nan=False) |
+        some.text(printable),
+        lambda children: some.lists(children, min_size=1)
+        | some.dictionaries(some.text(printable), children, min_size=1),
+    )
+except ImportError as e:
+    def given(x):
+        def func(y):
+            pass
+        return func
+    some_json = {}
 
 class TestLoads(unittest.TestCase):
     maxDiff = None

@@ -318,6 +318,55 @@ class TestDumps(unittest.TestCase):
         z['y']['x'] = x
         self.assertRaises(ValueError, json5.dumps, z)
 
+    def test_custom_arrays(self):
+        class MyArray(object):
+            def __iter__(self):
+                yield 0
+                yield 1
+                yield 1
+
+            def __getitem__(self, i):
+                return 0 if i == 0 else 1
+
+            def __len__(self):
+                return 3
+
+        self.assertEqual(json5.dumps(MyArray()), '[0, 1, 1]')
+
+    def test_custom_numbers(self):
+        class MyInt(int):
+            pass
+
+        self.assertEqual(json5.dumps(MyInt(5)), '5')
+
+        class MyFloat(float):
+            pass
+
+        self.assertEqual(json5.dumps(MyFloat(0.5)), '0.5')
+
+    def test_custom_objects(self):
+        class MyDict(object):
+            def __iter__(self):
+                yield ('a', 1)
+                yield ('b', 2)
+
+            def keys(self):
+                return ['a', 'b']
+
+            def __getitem__(self, k):
+                return {'a': 1, 'b': 2}[k]
+
+            def __len__(self):
+                return 2
+
+        self.assertEqual(json5.dumps(MyDict()), '{a: 1, b: 2}')
+
+    def test_custom_strings(self):
+        class MyStr(str):
+            pass
+
+        self.assertEqual(json5.dumps({'foo': MyStr('bar')}), '{foo: "bar"}')
+
     def test_default(self):
 
         def _custom_serializer(obj):

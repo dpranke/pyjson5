@@ -21,8 +21,10 @@ from .parser import Parser
 
 
 if sys.version_info[0] < 3:
+    str_types = (str, unicode)
     str = unicode  # pylint: disable=redefined-builtin, invalid-name
 else:
+    str_types = (str,)
     long = int  # pylint: disable=redefined-builtin, invalid-name
 
 
@@ -240,24 +242,23 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
            separators, default, sort_keys,
            quote_keys, trailing_commas, allow_duplicate_keys,
            seen, level, is_key):
-    s = None
     if obj is True:
         s = u'true'
-    if obj is False:
+    elif obj is False:
         s = u'false'
-    if obj is None:
+    elif obj is None:
         s = u'null'
-
-    t = type(obj)
-    if t == type('') or t == type(u''):
+    elif isinstance(obj, str_types):
         if (is_key and _is_ident(obj) and not quote_keys
             and not _is_reserved_word(obj)):
             return True, obj
         return True, _dump_str(obj, ensure_ascii)
-    if t is float:
+    elif isinstance(obj, float):
         s = _dump_float(obj,allow_nan)
-    if t is int:
+    elif isinstance(obj, int):
         s = str(obj)
+    else:
+        s = None
 
     if is_key:
         if s is not None:
@@ -300,14 +301,14 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
 
     # In Python3, we'd check if this was an abc.Mapping or an abc.Sequence.
     # For now, just check for the attrs we need to iterate over the object.
-    if hasattr(t, 'keys') and hasattr(t, '__getitem__'):
+    if hasattr(obj, 'keys') and hasattr(obj, '__getitem__'):
         s = _dump_dict(obj, skipkeys, ensure_ascii,
                        check_circular, allow_nan, indent,
                        separators, default, sort_keys,
                        quote_keys, trailing_commas,
                        allow_duplicate_keys, seen, level,
                        item_sep, kv_sep, indent_str, end_str)
-    elif hasattr(t, '__getitem__') and hasattr(t, '__iter__'):
+    elif hasattr(obj, '__getitem__') and hasattr(obj, '__iter__'):
         s = _dump_array(obj, skipkeys, ensure_ascii,
                         check_circular, allow_nan, indent,
                         separators, default, sort_keys,

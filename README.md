@@ -57,6 +57,18 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.6 (2021-06-21)
+    * Bump development status classifier to 5 - Production/Stable, which
+      the library feels like it is at this point. If I do end up significantly
+      reworking things to speed it up and/or to add round-trip editing,
+      that'll likely be a 2.0. If this version has no reported issues,
+      I'll likely promote it to 1.0.
+    * Also bump the tested Python versions to 2.7, 3.8 and 3.9, though
+      earlier Python3 versions will likely continue to work as well.
+    * [GitHub issue #46](https://github.dpranke/pyjson5/issues/36)
+      Fix incorrect serialization of custom subtypes
+    * Make it possible to run the tests if `hypothesis` isn't installed.
+
 * v0.9.5 (2020-05-26)
     * Miscellaneous non-source cleanups in the repo, including setting
       up GitHub Actions for a CI system. No changes to the library from

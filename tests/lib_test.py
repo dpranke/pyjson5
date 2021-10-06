@@ -18,7 +18,6 @@ import math
 import os
 import sys
 import unittest
-
 from collections import OrderedDict
 from string import printable
 
@@ -28,7 +27,6 @@ try:
     # Make the `hypothesis` library optional, so that the other tests will
     # still run if it isn't installed.
     import hypothesis.strategies as some
-
     from hypothesis import given
 
     some_json = some.recursive(
@@ -375,7 +373,7 @@ class TestDumps(unittest.TestCase):
 
         self.assertRaises(TypeError, json5.dumps, set())
         self.assertEqual(json5.dumps(set(), default=_custom_serializer),
-                         'something')
+                         '"something"')
 
     def test_ensure_ascii(self):
         self.check(u'\u00fc', '"\\u00fc"')

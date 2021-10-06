@@ -19,7 +19,6 @@ import unicodedata
 
 from .parser import Parser
 
-
 if sys.version_info[0] < 3:
     str_types = (str, unicode)
     str = unicode  # pylint: disable=redefined-builtin, invalid-name
@@ -290,7 +289,6 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
 
     item_sep, kv_sep = separators
     item_sep += indent_str
-    level += 1
 
     if seen is not None:
         i = id(obj)
@@ -306,17 +304,22 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
                        check_circular, allow_nan, indent,
                        separators, default, sort_keys,
                        quote_keys, trailing_commas,
-                       allow_duplicate_keys, seen, level,
+                       allow_duplicate_keys, seen, level + 1,
                        item_sep, kv_sep, indent_str, end_str)
     elif hasattr(obj, '__getitem__') and hasattr(obj, '__iter__'):
         s = _dump_array(obj, skipkeys, ensure_ascii,
                         check_circular, allow_nan, indent,
                         separators, default, sort_keys,
                         quote_keys, trailing_commas,
-                        allow_duplicate_keys, seen, level,
+                        allow_duplicate_keys, seen, level + 1,
                         item_sep, indent_str, end_str)
     else:
-        s = default(obj)
+        s = _dumps(default(obj), skipkeys, ensure_ascii,
+                   check_circular, allow_nan, indent,
+                   separators, default, sort_keys,
+                   quote_keys, trailing_commas,
+                   allow_duplicate_keys, seen, level,
+                   is_key)[1]
 
     if seen is not None:
         seen.remove(i)

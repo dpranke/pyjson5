@@ -151,27 +151,36 @@ def dump(obj, fp, skipkeys=False, ensure_ascii=True, check_circular=True,
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
     supporting file-like object).
 
-    Supports the same arguments as ``json.dumps()``, except that:
+    Supports the same arguments as ``json.dump()``, except that:
 
     - The ``cls`` keyword is not supported.
     - The ``encoding`` keyword is ignored; Unicode strings are always written.
     - By default, object keys that are legal identifiers are not quoted;
-      if you pass quote_keys=True, they will be.
+      if you pass ``quote_keys=True``, they will be.
     - By default, if lists and objects span multiple lines of output (i.e.,
       when ``indent`` >=0), the last item will have a trailing comma
-      after it. If you pass ``trailing_commas=False, it will not.
-    - If you use a number, a boolean, or None as a key value in a dict,
-      it will be converted to the corresponding json string value, e.g.
-      "1", "true", or "null". By default, dump() will match the `json`
-      modules behavior and produce ill-formed JSON if you mix keys of
-      different types that have the same converted value, e.g.:
-      {1: "foo", "1": "bar"} produces '{"1": "foo", "1": "bar"}', an
-      object with duplicated keys. If you pass allow_duplicate_keys=False,
+      after it. If you pass ``trailing_commas=False``, it will not.
+    - If you use a number, a boolean, or ``None`` as a key value in a dict,
+      it will be converted to the corresponding JSON string value, e.g.
+      "1", "true", or "null". By default, ``dump()`` will match the `json`
+      modules behavior and produce malformed JSON if you mix keys of
+      different types that have the same converted value; e.g.,
+      ``{1: "foo", "1": "bar"}`` produces '{"1": "foo", "1": "bar"}', an
+      object with duplicated keys. If you pass ``allow_duplicate_keys=False``,
       an exception will be raised instead.
+    - If `quote_keys` is true, then keys of objects will be enclosed in quotes,
+      as in regular JSON. Otheriwse, keys will not be enclosed in quotes unless
+      they contain whitespace.
+    - If `trailing_commas` is false, then commas will not be inserted after
+      the final elements of objects and arrays, as in regular JSON. Otherwise,
+      such commas will be inserted.
+    - If `allow_duplicate_keys` is false, then only the last entry with a given
+      key will be written. Otherwise, all entries with the same key will be
+      written.
 
-    Calling ``dumps(obj, fp, quote_keys=True, trailing_commas=False,
-                    allow_duplicate_keys=True)``
-    should produce exactly the same output as ``json.dumps(obj, fp).``
+    Calling ``dump(obj, fp, quote_keys=True, trailing_commas=False, \
+                   allow_duplicate_keys=True)``
+    should produce exactly the same output as ``json.dump(obj, fp).``
     """
 
     fp.write(str(dumps(obj=obj, skipkeys=skipkeys, ensure_ascii=ensure_ascii,
@@ -192,23 +201,31 @@ def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
     Supports the same arguments as ``json.dumps()``, except that:
 
     - The ``cls`` keyword is not supported.
-    - The ``encoding`` keyword is ignored; Unicode strings are always returned.
+    - The ``encoding`` keyword is ignored; Unicode strings are always written.
     - By default, object keys that are legal identifiers are not quoted;
-      if you pass quote_keys=True, they will be.
+      if you pass ``quote_keys=True``, they will be.
     - By default, if lists and objects span multiple lines of output (i.e.,
       when ``indent`` >=0), the last item will have a trailing comma
-      after it. If you pass ``trailing_commas=False, it will not.
-    - If you use a number, a boolean, or None as a key value in a dict,
-      it will be converted to the corresponding json string value, e.g.
-      "1", "true", or "null". By default, dump() will match the ``json``
-      module's behavior and produce ill-formed JSON if you mix keys of
-      different types that have the same converted value, e.g.:
-      {1: "foo", "1": "bar"} produces '{"1": "foo", "1": "bar"}', an
+      after it. If you pass ``trailing_commas=False``, it will not.
+    - If you use a number, a boolean, or ``None`` as a key value in a dict,
+      it will be converted to the corresponding JSON string value, e.g.
+      "1", "true", or "null". By default, ``dump()`` will match the `json`
+      modules behavior and produce malformed JSON if you mix keys of
+      different types that have the same converted value; e.g.,
+      ``{1: "foo", "1": "bar"}`` produces '{"1": "foo", "1": "bar"}', an
       object with duplicated keys. If you pass ``allow_duplicate_keys=False``,
       an exception will be raised instead.
+    - If `quote_keys` is true, then keys of objects will be enclosed in quotes,
+      as in regular JSON. Otheriwse, keys will not be enclosed in quotes unless
+      they contain whitespace.
+    - If `trailing_commas` is false, then commas will not be inserted after
+      the final elements of objects and arrays, as in regular JSON. Otherwise,
+      such commas will be inserted.
+    - If `allow_duplicate_keys` is false, then only the last entry with a given
+      key will be written. Otherwise, all entries with the same key will be
+      written.
 
-
-    Calling ``dumps(obj, quote_keys=True, trailing_commas=False,
+    Calling ``dumps(obj, quote_keys=True, trailing_commas=False, \
                     allow_duplicate_keys=True)``
     should produce exactly the same output as ``json.dumps(obj).``
     """

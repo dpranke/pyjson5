@@ -57,6 +57,13 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.7 (2022-05-06)
+    * [GitHub issue #52](https://github.com/dpranke/pyjson5/issues/52)
+      Fixed behavior of `default` fn in `dump` and `dumps`. Previously
+      we didn't require the function to return a string, and so we could
+      end up returning something that wasn't actually valid. This change
+      now matches the behavior in the `json` module. *Note: This is a
+      potentially breaking change.*
 * v0.9.6 (2021-06-21)
     * Bump development status classifier to 5 - Production/Stable, which
       the library feels like it is at this point. If I do end up significantly
@@ -65,7 +72,7 @@ To run the tests, setup a venv and install the required dependencies with
       I'll likely promote it to 1.0.
     * Also bump the tested Python versions to 2.7, 3.8 and 3.9, though
       earlier Python3 versions will likely continue to work as well.
-    * [GitHub issue #46](https://github.dpranke/pyjson5/issues/36)
+    * [GitHub issue #46](https://github.com/dpranke/pyjson5/issues/36)
       Fix incorrect serialization of custom subtypes
     * Make it possible to run the tests if `hypothesis` isn't installed.
 

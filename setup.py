@@ -51,7 +51,7 @@ setup(
     url='https://github.com/dpranke/pyjson5',
     license='Apache',
     classifiers=[
-        'Development Status :: 5 - Proudction/Stable',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 2',

@@ -252,6 +252,21 @@ class TestLoads(unittest.TestCase):
         self.check(u'\u2028 1', 1)
         self.check(u'\u2029 1', 1)
 
+    def test_error_reporting(self):
+        self.check_fail('[ ,]',
+            err='<string>:1 Unexpected "," at column 3')
+
+        self.check_fail(
+            '{\n'
+            '    version: "1.0",\n'
+            '    author: "John Smith",\n'
+            '    people : [\n'
+            '        "Monty",\n'
+            '        "Python"foo\n'
+            '    ]\n'
+            '}\n',
+            err='<string>:6 Unexpected "f" at column 17')
+
 
 class TestDump(unittest.TestCase):
     def test_basic(self):

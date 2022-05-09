@@ -57,6 +57,12 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.8 (2022-05-08)
+    * [GitHub issue #47](https://github.com/dpranke/pyjson5/issues/47)
+      Fixed error reporting in some cases due to how parsing was handling
+      nested rules in the grammar - previously the reported location for
+      the error could be far away from the point where it actually happened.
+
 * v0.9.7 (2022-05-06)
     * [GitHub issue #52](https://github.com/dpranke/pyjson5/issues/52)
       Fixed behavior of `default` fn in `dump` and `dumps`. Previously

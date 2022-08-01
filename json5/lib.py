@@ -264,15 +264,36 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
         s = u'false'
     elif obj is None:
         s = u'null'
+    elif obj == math.inf:
+        if allow_nan:
+            s = u'Infinity'
+        else:
+            raise ValueError()
+    elif obj == -math.inf:
+        if allow_nan:
+            s = u'-Infinity'
+        else:
+            raise ValueError()
+    elif isinstance(obj, float) and math.isnan(obj):
+        if allow_nan:
+            s = u'NaN'
+        else:
+            raise ValueError()
     elif isinstance(obj, str_types):
         if (is_key and _is_ident(obj) and not quote_keys
             and not _is_reserved_word(obj)):
             return True, obj
         return True, _dump_str(obj, ensure_ascii)
-    elif isinstance(obj, float):
-        s = _dump_float(obj,allow_nan)
     elif isinstance(obj, int):
-        s = str(obj)
+        # Subclasses of `int` and `float` may have custom
+        # __repr__ or __str__ methods, but the `JSON` library
+        # ignores them in order to ensure that the representation
+        # are just bare numbers. In order to match JSON's behavior
+        # we call the methods of the `float` and `int` class directly.
+        s = int.__repr__(obj)
+    elif isinstance(obj, float):
+        # See comment above for int
+        s = float.__repr__(obj)
     else:
         s = None
 
@@ -401,20 +422,6 @@ def _dump_array(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
                                   allow_duplicate_keys,
                                   seen, level, False)[1] for el in obj]) +
             end_str + u']')
-
-
-def _dump_float(obj, allow_nan):
-    if allow_nan:
-        if math.isnan(obj):
-            return 'NaN'
-        if obj == float('inf'):
-            return 'Infinity'
-        if obj == float('-inf'):
-            return '-Infinity'
-    elif math.isnan(obj) or obj == float('inf') or obj == float('-inf'):
-        raise ValueError('Out of range float values '
-                         'are not JSON compliant')
-    return str(obj)
 
 
 def _dump_str(obj, ensure_ascii):

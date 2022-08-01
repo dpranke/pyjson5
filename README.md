@@ -57,6 +57,16 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.9 (2022-08-01)
+    * [GitHub issue #57](https://github.com/dpranke/pyjson5/issues/57)
+      Fixed serialization for objects that subclass `int` or `float`:
+      Previously we would use the objects __str__ implementation, but
+      that might result in an illegal JSON5 value if the object had
+      customized __str__ to return something illegal. Instead,
+      we follow the lead of the `JSON` module and call `int.__repr__`
+      or `float.__repr__` directly.
+    * While I was at it, I added tests for dumps(-inf) and dumps(nan)
+      when those were supposed to be disallowed by `allow_nan=False`.
 * v0.9.8 (2022-05-08)
     * [GitHub issue #47](https://github.com/dpranke/pyjson5/issues/47)
       Fixed error reporting in some cases due to how parsing was handling

@@ -347,13 +347,20 @@ class TestDumps(unittest.TestCase):
         self.assertEqual(json5.dumps(MyArray()), '[0, 1, 1]')
 
     def test_custom_numbers(self):
+        # See https://github.com/dpranke/pyjson5/issues/57: we
+        # need to ensure that we use the bare int.__repr__ and
+        # float.__repr__ in order to get legal JSON values when
+        # people have custom subclasses with customer __repr__ methods.
+        # (This is what JSON does and we want to match it).
         class MyInt(int):
-            pass
+            def __repr__(self):
+                return 'fail'
 
         self.assertEqual(json5.dumps(MyInt(5)), '5')
 
         class MyFloat(float):
-            pass
+            def __repr__(self):
+                return 'fail'
 
         self.assertEqual(json5.dumps(MyFloat(0.5)), '0.5')
 
@@ -427,6 +434,10 @@ class TestDumps(unittest.TestCase):
 
         self.assertRaises(ValueError, json5.dumps,
                           float('inf'), allow_nan=False)
+        self.assertRaises(ValueError, json5.dumps,
+                          float('-inf'), allow_nan=False)
+        self.assertRaises(ValueError, json5.dumps,
+                          float('nan'), allow_nan=False)
 
     def test_null(self):
         self.check(None, 'null')

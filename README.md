@@ -31,6 +31,10 @@ This is an early release. It has been reasonably well-tested, but it is
 **SLOW**. It can be 1000-6000x slower than the C-optimized JSON module,
 and is 200x slower (or more) than the pure Python JSON module.
 
+**Please Note:** This library only handles JSON5 documents, it does not
+allow you to read arbitrary JavaScript. For example, bare integers can
+be legal object keys in JavaScript, but they aren't in JSON5.
+
 ## Known issues
 
 * Did I mention that it is **SLOW**?
@@ -57,6 +61,11 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.10 (2022-08-18)
+    * [GitHub issue #58](https://github.com/dpranke/pyjson5/issues/58)
+      Updated the //README.md to be clear that parsing arbitrary JS
+      code may not work.
+    * Otherwise, no code changes.
 * v0.9.9 (2022-08-01)
     * [GitHub issue #57](https://github.com/dpranke/pyjson5/issues/57)
       Fixed serialization for objects that subclass `int` or `float`:

@@ -61,6 +61,10 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.11 (2023-01-02)
+    * [GitHub issue #60](https://github.com/dpranke/pyjson5/issues/60)
+      Fixed minor Python2 compatibility issue by referring to
+      `float("inf")` instead of `math.inf`.
 * v0.9.10 (2022-08-18)
     * [GitHub issue #58](https://github.com/dpranke/pyjson5/issues/58)
       Updated the //README.md to be clear that parsing arbitrary JS

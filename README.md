@@ -61,6 +61,11 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.13 (2023-03-16)
+    * [GitHub PR #64](https://github.com/dpranke/pyjson5/pull/64)
+      Remove a field from one of the JSON benchmark files to
+      reduce confusion in Chromium.
+    * No code changes.
 * v0.9.12 (2023-01-02)
     * Fix GitHub Actions config file to no longer test against
       Python 3.6 or 3.7. For now we will only test against an

@@ -734,8 +734,8 @@ class Parser(object):
 
     def _num_literal_(self):
         self._choose([self._num_literal__c0_, self._num_literal__c1_,
-                      self._hex_literal_, self._num_literal__c3_,
-                      self._num_literal__c4_])
+                      self._num_literal__c2_, self._hex_literal_,
+                      self._num_literal__c4_, self._num_literal__c5_])
 
     def _num_literal__c0_(self):
         self._push('num_literal__c0')
@@ -746,19 +746,22 @@ class Parser(object):
 
     def _num_literal__c1_(self):
         self._push('num_literal__c1')
-        self._seq([self._num_literal__c1__s0_,
-                   lambda: self._bind(self._dec_literal_, 'd'),
-                   lambda: self._not(self._id_start_),
-                   lambda: self._succeed(self._get('d'))])
+        self._seq([lambda: self._ch('+'),
+                   lambda: self._bind(self._num_literal_, 'n'),
+                   lambda: self._succeed(self._get('n'))])
         self._pop('num_literal__c1')
 
-    def _num_literal__c1__s0_(self):
-        self._opt(lambda: self._ch('+'))
-
-    def _num_literal__c3_(self):
-        self._str('Infinity')
+    def _num_literal__c2_(self):
+        self._push('num_literal__c2')
+        self._seq([lambda: self._bind(self._dec_literal_, 'd'),
+                   lambda: self._not(self._id_start_),
+                   lambda: self._succeed(self._get('d'))])
+        self._pop('num_literal__c2')
 
     def _num_literal__c4_(self):
+        self._str('Infinity')
+
+    def _num_literal__c5_(self):
         self._str('NaN')
 
     def _dec_literal_(self):

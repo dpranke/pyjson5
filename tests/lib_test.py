@@ -120,6 +120,7 @@ class TestLoads(unittest.TestCase):
 
         # names
         self.check('Infinity', float('inf'))
+        self.check('+Infinity', float('inf'))
         self.check('-Infinity', float('-inf'))
         self.assertTrue(math.isnan(json5.loads('NaN')))
         self.assertTrue(math.isnan(json5.loads('-NaN')))

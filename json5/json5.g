@@ -98,7 +98,8 @@ id_continue    = ascii_id_start
                | '\u200D'
 
 num_literal    = '-' num_literal:n                   -> '-' + n
-               | '+'? dec_literal:d ~id_start        -> d
+               | '+' num_literal:n                   -> n
+               | dec_literal:d ~id_start             -> d
                | hex_literal
                | 'Infinity'
                | 'NaN'

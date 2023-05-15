@@ -61,6 +61,9 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.14 (2023-05-14)
+    * [GitHub issue #63](https://github.com/dpranke/pyjson5/issues/63)
+      Handle `+Infinity` as well as `-Infinity` and `Infinity`.
 * v0.9.13 (2023-03-16)
     * [GitHub PR #64](https://github.com/dpranke/pyjson5/pull/64)
       Remove a field from one of the JSON benchmark files to

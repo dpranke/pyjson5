@@ -61,6 +61,9 @@ To run the tests, setup a venv and install the required dependencies with
 
 ## Version History / Release Notes
 
+* v0.9.15 (2024-02-19)
+    * Merge in [Pull request #66](https://github.com/dpranke/pyjson5/pull/66)
+      to include the tests and sample file in a source distribution.
 * v0.9.14 (2023-05-14)
     * [GitHub issue #63](https://github.com/dpranke/pyjson5/issues/63)
       Handle `+Infinity` as well as `-Infinity` and `Infinity`.

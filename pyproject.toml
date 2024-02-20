@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "json5"
+authors = [
+    {name = "Dirk Pranke", email = "dpranke@chromium.org"},
+]
+license = {file = "LICENSE"}
+dynamic = [
+  "description",
+  "readme",
+  "version",
+]
+requires-python = ">= 3.8"
+classifiers= [
+    'Development Status :: 5 - Production/Stable',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: Apache Software License',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+]
+
+[project.urls]
+Repository = "https://github.com/dpranke/pyjson5"
+Issues = "https://github.com/dpranke/pyjson5/issues"
+Changelog = "https://github.com/dpranke/pyjson5/blob/master/README.md"
+
+[project.optional-dependencies]
+dev = ["hypothesis"]
+
+[project.scripts]
+pyjson5 = "json5.tool:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "json5.VERSION"}

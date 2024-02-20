@@ -70,10 +70,15 @@ $ python3 -m build
 
 # Upload the packages
 $ python3 -m twine upload dist/*
+
+(Assuming you have upload privileges to PyPI, of course.)
 ```
 
 ## Version History / Release Notes
 
+* v0.9.17 (2024-02-19)
+    * Move from `setup.py` to `pyproject.toml`.
+    * No code changes (other than the version increasing).
 * v0.9.16 (2024-02-19)
     * Drop Python2 from `setup.py`
     * Add minimal packaging instructions to `//README.md`.

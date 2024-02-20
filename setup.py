@@ -12,52 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
-import sys
+from setuptools import setup
 
-from setuptools import setup, find_packages
-
-here = os.path.abspath(os.path.dirname(__file__))
-if here not in sys.path:
-    sys.path.insert(0, here)
-
-import json5
-
-with open(os.path.join(here, 'README.md')) as fp:
-    long_description = fp.read()
-
+from pathlib import Path
+here = Path(__file__).parent
+long_description = (here / "README.md").read_text()
 
 setup(
-    name='json5',
-    packages=find_packages(exclude=['tests']),
-    entry_points={
-        'console_scripts': [
-            'pyjson5=json5.tool:main',
-        ]
-    },
-    install_requires=[
-    ],
-    extras_require={
-        'dev': [
-            'hypothesis'
-        ]
-    },
-    version=json5.VERSION,
-    author='Dirk Pranke',
-    author_email='dpranke@chromium.org',
+    name="json5",
     description=long_description.splitlines()[2],
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url='https://github.com/dpranke/pyjson5',
-    license='Apache',
-    classifiers=[
-        'Development Status :: 5 - Production/Stable',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: Apache Software License',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.8',
-        'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
-        'Programming Language :: Python :: 3.11',
-    ],
 )

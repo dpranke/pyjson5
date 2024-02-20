@@ -58,9 +58,25 @@ be legal object keys in JavaScript, but they aren't in JSON5.
 To run the tests, setup a venv and install the required dependencies with
 `pip install -e '.[dev]'`, then run the tests with `python setup.py test`.
 
+## Updating the packages
+
+```
+# Install the build packages if need be
+$ python3 -m pip install build twine
+
+# Build the distribution packages in //dist
+# (a universal wheel and a tarball by default)
+$ python3 -m build
+
+# Upload the packages
+$ python3 -m twine upload dist/*
+```
 
 ## Version History / Release Notes
 
+* v0.9.16 (2024-02-19)
+    * Drop Python2 from `setup.py`
+    * Add minimal packaging instructions to `//README.md`.
 * v0.9.15 (2024-02-19)
     * Merge in [Pull request #66](https://github.com/dpranke/pyjson5/pull/66)
       to include the tests and sample file in a source distribution.

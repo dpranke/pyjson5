@@ -14,11 +14,12 @@
 
 """A pure Python implementation of the JSON5 configuration language."""
 
-from .lib import load, loads, dump, dumps
+from .lib import load, loads, dump, dumps, ObjectType
 from .version import VERSION
 
 
 __all__ = [
+    'ObjectType',
     'VERSION',
     'dump',
     'dumps',

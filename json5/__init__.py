@@ -19,7 +19,6 @@ from .version import VERSION
 
 
 __all__ = [
-    'ObjectType',
     'VERSION',
     'dump',
     'dumps',

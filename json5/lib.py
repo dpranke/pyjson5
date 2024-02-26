@@ -15,7 +15,7 @@
 import math
 import re
 import sys
-from typing import Any, Callable, IO, Iterable, Mapping, NoneType, Optional, \
+from typing import Any, Callable, IO, Iterable, Mapping, Optional, \
     Sequence, Set, Tuple, Union
 import unicodedata
 
@@ -32,14 +32,14 @@ else:
 def load(fp : IO,
          *,
          encoding: Optional[str] = None,
-         cls: Optional[Any] = None,
+         cls: None = None,
          object_hook: Optional[Callable[[Mapping[str, Any]], Any]] = None,
          parse_float: Optional[Callable[[str], Any]] = None,
          parse_int: Optional[Callable[[str], Any]] = None,
          parse_constant: Optional[Callable[[str], Any]] = None,
          object_pairs_hook:
             Optional[Callable[[Iterable[Tuple[str, Any]]], Any]] = None,
-         allow_duplicate_keys: Optional[bool] = True) -> Any:
+         allow_duplicate_keys: bool = True) -> Any:
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object.
 
@@ -62,14 +62,14 @@ def load(fp : IO,
 def loads(s: str,
           *,
           encoding: Optional[str] = None,
-          cls: Optional[None] = None,
+          cls: None = None,
           object_hook: Optional[Callable[[Mapping[str, Any]], Any]] = None,
           parse_float: Optional[Callable[[str], Any]] = None,
           parse_int: Optional[Callable[[str], Any]] = None,
           parse_constant: Optional[Callable[[str], Any]] = None,
           object_pairs_hook:
               Optional[Callable[[Iterable[Tuple[str, Any]]], Any]] = None,
-          allow_duplicate_keys: Optional[bool] = True):
+          allow_duplicate_keys: bool = True):
     """Deserialize ``s`` (a string containing a JSON5 document) to a Python
     object.
 
@@ -162,27 +162,21 @@ def _walk_ast(el,
     raise Exception('unknown el: ' + el)  # pragma: no cover
 
 
-ObjectType = Union[
-    NoneType, int, float, bool,
-    Sequence['ObjectType'],
-    Mapping[str, 'ObjectType']]
-
-
-def dump(obj: ObjectType,
+def dump(obj: Any,
          fp: IO,
          *,
-         skipkeys: Optional[bool] = False,
-         ensure_ascii: Optional[bool] = True,
-         check_circular: Optional[bool] =True,
-         allow_nan: Optional[bool] = True,
-         cls: Optional[None] = None,
-         indent: Optional[int] = None,
+         skipkeys: bool = False,
+         ensure_ascii: bool = True,
+         check_circular: bool =True,
+         allow_nan: bool = True,
+         cls: None = None,
+         indent: Optional[Union[int, str]] = None,
          separators: Optional[Tuple[str, str]] = None,
          default: Optional[Callable[[Any], Any]] = None,
-         sort_keys: Optional[bool] = False,
-         quote_keys: Optional[bool] = False,
-         trailing_commas: Optional[bool] = True,
-         allow_duplicate_keys: Optional[bool] = True,
+         sort_keys: bool = False,
+         quote_keys: bool = False,
+         trailing_commas: bool = True,
+         allow_duplicate_keys: bool = True,
          **kwargs):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp``,
     a ``.write()``-supporting file-like object.
@@ -228,20 +222,20 @@ def dump(obj: ObjectType,
                        allow_duplicate_keys=allow_duplicate_keys)))
 
 
-def dumps(obj: ObjectType,
+def dumps(obj: Any,
           *,
-          skipkeys: Optional[bool] = False,
-          ensure_ascii: Optional[bool] = True,
-          check_circular: Optional[bool] =True,
-          allow_nan: Optional[bool] = True,
-          cls: Optional[None] = None,
-          indent: Optional[int] = None,
+          skipkeys: bool = False,
+          ensure_ascii: bool = True,
+          check_circular: bool =True,
+          allow_nan: bool = True,
+          cls: None = None,
+          indent: Optional[Union[int, str]] = None,
           separators: Optional[Tuple[str, str]] = None,
           default: Optional[Callable[[Any], Any]] = None,
-          sort_keys: Optional[bool] = False,
-          quote_keys: Optional[bool] = False,
-          trailing_commas: Optional[bool] = True,
-          allow_duplicate_keys: Optional[bool] = True,
+          sort_keys: bool = False,
+          quote_keys: bool = False,
+          trailing_commas: bool = True,
+          allow_duplicate_keys: bool = True,
           **kwargs):
     """Serialize ``obj`` to a JSON5-formatted string.
 

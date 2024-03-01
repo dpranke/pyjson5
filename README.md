@@ -76,6 +76,9 @@ $ python3 -m twine upload dist/*
 
 ## Version History / Release Notes
 
+* v0.9.18 (2024-02-29)
+    * Add typing information to the module. This is kind of a big change,
+      but there should be no functional differences.
 * v0.9.17 (2024-02-19)
     * Move from `setup.py` to `pyproject.toml`.
     * No code changes (other than the version increasing).

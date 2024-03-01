@@ -15,6 +15,8 @@
 import math
 import re
 import sys
+from typing import Any, Callable, IO, Iterable, Mapping, Optional, \
+    Sequence, Set, Tuple, Union
 import unicodedata
 
 from .parser import Parser
@@ -27,9 +29,17 @@ else:
     long = int  # pylint: disable=redefined-builtin, invalid-name
 
 
-def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
-         parse_int=None, parse_constant=None, object_pairs_hook=None,
-         allow_duplicate_keys=True):
+def load(fp : IO,
+         *,
+         encoding: Optional[str] = None,
+         cls: None = None,
+         object_hook: Optional[Callable[[Mapping[str, Any]], Any]] = None,
+         parse_float: Optional[Callable[[str], Any]] = None,
+         parse_int: Optional[Callable[[str], Any]] = None,
+         parse_constant: Optional[Callable[[str], Any]] = None,
+         object_pairs_hook:
+            Optional[Callable[[Iterable[Tuple[str, Any]]], Any]] = None,
+         allow_duplicate_keys: bool = True) -> Any:
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object.
 
@@ -49,11 +59,19 @@ def load(fp, encoding=None, cls=None, object_hook=None, parse_float=None,
                  allow_duplicate_keys=allow_duplicate_keys)
 
 
-def loads(s, encoding=None, cls=None, object_hook=None, parse_float=None,
-          parse_int=None, parse_constant=None, object_pairs_hook=None,
-          allow_duplicate_keys=True):
-    """Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a
-    JSON5 document) to a Python object.
+def loads(s: str,
+          *,
+          encoding: Optional[str] = None,
+          cls: None = None,
+          object_hook: Optional[Callable[[Mapping[str, Any]], Any]] = None,
+          parse_float: Optional[Callable[[str], Any]] = None,
+          parse_int: Optional[Callable[[str], Any]] = None,
+          parse_constant: Optional[Callable[[str], Any]] = None,
+          object_pairs_hook:
+              Optional[Callable[[Iterable[Tuple[str, Any]]], Any]] = None,
+          allow_duplicate_keys: bool = True):
+    """Deserialize ``s`` (a string containing a JSON5 document) to a Python
+    object.
 
     Supports the same arguments as ``json.load()`` except that:
         - the `cls` keyword is ignored.
@@ -109,7 +127,10 @@ def _reject_duplicate_keys(pairs, dictify):
         keys.add(key)
     return dictify(pairs)
 
-def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
+
+def _walk_ast(el,
+              dictify: Callable[[Iterable[Tuple[str, Any]]], Any],
+              parse_float, parse_int, parse_constant):
     if el == 'None':
         return None
     if el == 'True':
@@ -141,19 +162,30 @@ def _walk_ast(el, dictify, parse_float, parse_int, parse_constant):
     raise Exception('unknown el: ' + el)  # pragma: no cover
 
 
-def dump(obj, fp, skipkeys=False, ensure_ascii=True, check_circular=True,
-         allow_nan=True, cls=None, indent=None, separators=None,
-         default=None, sort_keys=False,
-         quote_keys=False, trailing_commas=True,
-         allow_duplicate_keys=True,
+def dump(obj: Any,
+         fp: IO,
+         *,
+         skipkeys: bool = False,
+         ensure_ascii: bool = True,
+         check_circular: bool =True,
+         allow_nan: bool = True,
+         cls: None = None,
+         indent: Optional[Union[int, str]] = None,
+         separators: Optional[Tuple[str, str]] = None,
+         default: Optional[Callable[[Any], Any]] = None,
+         sort_keys: bool = False,
+         quote_keys: bool = False,
+         trailing_commas: bool = True,
+         allow_duplicate_keys: bool = True,
          **kwargs):
-    """Serialize ``obj`` to a JSON5-formatted stream to ``fp`` (a ``.write()``-
-    supporting file-like object).
+    """Serialize ``obj`` to a JSON5-formatted stream to ``fp``,
+    a ``.write()``-supporting file-like object.
 
     Supports the same arguments as ``json.dump()``, except that:
 
     - The ``cls`` keyword is not supported.
-    - The ``encoding`` keyword is ignored; Unicode strings are always written.
+    - The ``encoding`` keyword is ignored; Unicode strings are always
+      written.
     - By default, object keys that are legal identifiers are not quoted;
       if you pass ``quote_keys=True``, they will be.
     - By default, if lists and objects span multiple lines of output (i.e.,
@@ -165,17 +197,17 @@ def dump(obj, fp, skipkeys=False, ensure_ascii=True, check_circular=True,
       modules behavior and produce malformed JSON if you mix keys of
       different types that have the same converted value; e.g.,
       ``{1: "foo", "1": "bar"}`` produces '{"1": "foo", "1": "bar"}', an
-      object with duplicated keys. If you pass ``allow_duplicate_keys=False``,
-      an exception will be raised instead.
-    - If `quote_keys` is true, then keys of objects will be enclosed in quotes,
-      as in regular JSON. Otheriwse, keys will not be enclosed in quotes unless
-      they contain whitespace.
+      object with duplicated keys. If you pass
+      ``allow_duplicate_keys=False``, an exception will be raised instead.
+    - If `quote_keys` is true, then keys of objects will be enclosed in
+      quotes, as in regular JSON. Otherwise, keys will not be enclosed in
+      quotes unless they contain whitespace.
     - If `trailing_commas` is false, then commas will not be inserted after
-      the final elements of objects and arrays, as in regular JSON. Otherwise,
-      such commas will be inserted.
-    - If `allow_duplicate_keys` is false, then only the last entry with a given
-      key will be written. Otherwise, all entries with the same key will be
-      written.
+      the final elements of objects and arrays, as in regular JSON.
+      Otherwise, such commas will be inserted.
+    - If `allow_duplicate_keys` is false, then only the last entry with a
+      given key will be written. Otherwise, all entries with the same key
+      will be written.
 
     Calling ``dump(obj, fp, quote_keys=True, trailing_commas=False, \
                    allow_duplicate_keys=True)``
@@ -190,17 +222,28 @@ def dump(obj, fp, skipkeys=False, ensure_ascii=True, check_circular=True,
                        allow_duplicate_keys=allow_duplicate_keys)))
 
 
-def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
-          allow_nan=True, cls=None, indent=None, separators=None,
-          default=None, sort_keys=False,
-          quote_keys=False, trailing_commas=True, allow_duplicate_keys=True,
+def dumps(obj: Any,
+          *,
+          skipkeys: bool = False,
+          ensure_ascii: bool = True,
+          check_circular: bool =True,
+          allow_nan: bool = True,
+          cls: None = None,
+          indent: Optional[Union[int, str]] = None,
+          separators: Optional[Tuple[str, str]] = None,
+          default: Optional[Callable[[Any], Any]] = None,
+          sort_keys: bool = False,
+          quote_keys: bool = False,
+          trailing_commas: bool = True,
+          allow_duplicate_keys: bool = True,
           **kwargs):
-    """Serialize ``obj`` to a JSON5-formatted ``str``.
+    """Serialize ``obj`` to a JSON5-formatted string.
 
     Supports the same arguments as ``json.dumps()``, except that:
 
     - The ``cls`` keyword is not supported.
-    - The ``encoding`` keyword is ignored; Unicode strings are always written.
+    - The ``encoding`` keyword is ignored; Unicode strings are always
+      written.
     - By default, object keys that are legal identifiers are not quoted;
       if you pass ``quote_keys=True``, they will be.
     - By default, if lists and objects span multiple lines of output (i.e.,
@@ -212,17 +255,17 @@ def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
       modules behavior and produce malformed JSON if you mix keys of
       different types that have the same converted value; e.g.,
       ``{1: "foo", "1": "bar"}`` produces '{"1": "foo", "1": "bar"}', an
-      object with duplicated keys. If you pass ``allow_duplicate_keys=False``,
-      an exception will be raised instead.
-    - If `quote_keys` is true, then keys of objects will be enclosed in quotes,
-      as in regular JSON. Otheriwse, keys will not be enclosed in quotes unless
-      they contain whitespace.
+      object with duplicated keys. If you pass
+      ``allow_duplicate_keys=False``, an exception will be raised instead.
+    - If `quote_keys` is true, then keys of objects will be enclosed
+      in quotes, as in regular JSON. Otheriwse, keys will not be enclosed
+      in quotes unless they contain whitespace.
     - If `trailing_commas` is false, then commas will not be inserted after
-      the final elements of objects and arrays, as in regular JSON. Otherwise,
-      such commas will be inserted.
-    - If `allow_duplicate_keys` is false, then only the last entry with a given
-      key will be written. Otherwise, all entries with the same key will be
-      written.
+      the final elements of objects and arrays, as in regular JSON.
+      Otherwise, such commas will be inserted.
+    - If `allow_duplicate_keys` is false, then only the last entry with a
+      given key will be written. Otherwise, all entries with the same key
+      will be written.
 
     Calling ``dumps(obj, quote_keys=True, trailing_commas=False, \
                     allow_duplicate_keys=True)``
@@ -240,7 +283,7 @@ def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
     default = default or _raise_type_error
 
     if check_circular:
-        seen = set()
+        seen: Optional[Set[int]] = set()
     else:
         seen = None
 
@@ -257,7 +300,9 @@ def dumps(obj, skipkeys=False, ensure_ascii=True, check_circular=True,
 def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
            separators, default, sort_keys,
            quote_keys, trailing_commas, allow_duplicate_keys,
-           seen, level, is_key):
+           seen: Optional[Set[int]],
+           level: int,
+           is_key: bool):
     if obj is True:
         s = u'true'
     elif obj is False:

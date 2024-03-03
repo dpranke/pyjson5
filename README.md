@@ -76,6 +76,13 @@ $ python3 -m twine upload dist/*
 
 ## Version History / Release Notes
 
+* v0.9.19 (2024-03-03)
+    * Replaced the benchmarking data files that came from chromium.org with
+      three files obtained from other datasets on GitHub. Since this repo
+      is vendored into the chromium/src repo it was occasionally confusing
+      people who thought the data was actually used for non-benchmarking
+      purposes and thus updating it for whatever reason.
+    * No code changes.
 * v0.9.18 (2024-02-29)
     * Add typing information to the module. This is kind of a big change,
       but there should be no functional differences.

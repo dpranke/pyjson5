@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright 2017 Google Inc. All rights reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from __future__ import print_function
 
 import argparse
 import json
@@ -30,10 +28,9 @@ import json5  # pylint: disable=wrong-import-position
 
 
 ALL_BENCHMARKS = (
-    'ios-simulator.json',
-    'mb_config.json',
-    'chromium.linux.json',
-    'chromium.perf.json',
+    '64KB-min.json',
+    'bitly-usa-gov.json',
+    'twitter.json',
 )
 
 

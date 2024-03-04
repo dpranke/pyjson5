@@ -139,6 +139,8 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
     def test_version(self):
         self.check_cmd(['--version'], returncode=0,
                        out=str(json5.VERSION) + '\n')
+        self.check_cmd(['--version'], returncode=0,
+                       out=str(json5.__version__) + '\n')
 
 
 if __name__ == '__main__':  # pragma: no cover

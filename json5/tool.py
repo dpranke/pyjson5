@@ -31,7 +31,7 @@ import sys
 from . import arg_parser
 from . import lib
 from .host import Host
-from .version import VERSION
+from .version import __version__
 
 
 def main(argv=None, host=None):
@@ -72,7 +72,7 @@ def main(argv=None, host=None):
         return parser.exit_status
 
     if args.version:
-        host.print_(VERSION)
+        host.print_(__version__)
         return 0
 
     if args.cmd:

@@ -37,4 +37,4 @@ dev = ["hypothesis"]
 pyjson5 = "json5.tool:main"
 
 [tool.setuptools.dynamic]
-version = {attr = "json5.VERSION"}
+version = {attr = "json5.__version__"}

@@ -15,10 +15,11 @@
 """A pure Python implementation of the JSON5 configuration language."""
 
 from .lib import load, loads, dump, dumps
-from .version import VERSION
+from .version import __version__, VERSION
 
 
 __all__ = [
+    '__version__',
     'VERSION',
     'dump',
     'dumps',

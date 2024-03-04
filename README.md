@@ -65,7 +65,7 @@ To run the tests, setup a venv and install the required dependencies with
 $ python3 -m pip install build twine
 
 # Build the distribution packages in //dist
-# (a universal wheel and a tarball by default)
+# (a wheel and a tarball by default)
 $ python3 -m build
 
 # Upload the packages
@@ -76,6 +76,11 @@ $ python3 -m twine upload dist/*
 
 ## Version History / Release Notes
 
+* v0.9.20 (2024-03-03)
+    * Added `json5.__version__` in addition to `json5.VERSION`.
+    * More packaging modernization (no more setup.{cfg,py} files).
+    * Mark Python3.12 as supported in project.classifiers.
+    * Updated the `//run` script to use python3.
 * v0.9.19 (2024-03-03)
     * Replaced the benchmarking data files that came from chromium.org with
       three files obtained from other datasets on GitHub. Since this repo

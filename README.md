@@ -76,6 +76,10 @@ $ python3 -m twine upload dist/*
 
 ## Version History / Release Notes
 
+* v0.9.22 (2024-03-06)
+    * Attempt to fix the GitHub CI configuration now that setup.py
+      is gone. Also, test on 3.12 instead of 3.11.
+    * No code changes.
 * v0.9.21 (2024-03-06)
     * Moved the benchmarks/*.json data files' license information
       to //LICENSE to (hopefully) make the Google linter happy.

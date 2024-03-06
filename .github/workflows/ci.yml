@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.8, 3.11]
+        python-version: [3.8, 3.12]
 
     steps:
     - uses: actions/checkout@v2
@@ -21,4 +21,4 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install -e .[dev]
     - name: Run tests
-      run: python setup.py test
+      run: python run tests

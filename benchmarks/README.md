@@ -8,7 +8,7 @@ running MacOS 14.2.1, JSON5 is from 800-1200x slower than JSON.
 
 The three datasets come from MIT-licensed data grabbed off the web on
 Mar 3, 2024 around 21:30 GMT. Their accompanying licenses are contained
-in the [LICENSE](license.md) file.
+in the [LICENSE](../LICENSE) file.
 
 [64KB-min.json](64KB-min.json) was retrieved from 
 <https://raw.githubusercontent.com/MicrosoftEdge/Demos/e3b81daee151a225c1d8f24bf82d31c464b0f737/json-dummy-data/64KB-min.json>.

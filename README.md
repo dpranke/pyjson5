@@ -76,6 +76,9 @@ $ python3 -m twine upload dist/*
 
 ## Version History / Release Notes
 
+* v0.9.21 (2024-03-06)
+    * Moved the benchmarks/*.json data files' license information
+      to //LICENSE to (hopefully) make the Google linter happy.
 * v0.9.20 (2024-03-03)
     * Added `json5.__version__` in addition to `json5.VERSION`.
     * More packaging modernization (no more setup.{cfg,py} files).

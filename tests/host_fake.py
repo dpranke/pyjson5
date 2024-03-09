@@ -13,14 +13,9 @@
 # limitations under the License.
 
 import io
-import sys
-
-if sys.version_info[0] < 3:
-    # pylint: disable=redefined-builtin, invalid-name
-    str = unicode
 
 
-class FakeHost(object):
+class FakeHost:
     # "too many instance attributes" pylint: disable=R0902
     # "redefining built-in" pylint: disable=W0622
     # "unused arg" pylint: disable=W0613
@@ -95,9 +90,9 @@ class FakeHost(object):
         self.dirs.add(self.last_tmpdir)
         return self.last_tmpdir
 
-    def print_(self, msg=u'', end=u'\n', stream=None):
+    def print_(self, msg='', end='\n', stream=None):
         stream = stream or self.stdout
-        stream.write(str(msg) + str(end))
+        stream.write(msg + end)
         stream.flush()
 
     def read_text_file(self, *comps):

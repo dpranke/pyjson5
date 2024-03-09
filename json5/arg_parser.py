@@ -26,7 +26,7 @@ class ArgumentParser(argparse.ArgumentParser):
         kwargs['prog'] = prog
         kwargs['description'] = desc
         kwargs['formatter_class'] = argparse.RawDescriptionHelpFormatter
-        super(ArgumentParser, self).__init__(**kwargs)
+        super().__init__(**kwargs)
         self._host = host
         self.exit_status = None
         self.add_argument('-V', '--version', action='store_true',
@@ -34,8 +34,7 @@ class ArgumentParser(argparse.ArgumentParser):
 
     def parse_args(self, args=None, namespace=None):
         try:
-            rargs = super(ArgumentParser, self).parse_args(args=args,
-                                                           namespace=namespace)
+            rargs = super().parse_args(args=args, namespace=namespace)
         except _Bailout:
             return None
 

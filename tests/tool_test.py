@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys
 import unittest
 
 import json5
@@ -21,12 +20,7 @@ import json5.tool
 from .host_fake import FakeHost
 
 
-if sys.version_info[0] < 3:
-    # pylint: disable=redefined-builtin, invalid-name
-    str = unicode
-
-
-class CheckMixin(object):
+class CheckMixin:
     def _write_files(self, host, files):
         for path, contents in list(files.items()):
             host.write_text_file(path, contents)
@@ -52,7 +46,7 @@ class CheckMixin(object):
         return actual_ret, actual_out, actual_err
 
 
-class UnitTestMixin(object):
+class UnitTestMixin:
     def _host(self):
         return FakeHost()
 
@@ -81,59 +75,59 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
 
     def test_inline_expression(self):
         self.check_cmd(['-c', '{foo: 1}'], returncode=0,
-                       out=u'{\n    foo: 1,\n}\n')
+                       out='{\n    foo: 1,\n}\n')
 
     def test_indent(self):
         self.check_cmd(['--indent=None', '-c', '[1]'], returncode=0,
-                       out=u'[1]\n')
+                       out='[1]\n')
         self.check_cmd(['--indent=2', '-c', '[1]'], returncode=0,
-                       out=u'[\n  1,\n]\n')
+                       out='[\n  1,\n]\n')
         self.check_cmd(['--indent=  ', '-c', '[1]'], returncode=0,
-                       out=u'[\n  1,\n]\n')
+                       out='[\n  1,\n]\n')
 
     def test_as_json(self):
         self.check_cmd(['--as-json', '-c', '{foo: 1}'], returncode=0,
-                       out=u'{\n    "foo": 1\n}\n')
+                       out='{\n    "foo": 1\n}\n')
 
     def test_quote_keys(self):
         self.check_cmd(['--quote-keys', '-c', '{foo: 1}'], returncode=0,
-                       out=u'{\n    "foo": 1,\n}\n')
+                       out='{\n    "foo": 1,\n}\n')
 
     def test_no_quote_keys(self):
         self.check_cmd(['--no-quote-keys', '-c', '{foo: 1}'], returncode=0,
-                       out=u'{\n    foo: 1,\n}\n')
+                       out='{\n    foo: 1,\n}\n')
 
     def test_keys_are_quoted_by_default(self):
         self.check_cmd(['-c', '{foo: 1}'], returncode=0,
-                       out=u'{\n    foo: 1,\n}\n')
+                       out='{\n    foo: 1,\n}\n')
 
     def test_read_command(self):
-        self.check_cmd(['-c', '"foo"'], returncode=0, out=u'"foo"\n')
+        self.check_cmd(['-c', '"foo"'], returncode=0, out='"foo"\n')
 
     def test_read_from_stdin(self):
-        self.check_cmd([], stdin='"foo"\n', returncode=0, out=u'"foo"\n')
+        self.check_cmd([], stdin='"foo"\n', returncode=0, out='"foo"\n')
 
     def test_read_from_a_file(self):
         files = {
             'foo.json5': '"foo"\n',
         }
-        self.check_cmd(['foo.json5'], files=files, returncode=0, out=u'"foo"\n')
+        self.check_cmd(['foo.json5'], files=files, returncode=0, out='"foo"\n')
 
     def test_trailing_commas(self):
         self.check_cmd(['--trailing-commas', '-c', '{foo: 1}'], returncode=0,
-                       out=u'{\n    foo: 1,\n}\n')
+                       out='{\n    foo: 1,\n}\n')
 
     def test_no_trailing_commas(self):
         self.check_cmd(['--no-trailing-commas', '-c', '{foo: 1}'], returncode=0,
-                       out=u'{\n    foo: 1\n}\n')
+                       out='{\n    foo: 1\n}\n')
 
     def test_trailing_commas_are_there_by_default(self):
         self.check_cmd(['-c', '{foo: 1}'], returncode=0,
-                       out=u'{\n    foo: 1,\n}\n')
+                       out='{\n    foo: 1,\n}\n')
 
     def test_unknown_switch(self):
         self.check_cmd(['--unknown-switch'], returncode=2,
-                       err=u'json5: error: unrecognized arguments: '
+                       err='json5: error: unrecognized arguments: '
                        '--unknown-switch\n\n')
 
     def test_version(self):

@@ -18,12 +18,7 @@ import sys
 import tempfile
 
 
-if sys.version_info[0] < 3:
-    # pylint: disable=redefined-builtin, invalid-name
-    str = unicode
-
-
-class Host(object):
+class Host:
     def __init__(self):
         self.stdin = sys.stdin
         self.stdout = sys.stdout
@@ -41,7 +36,7 @@ class Host(object):
     def mkdtemp(self, **kwargs):
         return tempfile.mkdtemp(**kwargs)
 
-    def print_(self, msg=u'', end=u'\n', stream=None):
+    def print_(self, msg='', end='\n', stream=None):
         stream = stream or self.stdout
         stream.write(str(msg) + end)
         stream.flush()

@@ -1,18 +1,9 @@
 # pylint: disable=line-too-long,unnecessary-lambda
 
-import sys
 
-
-if sys.version_info[0] < 3:
-    # pylint: disable=redefined-builtin,invalid-name
-    chr = unichr
-    range = xrange
-    str = unicode
-
-
-class Parser(object):
+class Parser:
     def __init__(self, msg, fname):
-        self.msg = str(msg)
+        self.msg = msg
         self.end = len(self.msg)
         self.fname = fname
         self.val = None
@@ -193,10 +184,10 @@ class Parser(object):
         self._ch('\f')
 
     def _ws__c6_(self):
-        self._ch(u'\xa0')
+        self._ch('\xa0')
 
     def _ws__c7_(self):
-        self._ch(u'\ufeff')
+        self._ch('\ufeff')
 
     def _ws__c8_(self):
         self._push('ws__c8')
@@ -235,10 +226,10 @@ class Parser(object):
         self._ch('\n')
 
     def _eol__c3_(self):
-        self._ch(u'\u2028')
+        self._ch('\u2028')
 
     def _eol__c4_(self):
-        self._ch(u'\u2029')
+        self._ch('\u2029')
 
     def _comment_(self):
         self._choose([self._comment__c0_, self._comment__c1_])
@@ -727,10 +718,10 @@ class Parser(object):
         self._seq([self._bslash_, self._unicode_esc_])
 
     def _id_continue__c8_(self):
-        self._ch(u'\u200c')
+        self._ch('\u200c')
 
     def _id_continue__c9_(self):
-        self._ch(u'\u200d')
+        self._ch('\u200d')
 
     def _num_literal_(self):
         self._choose([self._num_literal__c0_, self._num_literal__c1_,

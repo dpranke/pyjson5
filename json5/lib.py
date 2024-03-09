@@ -14,19 +14,11 @@
 
 import math
 import re
-import sys
 from typing import Any, Callable, IO, Iterable, Mapping, Optional, \
     Sequence, Set, Tuple, Union
 import unicodedata
 
 from .parser import Parser
-
-if sys.version_info[0] < 3:
-    str_types = (str, unicode)
-    str = unicode  # pylint: disable=redefined-builtin, invalid-name
-else:
-    str_types = (str,)
-    long = int  # pylint: disable=redefined-builtin, invalid-name
 
 
 def load(fp : IO,
@@ -83,11 +75,7 @@ def loads(s: str,
 
     assert cls is None, 'Custom decoders are not supported'
 
-    if sys.version_info[0] < 3:
-        decodable_type = type('')
-    else:
-        decodable_type = type(b'')
-    if isinstance(s, decodable_type):
+    if isinstance(s, bytes):
         encoding = encoding or 'utf-8'
         s = s.decode(encoding)
 
@@ -214,12 +202,12 @@ def dump(obj: Any,
     should produce exactly the same output as ``json.dump(obj, fp).``
     """
 
-    fp.write(str(dumps(obj=obj, skipkeys=skipkeys, ensure_ascii=ensure_ascii,
-                       check_circular=check_circular, allow_nan=allow_nan,
-                       cls=cls, indent=indent, separators=separators,
-                       default=default, sort_keys=sort_keys,
-                       quote_keys=quote_keys, trailing_commas=trailing_commas,
-                       allow_duplicate_keys=allow_duplicate_keys)))
+    fp.write(dumps(obj=obj, skipkeys=skipkeys, ensure_ascii=ensure_ascii,
+                   check_circular=check_circular, allow_nan=allow_nan,
+                   cls=cls, indent=indent, separators=separators,
+                   default=default, sort_keys=sort_keys,
+                   quote_keys=quote_keys, trailing_commas=trailing_commas,
+                   allow_duplicate_keys=allow_duplicate_keys))
 
 
 def dumps(obj: Any,
@@ -276,9 +264,9 @@ def dumps(obj: Any,
 
     if separators is None:
         if indent is None:
-            separators = (u', ', u': ')
+            separators = (', ', ': ')
         else:
-            separators = (u',', u': ')
+            separators = (',', ': ')
 
     default = default or _raise_type_error
 
@@ -304,27 +292,27 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
            level: int,
            is_key: bool):
     if obj is True:
-        s = u'true'
+        s = 'true'
     elif obj is False:
-        s = u'false'
+        s = 'false'
     elif obj is None:
-        s = u'null'
+        s = 'null'
     elif obj == float('inf'):
         if allow_nan:
-            s = u'Infinity'
+            s = 'Infinity'
         else:
             raise ValueError()
     elif obj == float('-inf'):
         if allow_nan:
-            s = u'-Infinity'
+            s = '-Infinity'
         else:
             raise ValueError()
     elif isinstance(obj, float) and math.isnan(obj):
         if allow_nan:
-            s = u'NaN'
+            s = 'NaN'
         else:
             raise ValueError()
-    elif isinstance(obj, str_types):
+    elif isinstance(obj, str):
         if (is_key and _is_ident(obj) and not quote_keys
             and not _is_reserved_word(obj)):
             return True, obj
@@ -414,14 +402,14 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
                quote_keys, trailing_commas, allow_duplicate_keys,
                seen, level, item_sep, kv_sep, indent_str, end_str):
     if not obj:
-        return u'{}'
+        return '{}'
 
     if sort_keys:
         keys = sorted(obj.keys())
     else:
         keys = obj.keys()
 
-    s = u'{' + indent_str
+    s = '{' + indent_str
 
     num_items_added = 0
     new_keys = set()
@@ -450,7 +438,7 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
         elif not skipkeys:
             raise TypeError('invalid key %s' % repr(key))
 
-    s += end_str + u'}'
+    s += end_str + '}'
     return s
 
 
@@ -459,14 +447,14 @@ def _dump_array(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
                 quote_keys, trailing_commas, allow_duplicate_keys,
                 seen, level, item_sep, indent_str, end_str):
     if not obj:
-        return u'[]'
-    return (u'[' + indent_str +
+        return '[]'
+    return ('[' + indent_str +
             item_sep.join([_dumps(el, skipkeys, ensure_ascii, check_circular,
                                   allow_nan, indent, separators, default,
                                   sort_keys, quote_keys, trailing_commas,
                                   allow_duplicate_keys,
                                   seen, level, False)[1] for el in obj]) +
-            end_str + u']')
+            end_str + ']')
 
 
 def _dump_str(obj, ensure_ascii):
@@ -476,9 +464,9 @@ def _dump_str(obj, ensure_ascii):
             ret.append('\\\\')
         elif ch == '"':
             ret.append('\\"')
-        elif ch == u'\u2028':
+        elif ch == '\u2028':
             ret.append('\\u2028')
-        elif ch == u'\u2029':
+        elif ch == '\u2029':
             ret.append('\\u2029')
         elif ch == '\n':
             ret.append('\\n')
@@ -507,15 +495,14 @@ def _dump_str(obj, ensure_ascii):
                 high = 0xd800 + (val >> 10)
                 low = 0xdc00 + (val & 0x3ff)
                 ret.append('\\u%04x\\u%04x' % (high, low))
-    return u''.join(ret) + '"'
+    return ''.join(ret) + '"'
 
 
 def _is_ident(k):
-    k = str(k)
-    if not k or not _is_id_start(k[0]) and k[0] not in (u'$', u'_'):
+    if not k or not _is_id_start(k[0]) and k[0] not in ('$', '_'):
         return False
     for ch in k[1:]:
-        if not _is_id_continue(ch) and ch not in (u'$', u'_'):
+        if not _is_id_continue(ch) and ch not in ('$', '_'):
             return False
     return True
 

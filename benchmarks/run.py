@@ -35,8 +35,9 @@ THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--pure', action='store_true')
-    parser.add_argument('-n', '--num-iterations', default=DEFAULT_ITERATIONS,
-                        type=int)
+    parser.add_argument(
+        '-n', '--num-iterations', default=DEFAULT_ITERATIONS, type=int
+    )
     parser.add_argument('benchmarks', nargs='*')
     args = parser.parse_args()
     if not args.benchmarks:
@@ -46,7 +47,6 @@ def main():
     for f in args.benchmarks:
         with open(f, encoding='utf-8') as fp:
             file_contents.append(fp.read())
-
 
     # json.decoder.c_scanstring = py_scanstring
     def py_maker(*args, **kwargs):
@@ -81,20 +81,28 @@ def main():
         if json5_time and json_time:
             if json5_time > json_time:
                 avg = json5_time / json_time
-                print(f"{fname:-%20s}: JSON was {avg:5.1f}x faster "
-                      f"({json_time:.6f} to {json5_time:.6fs}")
+                print(
+                    f'{fname:-%20s}: JSON was {avg:5.1f}x faster '
+                    f'({json_time:.6f} to {json5_time:.6fs}'
+                )
             else:
                 avg = json_time / json5_time
-                print(f"{fname:-%20s}: JSON5 was {avg:5.1f}x faster "
-                      f"({json5_time:.6f} to {json_time:.6fs}")
+                print(
+                    f'{fname:-%20s}: JSON5 was {avg:5.1f}x faster '
+                    f'({json5_time:.6f} to {json_time:.6fs}'
+                )
         elif json5_time:
-            print(f"{fname:-20s}: JSON5 took {json5_time:.6f} secs, "
-                  f"JSON was too fast to measure")
+            print(
+                f'{fname:-20s}: JSON5 took {json5_time:.6f} secs, '
+                f'JSON was too fast to measure'
+            )
         elif json_time:
-            print(f"{fname:-20s}: JSON took {json_time:.6f} secs, "
-                  f"JSON5 was too fast to measure")
+            print(
+                f'{fname:-20s}: JSON took {json_time:.6f} secs, '
+                f'JSON5 was too fast to measure'
+            )
         else:
-            print(f"{fname:-20s}: both were too fast to measure")
+            print(f'{fname:-20s}: both were too fast to measure')
 
     return 0
 

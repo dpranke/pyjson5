@@ -29,8 +29,12 @@ class ArgumentParser(argparse.ArgumentParser):
         super().__init__(**kwargs)
         self._host = host
         self.exit_status = None
-        self.add_argument('-V', '--version', action='store_true',
-                          help='print the version and exit')
+        self.add_argument(
+            '-V',
+            '--version',
+            action='store_true',
+            help='print the version and exit',
+        )
 
     def parse_args(self, args=None, namespace=None):
         try:
@@ -49,8 +53,7 @@ class ArgumentParser(argparse.ArgumentParser):
     def error(self, message, bailout=True):
         self.exit(2, f'{self.prog}: error: {message}\n', bailout=bailout)
 
-    def exit(self, status=0, message=None,
-             bailout=True):
+    def exit(self, status=0, message=None, bailout=True):
         self.exit_status = status
         if message:
             self._print_message(message, file=self._host.stderr)

@@ -17,6 +17,7 @@ import unittest
 
 from json5.host import Host
 
+
 class HostTest(unittest.TestCase):
     maxDiff = None
 

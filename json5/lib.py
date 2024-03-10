@@ -14,24 +14,36 @@
 
 import math
 import re
-from typing import Any, Callable, IO, Iterable, Mapping, Optional, \
-    Set, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    IO,
+    Iterable,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 import unicodedata
 
 from .parser import Parser
 
 
-def load(fp : IO,
-         *,
-         encoding: Optional[str] = None,
-         cls: None = None,
-         object_hook: Optional[Callable[[Mapping[str, Any]], Any]] = None,
-         parse_float: Optional[Callable[[str], Any]] = None,
-         parse_int: Optional[Callable[[str], Any]] = None,
-         parse_constant: Optional[Callable[[str], Any]] = None,
-         object_pairs_hook:
-            Optional[Callable[[Iterable[Tuple[str, Any]]], Any]] = None,
-         allow_duplicate_keys: bool = True) -> Any:
+def load(
+    fp: IO,
+    *,
+    encoding: Optional[str] = None,
+    cls: None = None,
+    object_hook: Optional[Callable[[Mapping[str, Any]], Any]] = None,
+    parse_float: Optional[Callable[[str], Any]] = None,
+    parse_int: Optional[Callable[[str], Any]] = None,
+    parse_constant: Optional[Callable[[str], Any]] = None,
+    object_pairs_hook: Optional[
+        Callable[[Iterable[Tuple[str, Any]]], Any]
+    ] = None,
+    allow_duplicate_keys: bool = True,
+) -> Any:
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object.
 
@@ -44,24 +56,33 @@ def load(fp : IO,
     """
 
     s = fp.read()
-    return loads(s, encoding=encoding, cls=cls, object_hook=object_hook,
-                 parse_float=parse_float, parse_int=parse_int,
-                 parse_constant=parse_constant,
-                 object_pairs_hook=object_pairs_hook,
-                 allow_duplicate_keys=allow_duplicate_keys)
+    return loads(
+        s,
+        encoding=encoding,
+        cls=cls,
+        object_hook=object_hook,
+        parse_float=parse_float,
+        parse_int=parse_int,
+        parse_constant=parse_constant,
+        object_pairs_hook=object_pairs_hook,
+        allow_duplicate_keys=allow_duplicate_keys,
+    )
 
 
-def loads(s: str,
-          *,
-          encoding: Optional[str] = None,
-          cls: None = None,
-          object_hook: Optional[Callable[[Mapping[str, Any]], Any]] = None,
-          parse_float: Optional[Callable[[str], Any]] = None,
-          parse_int: Optional[Callable[[str], Any]] = None,
-          parse_constant: Optional[Callable[[str], Any]] = None,
-          object_pairs_hook:
-              Optional[Callable[[Iterable[Tuple[str, Any]]], Any]] = None,
-          allow_duplicate_keys: bool = True):
+def loads(
+    s: str,
+    *,
+    encoding: Optional[str] = None,
+    cls: None = None,
+    object_hook: Optional[Callable[[Mapping[str, Any]], Any]] = None,
+    parse_float: Optional[Callable[[str], Any]] = None,
+    parse_int: Optional[Callable[[str], Any]] = None,
+    parse_constant: Optional[Callable[[str], Any]] = None,
+    object_pairs_hook: Optional[
+        Callable[[Iterable[Tuple[str, Any]]], Any]
+    ] = None,
+    allow_duplicate_keys: bool = True,
+):
     """Deserialize ``s`` (a string containing a JSON5 document) to a Python
     object.
 
@@ -92,6 +113,7 @@ def loads(s: str,
     if object_pairs_hook:
         dictify = object_pairs_hook
     elif object_hook:
+
         def dictify(pairs):
             return object_hook(dict(pairs))
     else:
@@ -99,6 +121,7 @@ def loads(s: str,
 
     if not allow_duplicate_keys:
         _orig_dictify = dictify
+
         def dictify(pairs):
             return _reject_duplicate_keys(pairs, _orig_dictify)
 
@@ -118,9 +141,13 @@ def _reject_duplicate_keys(pairs, dictify):
     return dictify(pairs)
 
 
-def _walk_ast(el,
-              dictify: Callable[[Iterable[Tuple[str, Any]]], Any],
-              parse_float, parse_int, parse_constant):
+def _walk_ast(
+    el,
+    dictify: Callable[[Iterable[Tuple[str, Any]]], Any],
+    parse_float,
+    parse_int,
+    parse_constant,
+):
     if el == 'None':
         return None
     if el == 'True':
@@ -141,32 +168,37 @@ def _walk_ast(el,
     if ty == 'object':
         pairs = []
         for key, val_expr in v:
-            val = _walk_ast(val_expr, dictify, parse_float, parse_int,
-                            parse_constant)
+            val = _walk_ast(
+                val_expr, dictify, parse_float, parse_int, parse_constant
+            )
             pairs.append((key, val))
         return dictify(pairs)
     if ty == 'array':
-        return [_walk_ast(el, dictify, parse_float, parse_int, parse_constant)
-                for el in v]
+        return [
+            _walk_ast(el, dictify, parse_float, parse_int, parse_constant)
+            for el in v
+        ]
     raise ValueError('unknown el: ' + el)  # pragma: no cover
 
 
-def dump(obj: Any,
-         fp: IO,
-         *,
-         skipkeys: bool = False,
-         ensure_ascii: bool = True,
-         check_circular: bool =True,
-         allow_nan: bool = True,
-         cls: None = None,
-         indent: Optional[Union[int, str]] = None,
-         separators: Optional[Tuple[str, str]] = None,
-         default: Optional[Callable[[Any], Any]] = None,
-         sort_keys: bool = False,
-         quote_keys: bool = False,
-         trailing_commas: bool = True,
-         allow_duplicate_keys: bool = True,
-         **kwargs):
+def dump(
+    obj: Any,
+    fp: IO,
+    *,
+    skipkeys: bool = False,
+    ensure_ascii: bool = True,
+    check_circular: bool = True,
+    allow_nan: bool = True,
+    cls: None = None,
+    indent: Optional[Union[int, str]] = None,
+    separators: Optional[Tuple[str, str]] = None,
+    default: Optional[Callable[[Any], Any]] = None,
+    sort_keys: bool = False,
+    quote_keys: bool = False,
+    trailing_commas: bool = True,
+    allow_duplicate_keys: bool = True,
+    **kwargs,
+):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp``,
     a ``.write()``-supporting file-like object.
 
@@ -204,29 +236,42 @@ def dump(obj: Any,
     """
 
     del kwargs
-    fp.write(dumps(obj=obj, skipkeys=skipkeys, ensure_ascii=ensure_ascii,
-                   check_circular=check_circular, allow_nan=allow_nan,
-                   cls=cls, indent=indent, separators=separators,
-                   default=default, sort_keys=sort_keys,
-                   quote_keys=quote_keys, trailing_commas=trailing_commas,
-                   allow_duplicate_keys=allow_duplicate_keys))
+    fp.write(
+        dumps(
+            obj=obj,
+            skipkeys=skipkeys,
+            ensure_ascii=ensure_ascii,
+            check_circular=check_circular,
+            allow_nan=allow_nan,
+            cls=cls,
+            indent=indent,
+            separators=separators,
+            default=default,
+            sort_keys=sort_keys,
+            quote_keys=quote_keys,
+            trailing_commas=trailing_commas,
+            allow_duplicate_keys=allow_duplicate_keys,
+        )
+    )
 
 
-def dumps(obj: Any,
-          *,
-          skipkeys: bool = False,
-          ensure_ascii: bool = True,
-          check_circular: bool =True,
-          allow_nan: bool = True,
-          cls: None = None,
-          indent: Optional[Union[int, str]] = None,
-          separators: Optional[Tuple[str, str]] = None,
-          default: Optional[Callable[[Any], Any]] = None,
-          sort_keys: bool = False,
-          quote_keys: bool = False,
-          trailing_commas: bool = True,
-          allow_duplicate_keys: bool = True,
-          **kwargs):
+def dumps(
+    obj: Any,
+    *,
+    skipkeys: bool = False,
+    ensure_ascii: bool = True,
+    check_circular: bool = True,
+    allow_nan: bool = True,
+    cls: None = None,
+    indent: Optional[Union[int, str]] = None,
+    separators: Optional[Tuple[str, str]] = None,
+    default: Optional[Callable[[Any], Any]] = None,
+    sort_keys: bool = False,
+    quote_keys: bool = False,
+    trailing_commas: bool = True,
+    allow_duplicate_keys: bool = True,
+    **kwargs,
+):
     """Serialize ``obj`` to a JSON5-formatted string.
 
     Supports the same arguments as ``json.dumps()``, except that:
@@ -281,19 +326,43 @@ def dumps(obj: Any,
     level = 1
     is_key = False
 
-    _, v = _dumps(obj, skipkeys, ensure_ascii, check_circular,
-                  allow_nan, indent, separators, default, sort_keys,
-                  quote_keys, trailing_commas, allow_duplicate_keys,
-                  seen, level, is_key)
+    _, v = _dumps(
+        obj,
+        skipkeys,
+        ensure_ascii,
+        check_circular,
+        allow_nan,
+        indent,
+        separators,
+        default,
+        sort_keys,
+        quote_keys,
+        trailing_commas,
+        allow_duplicate_keys,
+        seen,
+        level,
+        is_key,
+    )
     return v
 
 
-def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
-           separators, default, sort_keys,
-           quote_keys, trailing_commas, allow_duplicate_keys,
-           seen: Optional[Set[int]],
-           level: int,
-           is_key: bool):
+def _dumps(
+    obj,
+    skipkeys,
+    ensure_ascii,
+    check_circular,
+    allow_nan,
+    indent,
+    separators,
+    default,
+    sort_keys,
+    quote_keys,
+    trailing_commas,
+    allow_duplicate_keys,
+    seen: Optional[Set[int]],
+    level: int,
+    is_key: bool,
+):
     # pylint: disable=too-many-statements
     if obj is True:
         s = 'true'
@@ -317,8 +386,12 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
         else:
             raise ValueError()
     elif isinstance(obj, str):
-        if (is_key and _is_ident(obj) and not quote_keys
-            and not _is_reserved_word(obj)):
+        if (
+            is_key
+            and _is_ident(obj)
+            and not quote_keys
+            and not _is_reserved_word(obj)
+        ):
             return True, obj
         return True, _dump_str(obj, ensure_ascii)
     elif isinstance(obj, int):
@@ -375,36 +448,90 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
     # here, but for backwards-compatibility with potential old callers,
     # we only check for the two attributes we need in each case.
     if hasattr(obj, 'keys') and hasattr(obj, '__getitem__'):
-        s = _dump_dict(obj, skipkeys, ensure_ascii,
-                       check_circular, allow_nan, indent,
-                       separators, default, sort_keys,
-                       quote_keys, trailing_commas,
-                       allow_duplicate_keys, seen, level + 1,
-                       item_sep, kv_sep, indent_str, end_str)
+        s = _dump_dict(
+            obj,
+            skipkeys,
+            ensure_ascii,
+            check_circular,
+            allow_nan,
+            indent,
+            separators,
+            default,
+            sort_keys,
+            quote_keys,
+            trailing_commas,
+            allow_duplicate_keys,
+            seen,
+            level + 1,
+            item_sep,
+            kv_sep,
+            indent_str,
+            end_str,
+        )
     elif hasattr(obj, '__getitem__') and hasattr(obj, '__iter__'):
-        s = _dump_array(obj, skipkeys, ensure_ascii,
-                        check_circular, allow_nan, indent,
-                        separators, default, sort_keys,
-                        quote_keys, trailing_commas,
-                        allow_duplicate_keys, seen, level + 1,
-                        item_sep, indent_str, end_str)
+        s = _dump_array(
+            obj,
+            skipkeys,
+            ensure_ascii,
+            check_circular,
+            allow_nan,
+            indent,
+            separators,
+            default,
+            sort_keys,
+            quote_keys,
+            trailing_commas,
+            allow_duplicate_keys,
+            seen,
+            level + 1,
+            item_sep,
+            indent_str,
+            end_str,
+        )
     else:
-        s = _dumps(default(obj), skipkeys, ensure_ascii,
-                   check_circular, allow_nan, indent,
-                   separators, default, sort_keys,
-                   quote_keys, trailing_commas,
-                   allow_duplicate_keys, seen, level,
-                   is_key)[1]
+        s = _dumps(
+            default(obj),
+            skipkeys,
+            ensure_ascii,
+            check_circular,
+            allow_nan,
+            indent,
+            separators,
+            default,
+            sort_keys,
+            quote_keys,
+            trailing_commas,
+            allow_duplicate_keys,
+            seen,
+            level,
+            is_key,
+        )[1]
 
     if seen is not None:
         seen.remove(i)
     return False, s
 
 
-def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
-               indent, separators, default, sort_keys,
-               quote_keys, trailing_commas, allow_duplicate_keys,
-               seen, level, item_sep, kv_sep, indent_str, end_str):
+def _dump_dict(
+    obj,
+    skipkeys,
+    ensure_ascii,
+    check_circular,
+    allow_nan,
+    indent,
+    separators,
+    default,
+    sort_keys,
+    quote_keys,
+    trailing_commas,
+    allow_duplicate_keys,
+    seen,
+    level,
+    item_sep,
+    kv_sep,
+    indent_str,
+    end_str,
+):
     if not obj:
         return '{}'
 
@@ -418,12 +545,23 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
     num_items_added = 0
     new_keys = set()
     for key in keys:
-        valid_key, key_str = _dumps(key, skipkeys, ensure_ascii, check_circular,
-                                    allow_nan, indent, separators, default,
-                                    sort_keys,
-                                    quote_keys, trailing_commas,
-                                    allow_duplicate_keys,
-                                    seen, level, is_key=True)
+        valid_key, key_str = _dumps(
+            key,
+            skipkeys,
+            ensure_ascii,
+            check_circular,
+            allow_nan,
+            indent,
+            separators,
+            default,
+            sort_keys,
+            quote_keys,
+            trailing_commas,
+            allow_duplicate_keys,
+            seen,
+            level,
+            is_key=True,
+        )
         if valid_key:
             if not allow_duplicate_keys:
                 if key_str in new_keys:
@@ -431,12 +569,27 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
                 new_keys.add(key_str)
             if num_items_added:
                 s += item_sep
-            s += key_str + kv_sep + _dumps(obj[key], skipkeys, ensure_ascii,
-                                           check_circular, allow_nan, indent,
-                                           separators, default, sort_keys,
-                                           quote_keys, trailing_commas,
-                                           allow_duplicate_keys,
-                                           seen, level, is_key=False)[1]
+            s += (
+                key_str
+                + kv_sep
+                + _dumps(
+                    obj[key],
+                    skipkeys,
+                    ensure_ascii,
+                    check_circular,
+                    allow_nan,
+                    indent,
+                    separators,
+                    default,
+                    sort_keys,
+                    quote_keys,
+                    trailing_commas,
+                    allow_duplicate_keys,
+                    seen,
+                    level,
+                    is_key=False,
+                )[1]
+            )
             num_items_added += 1
         elif not skipkeys:
             raise TypeError(f'invalid key {repr(key)}')
@@ -445,19 +598,55 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
     return s
 
 
-def _dump_array(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
-                indent, separators, default, sort_keys,
-                quote_keys, trailing_commas, allow_duplicate_keys,
-                seen, level, item_sep, indent_str, end_str):
+def _dump_array(
+    obj,
+    skipkeys,
+    ensure_ascii,
+    check_circular,
+    allow_nan,
+    indent,
+    separators,
+    default,
+    sort_keys,
+    quote_keys,
+    trailing_commas,
+    allow_duplicate_keys,
+    seen,
+    level,
+    item_sep,
+    indent_str,
+    end_str,
+):
     if not obj:
         return '[]'
-    return ('[' + indent_str +
-            item_sep.join([_dumps(el, skipkeys, ensure_ascii, check_circular,
-                                  allow_nan, indent, separators, default,
-                                  sort_keys, quote_keys, trailing_commas,
-                                  allow_duplicate_keys,
-                                  seen, level, False)[1] for el in obj]) +
-            end_str + ']')
+    return (
+        '['
+        + indent_str
+        + item_sep.join(
+            [
+                _dumps(
+                    el,
+                    skipkeys,
+                    ensure_ascii,
+                    check_circular,
+                    allow_nan,
+                    indent,
+                    separators,
+                    default,
+                    sort_keys,
+                    quote_keys,
+                    trailing_commas,
+                    allow_duplicate_keys,
+                    seen,
+                    level,
+                    False,
+                )[1]
+                for el in obj
+            ]
+        )
+        + end_str
+        + ']'
+    )
 
 
 def _dump_str(obj, ensure_ascii):
@@ -495,8 +684,8 @@ def _dump_str(obj, ensure_ascii):
                 ret.append(f'\\u{o:04x}')
             else:
                 val = o - 0x10000
-                high = 0xd800 + (val >> 10)
-                low = 0xdc00 + (val & 0x3ff)
+                high = 0xD800 + (val >> 10)
+                low = 0xDC00 + (val & 0x3FF)
                 ret.append(f'\\u{high:04x}\\u{low:04x}')
     return ''.join(ret) + '"'
 
@@ -512,59 +701,84 @@ def _is_ident(k):
 
 def _is_id_start(ch):
     return unicodedata.category(ch) in (
-        'Lu', 'Ll', 'Li', 'Lt', 'Lm', 'Lo', 'Nl')
+        'Lu',
+        'Ll',
+        'Li',
+        'Lt',
+        'Lm',
+        'Lo',
+        'Nl',
+    )
 
 
 def _is_id_continue(ch):
     return unicodedata.category(ch) in (
-        'Lu', 'Ll', 'Li', 'Lt', 'Lm', 'Lo', 'Nl', 'Nd', 'Mn', 'Mc', 'Pc')
+        'Lu',
+        'Ll',
+        'Li',
+        'Lt',
+        'Lm',
+        'Lo',
+        'Nl',
+        'Nd',
+        'Mn',
+        'Mc',
+        'Pc',
+    )
 
 
 _reserved_word_re = None
+
 
 def _is_reserved_word(k):
     global _reserved_word_re
 
     if _reserved_word_re is None:
         # List taken from section 7.6.1 of ECMA-262.
-        _reserved_word_re = re.compile('(' + '|'.join([
-            'break',
-            'case',
-            'catch',
-            'class',
-            'const',
-            'continue',
-            'debugger',
-            'default',
-            'delete',
-            'do',
-            'else',
-            'enum',
-            'export',
-            'extends',
-            'false',
-            'finally',
-            'for',
-            'function',
-            'if',
-            'import',
-            'in',
-            'instanceof',
-            'new',
-            'null',
-            'return',
-            'super',
-            'switch',
-            'this',
-            'throw',
-            'true',
-            'try',
-            'typeof',
-            'var',
-            'void',
-            'while',
-            'with',
-        ]) + ')$')
+        _reserved_word_re = re.compile(
+            '('
+            + '|'.join(
+                [
+                    'break',
+                    'case',
+                    'catch',
+                    'class',
+                    'const',
+                    'continue',
+                    'debugger',
+                    'default',
+                    'delete',
+                    'do',
+                    'else',
+                    'enum',
+                    'export',
+                    'extends',
+                    'false',
+                    'finally',
+                    'for',
+                    'function',
+                    'if',
+                    'import',
+                    'in',
+                    'instanceof',
+                    'new',
+                    'null',
+                    'return',
+                    'super',
+                    'switch',
+                    'this',
+                    'throw',
+                    'true',
+                    'try',
+                    'typeof',
+                    'var',
+                    'void',
+                    'while',
+                    'with',
+                ]
+            )
+            + ')$'
+        )
     return _reserved_word_re.match(k) is not None
 
 

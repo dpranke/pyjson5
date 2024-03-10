@@ -29,9 +29,6 @@ Repository = "https://github.com/dpranke/pyjson5"
 Issues = "https://github.com/dpranke/pyjson5/issues"
 Changelog = "https://github.com/dpranke/pyjson5/blob/master/README.md"
 
-[project.optional-dependencies]
-dev = ["hypothesis"]
-
 [project.scripts]
 pyjson5 = "json5.tool:main"
 

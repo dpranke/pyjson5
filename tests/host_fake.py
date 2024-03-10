@@ -72,7 +72,7 @@ class FakeHost:
         while '/..' in p:
             comps = p.split('/')
             idx = comps.index('..')
-            comps = comps[:idx-1] + comps[idx+1:]
+            comps = comps[: idx - 1] + comps[idx + 1 :]
             p = '/'.join(comps)
         return p
 

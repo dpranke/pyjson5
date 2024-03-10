@@ -25,8 +25,9 @@ class CheckMixin:
         for path, contents in list(files.items()):
             host.write_text_file(path, contents)
 
-    def check_cmd(self, args, stdin=None, files=None,
-                  returncode=None, out=None, err=None):
+    def check_cmd(
+        self, args, stdin=None, files=None, returncode=None, out=None, err=None
+    ):
         host = self._host()
         orig_wd, tmpdir = None, None
         try:
@@ -50,8 +51,9 @@ class UnitTestMixin:
     def _host(self):
         return FakeHost()
 
-    def _call(self, host, args, stdin=None,
-              returncode=None, out=None, err=None):
+    def _call(
+        self, host, args, stdin=None, returncode=None, out=None, err=None
+    ):
         if stdin is not None:
             host.stdin.write(str(stdin))
             host.stdin.seek(0)
@@ -74,32 +76,46 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
         self.check_cmd(['--help'], returncode=0)
 
     def test_inline_expression(self):
-        self.check_cmd(['-c', '{foo: 1}'], returncode=0,
-                       out='{\n    foo: 1,\n}\n')
+        self.check_cmd(
+            ['-c', '{foo: 1}'], returncode=0, out='{\n    foo: 1,\n}\n'
+        )
 
     def test_indent(self):
-        self.check_cmd(['--indent=None', '-c', '[1]'], returncode=0,
-                       out='[1]\n')
-        self.check_cmd(['--indent=2', '-c', '[1]'], returncode=0,
-                       out='[\n  1,\n]\n')
-        self.check_cmd(['--indent=  ', '-c', '[1]'], returncode=0,
-                       out='[\n  1,\n]\n')
+        self.check_cmd(
+            ['--indent=None', '-c', '[1]'], returncode=0, out='[1]\n'
+        )
+        self.check_cmd(
+            ['--indent=2', '-c', '[1]'], returncode=0, out='[\n  1,\n]\n'
+        )
+        self.check_cmd(
+            ['--indent=  ', '-c', '[1]'], returncode=0, out='[\n  1,\n]\n'
+        )
 
     def test_as_json(self):
-        self.check_cmd(['--as-json', '-c', '{foo: 1}'], returncode=0,
-                       out='{\n    "foo": 1\n}\n')
+        self.check_cmd(
+            ['--as-json', '-c', '{foo: 1}'],
+            returncode=0,
+            out='{\n    "foo": 1\n}\n',
+        )
 
     def test_quote_keys(self):
-        self.check_cmd(['--quote-keys', '-c', '{foo: 1}'], returncode=0,
-                       out='{\n    "foo": 1,\n}\n')
+        self.check_cmd(
+            ['--quote-keys', '-c', '{foo: 1}'],
+            returncode=0,
+            out='{\n    "foo": 1,\n}\n',
+        )
 
     def test_no_quote_keys(self):
-        self.check_cmd(['--no-quote-keys', '-c', '{foo: 1}'], returncode=0,
-                       out='{\n    foo: 1,\n}\n')
+        self.check_cmd(
+            ['--no-quote-keys', '-c', '{foo: 1}'],
+            returncode=0,
+            out='{\n    foo: 1,\n}\n',
+        )
 
     def test_keys_are_quoted_by_default(self):
-        self.check_cmd(['-c', '{foo: 1}'], returncode=0,
-                       out='{\n    foo: 1,\n}\n')
+        self.check_cmd(
+            ['-c', '{foo: 1}'], returncode=0, out='{\n    foo: 1,\n}\n'
+        )
 
     def test_read_command(self):
         self.check_cmd(['-c', '"foo"'], returncode=0, out='"foo"\n')
@@ -114,27 +130,39 @@ class ToolTest(UnitTestMixin, CheckMixin, unittest.TestCase):
         self.check_cmd(['foo.json5'], files=files, returncode=0, out='"foo"\n')
 
     def test_trailing_commas(self):
-        self.check_cmd(['--trailing-commas', '-c', '{foo: 1}'], returncode=0,
-                       out='{\n    foo: 1,\n}\n')
+        self.check_cmd(
+            ['--trailing-commas', '-c', '{foo: 1}'],
+            returncode=0,
+            out='{\n    foo: 1,\n}\n',
+        )
 
     def test_no_trailing_commas(self):
-        self.check_cmd(['--no-trailing-commas', '-c', '{foo: 1}'], returncode=0,
-                       out='{\n    foo: 1\n}\n')
+        self.check_cmd(
+            ['--no-trailing-commas', '-c', '{foo: 1}'],
+            returncode=0,
+            out='{\n    foo: 1\n}\n',
+        )
 
     def test_trailing_commas_are_there_by_default(self):
-        self.check_cmd(['-c', '{foo: 1}'], returncode=0,
-                       out='{\n    foo: 1,\n}\n')
+        self.check_cmd(
+            ['-c', '{foo: 1}'], returncode=0, out='{\n    foo: 1,\n}\n'
+        )
 
     def test_unknown_switch(self):
-        self.check_cmd(['--unknown-switch'], returncode=2,
-                       err='json5: error: unrecognized arguments: '
-                       '--unknown-switch\n\n')
+        self.check_cmd(
+            ['--unknown-switch'],
+            returncode=2,
+            err='json5: error: unrecognized arguments: '
+            '--unknown-switch\n\n',
+        )
 
     def test_version(self):
-        self.check_cmd(['--version'], returncode=0,
-                       out=str(json5.VERSION) + '\n')
-        self.check_cmd(['--version'], returncode=0,
-                       out=str(json5.__version__) + '\n')
+        self.check_cmd(
+            ['--version'], returncode=0, out=str(json5.VERSION) + '\n'
+        )
+        self.check_cmd(
+            ['--version'], returncode=0, out=str(json5.__version__) + '\n'
+        )
 
 
 if __name__ == '__main__':  # pragma: no cover

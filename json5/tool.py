@@ -38,34 +38,62 @@ def main(argv=None, host=None):
     host = host or Host()
 
     parser = arg_parser.ArgumentParser(host, prog='json5', desc=__doc__)
-    parser.add_argument('-c', metavar='STR', dest='cmd',
-                        help='inline json5 string to read instead of '
-                             'reading from a file')
-    parser.add_argument('--as-json', dest='as_json', action='store_const',
-                        const=True, default=False,
-                        help='output as JSON '
-                             '(same as --quote-keys --no-trailing-commas)')
-    parser.add_argument('--indent', dest='indent', default=4,
-                        help='amount to indent each line '
-                             '(default is 4 spaces)')
-    parser.add_argument('--quote-keys', action='store_true', default=False,
-                        help='quote all object keys')
-    parser.add_argument('--no-quote-keys', action='store_false',
-                        dest='quote_keys',
-                        help="don't quote object keys that are identifiers"
-                             " (this is the default)")
-    parser.add_argument('--trailing-commas', action='store_true',
-                        default=True,
-                        help='add commas after the last item in multi-line '
-                             'objects and arrays (this is the default)')
-    parser.add_argument('--no-trailing-commas', dest='trailing_commas',
-                        action='store_false',
-                        help='do not add commas after the last item in '
-                             'multi-line lists and objects')
-    parser.add_argument('file', metavar='FILE', nargs='?', default='-',
-                        help='optional file to read JSON5 document from; if '
-                             'not specified or "-", will read from stdin '
-                             'instead')
+    parser.add_argument(
+        '-c',
+        metavar='STR',
+        dest='cmd',
+        help='inline json5 string to read instead of ' 'reading from a file',
+    )
+    parser.add_argument(
+        '--as-json',
+        dest='as_json',
+        action='store_const',
+        const=True,
+        default=False,
+        help='output as JSON ' '(same as --quote-keys --no-trailing-commas)',
+    )
+    parser.add_argument(
+        '--indent',
+        dest='indent',
+        default=4,
+        help='amount to indent each line ' '(default is 4 spaces)',
+    )
+    parser.add_argument(
+        '--quote-keys',
+        action='store_true',
+        default=False,
+        help='quote all object keys',
+    )
+    parser.add_argument(
+        '--no-quote-keys',
+        action='store_false',
+        dest='quote_keys',
+        help="don't quote object keys that are identifiers"
+        ' (this is the default)',
+    )
+    parser.add_argument(
+        '--trailing-commas',
+        action='store_true',
+        default=True,
+        help='add commas after the last item in multi-line '
+        'objects and arrays (this is the default)',
+    )
+    parser.add_argument(
+        '--no-trailing-commas',
+        dest='trailing_commas',
+        action='store_false',
+        help='do not add commas after the last item in '
+        'multi-line lists and objects',
+    )
+    parser.add_argument(
+        'file',
+        metavar='FILE',
+        nargs='?',
+        default='-',
+        help='optional file to read JSON5 document from; if '
+        'not specified or "-", will read from stdin '
+        'instead',
+    )
     args = parser.parse_args(argv)
 
     if parser.exit_status is not None:
@@ -95,10 +123,12 @@ def main(argv=None, host=None):
         args.trailing_commas = False
 
     obj = lib.loads(inp)
-    s = lib.dumps(obj,
-                  indent=args.indent,
-                  quote_keys=args.quote_keys,
-                  trailing_commas=args.trailing_commas)
+    s = lib.dumps(
+        obj,
+        indent=args.indent,
+        quote_keys=args.quote_keys,
+        trailing_commas=args.trailing_commas,
+    )
     host.print_(s)
     return 0
 

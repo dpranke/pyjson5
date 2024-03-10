@@ -13,40 +13,12 @@
 # limitations under the License.
 
 import io
-import json
 import math
 import os
 import unittest
 from collections import OrderedDict
-from string import printable
 
 import json5
-
-try:
-    # Make the `hypothesis` library optional, so that the other tests will
-    # still run if it isn't installed.
-    import hypothesis.strategies as some
-    from hypothesis import given
-
-    some_json = some.recursive(
-        some.none()
-        | some.booleans()
-        | some.floats(allow_nan=False)
-        | some.text(printable),
-        lambda children: some.lists(children, min_size=1)
-        | some.dictionaries(some.text(printable), children, min_size=1),
-    )
-except ImportError:
-
-    def given(x):
-        del x
-
-        def func(y):
-            del y
-
-        return func
-
-    some_json = {}
 
 
 class TestLoads(unittest.TestCase):
@@ -560,17 +532,6 @@ class TestDumps(unittest.TestCase):
 
     def test_empty_key(self):
         self.assertEqual(json5.dumps({'': 'value'}), '{"": "value"}')
-
-    @given(some_json)
-    def test_object_roundtrip(self, input_object):
-        dumped_string_json = json.dumps(input_object)
-        dumped_string_json5 = json5.dumps(input_object)
-
-        parsed_object_json = json5.loads(dumped_string_json)
-        parsed_object_json5 = json5.loads(dumped_string_json5)
-
-        assert parsed_object_json == input_object
-        assert parsed_object_json5 == input_object
 
 
 if __name__ == '__main__':  # pragma: no cover

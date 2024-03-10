@@ -76,9 +76,7 @@ def run_clean(args):
 
 def run_coverage(args):
     del args
-    call(['python', '-m', 'coverage', 'run', '-m', 'unittest',
-          'discover', '-p', '*_test.py'])
-    call(['python3', '-m', 'coverage', 'run', '--append', '-m', 'unittest',
+    call([sys.executable, '-m', 'coverage', 'run', '--append', '-m', 'unittest',
           'discover', '-p', '*_test.py'])
     call([sys.executable, '-m', 'coverage', 'report', '--show-missing'])
 
@@ -104,7 +102,7 @@ def run_install(args):
 
 def run_lint(args):
     del args
-    call('pylint --rcfile=pylintrc */*.py', shell=True)
+    call(sys.executable + ' --rcfile=pylintrc */*.py', shell=True)
 
 
 def run_tests(args):

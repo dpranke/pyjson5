@@ -32,7 +32,7 @@ class TestLoads(unittest.TestCase):
             json5.loads(s)
             self.fail()  # pragma: no cover
         except ValueError as e:
-            if err:
+            if err is not None:
                 self.assertEqual(err, str(e))
 
     def test_arrays(self):
@@ -71,8 +71,17 @@ class TestLoads(unittest.TestCase):
             allow_duplicate_keys=False,
         )
 
+        # Also check to make sure we don't reject things incorrectly.
+        self.assertEqual(
+            json5.loads('{foo: 1, bar: 2}', allow_duplicate_keys=False),
+            {'foo': 1, 'bar': 2},
+        )
+
     def test_empty_strings_are_errors(self):
         self.check_fail('', 'Empty strings are not legal JSON5')
+
+    def test_partial_strings_are_errors(self):
+        self.check_fail("'", '<string>:1 Unexpected end of input at column 2')
 
     def test_encoding(self):
         self.assertEqual(json5.loads(b'"\xf6"', encoding='iso-8859-1'), '\xf6')
@@ -89,6 +98,7 @@ class TestLoads(unittest.TestCase):
         self.check('0xfff', 4095)
         self.check('0XABCD', 43981)
         self.check('0x123456', 1193046)
+        self.check_fail('0x+', '<string>:1 Unexpected "+" at column 3')
 
         # floats
         self.check('1.5', 1.5)
@@ -117,7 +127,40 @@ class TestLoads(unittest.TestCase):
         self.check_fail('{1: 1}')
 
     def test_identifiers_unicode(self):
+        # It would be silly to try and test all of the possible unicode
+        # characters for correctness, but we can at least check each
+        # legal Unicode category.
+
+        # Latin Capital letter A with Tilde, category Lu (uppercase letter)
         self.check('{\xc3: 1}', {'\xc3': 1})
+
+        # Latin small A with Ring above, category Ll (lowercase letter)
+        self.check('{\u00E5: 1}', {'\u00E5': 1})
+
+        # Modifier Letter small H, category Lm (modifier letter)
+        self.check('{\u02B0: 1}', {'\u02B0': 1})
+
+        # Latin Letter Two with Stroke, category Lo (other letter)
+        self.check('{\u01BB: 1}', {'\u01BB': 1})
+
+        # Latin Capital Letter L with Small Letter J
+        # (category Lt, titlecase letter)
+        self.check('{\u01C8: 1}', {'\u01C8': 1})
+
+        # Roman Numeral One (category Nl, letter number)
+        self.check('{\u2160: 1}', {'\u2160': 1})
+
+        # Combining Diaresis (category Mn, non-spacing mark)
+        self.check('{a\u0308o: 1}', {'a\u0308o': 1})
+
+        # Rejang Virama (category Mc, spacing mark)
+        self.check('{a\uA953o: 1}', {'a\uA953o': 1})
+
+        # Arabic-Indic Digit Zero (category Nd, decimal number)
+        self.check('{a\u0660: 1}', {'a\u0660': 1})
+
+        # Undertie (category Pc, connector punctuation)
+        self.check('{a\u203Fb: 1}', {'a\u203Fb': 1})
 
     def test_null(self):
         self.check('null', None)
@@ -236,6 +279,7 @@ class TestLoads(unittest.TestCase):
         self.check(r'"\0"', '\x00')
 
     def test_whitespace(self):
+        # Whitespace should be allowed before and after a value.
         self.check('\n1', 1)
         self.check('\r1', 1)
         self.check('\r\n1', 1)
@@ -243,8 +287,11 @@ class TestLoads(unittest.TestCase):
         self.check('\v1', 1)
         self.check('\ufeff 1', 1)
         self.check('\u00a0 1', 1)
-        self.check('\u2028 1', 1)
-        self.check('\u2029 1', 1)
+        self.check('\u2028 1', 1)  # line separator
+        self.check('\u2029 1', 1)  # paragraph separator
+        self.check('\u2000 1', 1)  # En quad, unicode category Zs
+
+        self.check('1\n', 1)
 
     def test_error_reporting(self):
         self.check_fail('[ ,]', err='<string>:1 Unexpected "," at column 3')
@@ -260,6 +307,10 @@ class TestLoads(unittest.TestCase):
             '}\n',
             err='<string>:6 Unexpected "f" at column 17',
         )
+
+    def test_no_extra_characters_in_value(self):
+        self.check_fail('0 1', '<string>:1 Unexpected "1" at column 3')
+        self.check_fail('0 a', '<string>:1 Unexpected "a" at column 3')
 
 
 class TestDump(unittest.TestCase):
@@ -330,6 +381,12 @@ class TestDumps(unittest.TestCase):
         self.assertRaises(ValueError, json5.dumps, z)
 
     def test_custom_arrays(self):
+        # A sequence-like object could be dumped by either
+        # iterating over it using __iter__, or manually iterating
+        # over it using __len__ and __getitem__. As long as one or
+        # the other is implemented, this test will pass. The implementation
+        # is perhaps more lenient than it should be, as we don't ensure
+        # that all three methods are implemented correctly.
         class MyArray:
             def __iter__(self):
                 yield 0
@@ -337,12 +394,17 @@ class TestDumps(unittest.TestCase):
                 yield 1
 
             def __getitem__(self, i):
-                return 0 if i == 0 else 1
+                return 0 if i == 0 else 1  # pragma: no cover
 
             def __len__(self):
-                return 3
+                return 3  # pragma: no cover
 
         self.assertEqual(json5.dumps(MyArray()), '[0, 1, 1]')
+
+    def test_invalid_collection(self):
+        # Check that something that isn't actually an array or a dict doesn't
+        # work.
+        self.assertRaises(TypeError, json5.dumps, {1, 2, 3})
 
     def test_custom_numbers(self):
         # See https://github.com/dpranke/pyjson5/issues/57: we
@@ -351,20 +413,22 @@ class TestDumps(unittest.TestCase):
         # people have custom subclasses with customer __repr__ methods.
         # (This is what JSON does and we want to match it).
         class MyInt(int):
-            def __repr__(self):
-                return 'fail'
+            def __repr__(other):  # pragma: no cover
+                del other
+                self.fail()
 
         self.assertEqual(json5.dumps(MyInt(5)), '5')
 
         class MyFloat(float):
-            def __repr__(self):
-                return 'fail'
+            def __repr__(other):  # pragma: no cover
+                del other
+                self.fail()
 
         self.assertEqual(json5.dumps(MyFloat(0.5)), '0.5')
 
     def test_custom_objects(self):
         class MyDict:
-            def __iter__(self):
+            def __iter__(self):  # pragma: no cover
                 yield ('a', 1)
                 yield ('b', 2)
 

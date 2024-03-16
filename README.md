@@ -76,6 +76,16 @@ $ python3 -m twine upload dist/*
 
 ## Version History / Release Notes
 
+* v0.9.23 (2024-03-16)
+    * Lots of cleanup:
+      * Removed old code needed for Python2 compatibility.
+      * Got everything linting cleanly with pylint 3.1 and `ruff check`
+        using ruff 0.3.3 (Note that commit message in 00d73a3 says pylint
+        3.11, which is a typo).
+      * Code reformatted with `ruff format`
+      * Added missing tests to bring coverage up to 100%.
+      * Lots of minor code changes as the result of linting and coverage
+        testing, but no intentional functional differences.
 * v0.9.22 (2024-03-06)
     * Attempt to fix the GitHub CI configuration now that setup.py
       is gone. Also, test on 3.12 instead of 3.11.

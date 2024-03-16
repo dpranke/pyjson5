@@ -15,7 +15,7 @@
 import math
 import re
 from typing import Any, Callable, IO, Iterable, Mapping, Optional, \
-    Sequence, Set, Tuple, Union
+    Set, Tuple, Union
 import unicodedata
 
 from .parser import Parser
@@ -92,13 +92,15 @@ def loads(s: str,
     if object_pairs_hook:
         dictify = object_pairs_hook
     elif object_hook:
-        dictify = lambda pairs: object_hook(dict(pairs))
+        def dictify(pairs):
+            return object_hook(dict(pairs))
     else:
-        dictify = lambda pairs: dict(pairs) # pylint: disable=unnecessary-lambda
+        dictify = dict
 
     if not allow_duplicate_keys:
         _orig_dictify = dictify
-        dictify = lambda pairs: _reject_duplicate_keys(pairs, _orig_dictify)
+        def dictify(pairs):
+            return _reject_duplicate_keys(pairs, _orig_dictify)
 
     parse_float = parse_float or float
     parse_int = parse_int or int
@@ -111,7 +113,7 @@ def _reject_duplicate_keys(pairs, dictify):
     keys = set()
     for key, _ in pairs:
         if key in keys:
-            raise ValueError('Duplicate key "%s" found in object', key)
+            raise ValueError(f'Duplicate key "{key}" found in object')
         keys.add(key)
     return dictify(pairs)
 
@@ -129,12 +131,11 @@ def _walk_ast(el,
     if ty == 'number':
         if v.startswith('0x') or v.startswith('0X'):
             return parse_int(v, base=16)
-        elif '.' in v or 'e' in v or 'E' in v:
+        if '.' in v or 'e' in v or 'E' in v:
             return parse_float(v)
-        elif 'Infinity' in v or 'NaN' in v:
+        if 'Infinity' in v or 'NaN' in v:
             return parse_constant(v)
-        else:
-            return parse_int(v)
+        return parse_int(v)
     if ty == 'string':
         return v
     if ty == 'object':
@@ -147,7 +148,7 @@ def _walk_ast(el,
     if ty == 'array':
         return [_walk_ast(el, dictify, parse_float, parse_int, parse_constant)
                 for el in v]
-    raise Exception('unknown el: ' + el)  # pragma: no cover
+    raise ValueError('unknown el: ' + el)  # pragma: no cover
 
 
 def dump(obj: Any,
@@ -202,6 +203,7 @@ def dump(obj: Any,
     should produce exactly the same output as ``json.dump(obj, fp).``
     """
 
+    del kwargs
     fp.write(dumps(obj=obj, skipkeys=skipkeys, ensure_ascii=ensure_ascii,
                    check_circular=check_circular, allow_nan=allow_nan,
                    cls=cls, indent=indent, separators=separators,
@@ -261,6 +263,7 @@ def dumps(obj: Any,
     """
 
     assert kwargs.get('cls', None) is None, 'Custom encoders are not supported'
+    del cls
 
     if separators is None:
         if indent is None:
@@ -291,6 +294,7 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
            seen: Optional[Set[int]],
            level: int,
            is_key: bool):
+    # pylint: disable=too-many-statements
     if obj is True:
         s = 'true'
     elif obj is False:
@@ -332,10 +336,10 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
 
     if is_key:
         if s is not None:
-            return True, '"%s"' % s
+            return True, f'"{s}"'
         if skipkeys:
             return False, None
-        raise TypeError('invalid key %s' % repr(obj))
+        raise TypeError(f'invalid key {repr(obj)}')
 
     if s is not None:
         return True, s
@@ -344,7 +348,7 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
         end_str = ''
         if trailing_commas:
             end_str = ','
-        if type(indent) == int:
+        if isinstance(indent, int):
             if indent > 0:
                 indent_str = '\n' + ' ' * indent * level
                 end_str += '\n' + ' ' * indent * (level - 1)
@@ -365,11 +369,11 @@ def _dumps(obj, skipkeys, ensure_ascii, check_circular, allow_nan, indent,
         i = id(obj)
         if i in seen:
             raise ValueError('Circular reference detected.')
-        else:
-            seen.add(i)
+        seen.add(i)
 
-    # In Python3, we'd check if this was an abc.Mapping or an abc.Sequence.
-    # For now, just check for the attrs we need to iterate over the object.
+    # Ideally we'd use collections.abc.Mapping and collections.abc.Sequence
+    # here, but for backwards-compatibility with potential old callers,
+    # we only check for the two attributes we need in each case.
     if hasattr(obj, 'keys') and hasattr(obj, '__getitem__'):
         s = _dump_dict(obj, skipkeys, ensure_ascii,
                        check_circular, allow_nan, indent,
@@ -423,9 +427,8 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
         if valid_key:
             if not allow_duplicate_keys:
                 if key_str in new_keys:
-                    raise ValueError('duplicate key %s' % repr(key))
-                else:
-                    new_keys.add(key_str)
+                    raise ValueError(f'duplicate key {repr(key)}')
+                new_keys.add(key_str)
             if num_items_added:
                 s += item_sep
             s += key_str + kv_sep + _dumps(obj[key], skipkeys, ensure_ascii,
@@ -436,7 +439,7 @@ def _dump_dict(obj, skipkeys, ensure_ascii, check_circular, allow_nan,
                                            seen, level, is_key=False)[1]
             num_items_added += 1
         elif not skipkeys:
-            raise TypeError('invalid key %s' % repr(key))
+            raise TypeError(f'invalid key {repr(key)}')
 
     s += end_str + '}'
     return s
@@ -486,15 +489,15 @@ def _dump_str(obj, ensure_ascii):
             ret.append(ch)
         else:
             o = ord(ch)
-            if o >= 32 and o < 128:
+            if 32 <= o < 128:
                 ret.append(ch)
             elif o < 65536:
-                ret.append('\\u' + '%04x' % o)
+                ret.append(f'\\u{o:04x}')
             else:
                 val = o - 0x10000
                 high = 0xd800 + (val >> 10)
                 low = 0xdc00 + (val & 0x3ff)
-                ret.append('\\u%04x\\u%04x' % (high, low))
+                ret.append(f'\\u{high:04x}\\u{low:04x}')
     return ''.join(ret) + '"'
 
 
@@ -566,4 +569,4 @@ def _is_reserved_word(k):
 
 
 def _raise_type_error(obj):
-    raise TypeError('%s is not JSON5 serializable' % repr(obj))
+    raise TypeError(f'{repr(obj)} is not JSON5 serializable')

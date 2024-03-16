@@ -36,12 +36,14 @@ try:
         lambda children: some.lists(children, min_size=1)
         | some.dictionaries(some.text(printable), children, min_size=1),
     )
-except ImportError as e:
+except ImportError:
     def given(x):
+        del x
         def func(y):
-            pass
+            del y
         return func
     some_json = {}
+
 
 class TestLoads(unittest.TestCase):
     maxDiff = None
@@ -141,12 +143,14 @@ class TestLoads(unittest.TestCase):
         self.check('null', None)
 
     def test_object_hook(self):
-        hook = lambda d: [d]
+        def hook(d):
+            return [d]
         self.assertEqual(json5.loads('{foo: 1}', object_hook=hook),
                          [{"foo": 1}])
 
     def test_object_pairs_hook(self):
-        hook = lambda pairs: pairs
+        def hook(pairs):
+            return pairs
         self.assertEqual(json5.loads('{foo: 1, bar: 2}',
                                      object_pairs_hook=hook),
                          [('foo', 1), ('bar', 2)])
@@ -158,23 +162,27 @@ class TestLoads(unittest.TestCase):
         self.check('{ "foo" : 0 , "bar" : 1 }', {"foo": 0, "bar": 1})
 
     def test_parse_constant(self):
-        hook = lambda x: x
+        def hook(x):
+            return x
         self.assertEqual(json5.loads('-Infinity', parse_constant=hook),
                          '-Infinity')
         self.assertEqual(json5.loads('NaN', parse_constant=hook),
                          'NaN')
 
     def test_parse_float(self):
-        hook = lambda x: x
+        def hook(x):
+            return x
         self.assertEqual(json5.loads('1.0', parse_float=hook), '1.0')
 
     def test_parse_int(self):
-        hook = lambda x, base=10: x
+        def hook(x, base=10):
+            del base
+            return x
         self.assertEqual(json5.loads('1', parse_int=hook), '1')
 
     def test_sample_file(self):
         path = os.path.join(os.path.dirname(__file__), '..', 'sample.json5')
-        with open(path) as fp:
+        with open(path, encoding='utf-8') as fp:
             obj = json5.load(fp)
         self.assertEqual({
             'oh': [
@@ -298,14 +306,14 @@ class TestDumps(unittest.TestCase):
 
     def test_check_circular(self):
         # This tests a trivial cycle.
-        l = [1, 2, 3]
-        l[2] = l
-        self.assertRaises(ValueError, json5.dumps, l)
+        obj = [1, 2, 3]
+        obj[2] = obj
+        self.assertRaises(ValueError, json5.dumps, obj)
 
         # This checks that json5 doesn't raise an error. However,
         # the underlying Python implementation likely will.
         try:
-            json5.dumps(l, check_circular=False)
+            json5.dumps(obj, check_circular=False)
             self.fail()  # pragma: no cover
         except Exception as e:
             self.assertNotIn(str(e), 'Circular reference detected')
@@ -446,8 +454,10 @@ class TestDumps(unittest.TestCase):
     def test_reserved_words_in_object_keys_are_quoted(self):
         self.check({'new': 1}, '{"new": 1}')
 
+    # pylint: disable=invalid-name
     def test_identifiers_only_starting_with_reserved_words_are_not_quoted(self):
         self.check({'newbie': 1}, '{newbie: 1}')
+    # pylint: enable=invalid-name
 
     def test_non_string_keys(self):
         self.assertEqual(json5.dumps({False: 'a', 1: 'b', 2.0: 'c', None: 'd'}),

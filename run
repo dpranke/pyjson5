@@ -21,39 +21,46 @@ def main(argv):
     parser.add_argument('-v', '--verbose', action='store_true')
     subps = parser.add_subparsers()
 
-    subp = subps.add_parser('build', help='build the package')
+    subp = subps.add_parser('build', help='Build the package.')
     subp.set_defaults(func=run_build)
+
+    subp = subps.add_parser('check', help='Lint the source code.')
+    subp.set_defaults(func=run_check)
 
     subp = subps.add_parser('clean', help='Remove any local files.')
     subp.set_defaults(func=run_clean)
 
-    subp = subps.add_parser('coverage',
-                            help='Run tests and report code coverage.')
+    subp = subps.add_parser(
+        'coverage', help='Run tests and report code coverage.'
+    )
     subp.set_defaults(func=run_coverage)
 
-    subp = subps.add_parser('format',
-                            help='Reformat the source code.')
+    subp = subps.add_parser('format', help='Format the source code')
     subp.set_defaults(func=run_format)
 
-    subp = subps.add_parser('help',
-                            help='Get help on a subcommand.')
-    subp.add_argument(nargs='?', action='store', dest='subcommand',
-                      help='The command to get help for.')
+    subp = subps.add_parser('help', help='Get help on a subcommand.')
+    subp.add_argument(
+        nargs='?',
+        action='store',
+        dest='subcommand',
+        help='The command to get help for.',
+    )
     subp.set_defaults(func=run_help)
 
-    subp = subps.add_parser('install',
-                            help='build the package and install locally.')
+    subp = subps.add_parser(
+        'install', help='build the package and install locally.'
+    )
     subp.set_defaults(func=run_install)
-    subp.add_argument('--system', action='store_true',
-                      help=('Install to the system site-package dir '
-                            'rather than the user\'s (requires root).'))
+    subp.add_argument(
+        '--system',
+        action='store_true',
+        help=(
+            'Install to the system site-package dir '
+            "rather than the user's (requires root)."
+        ),
+    )
 
-    subp = subps.add_parser('lint',
-                            help='run lint over the source')
-    subp.set_defaults(func=run_lint)
-
-    subp = subps.add_parser('tests',
-                            help='run the tests')
+    subp = subps.add_parser('tests', help='run the tests')
     subp.set_defaults(func=run_tests)
 
     args = parser.parse_args(argv)
@@ -69,6 +76,11 @@ def run_build(args):
     call([sys.executable, 'setup.py', 'build', '--quiet'])
 
 
+def run_check(args):
+    del args
+    call([sys.executable, '-m', 'ruff', 'check'])
+
+
 def run_clean(args):
     del args
     call(['git', 'clean', '-fxd'])
@@ -76,14 +88,25 @@ def run_clean(args):
 
 def run_coverage(args):
     del args
-    call([sys.executable, '-m', 'coverage', 'run', '-m', 'unittest',
-          'discover', '-p', '*_test.py'])
+    call(
+        [
+            sys.executable,
+            '-m',
+            'coverage',
+            'run',
+            '-m',
+            'unittest',
+            'discover',
+            '-p',
+            '*_test.py',
+        ]
+    )
     call([sys.executable, '-m', 'coverage', 'report', '--show-missing'])
 
 
 def run_format(args):
     del args
-    call('autopep8 --in-place *.py */*.py', shell=True)
+    call([sys.executable, '-m', 'ruff', 'format'])
 
 
 def run_help(args):
@@ -100,15 +123,9 @@ def run_install(args):
     call([sys.executable, 'setup.py', 'install'] + argv)
 
 
-def run_lint(args):
-    del args
-    call(sys.executable + ' --rcfile=pylintrc */*.py', shell=True)
-
-
 def run_tests(args):
     del args
-    call([sys.executable, '-m', 'unittest', 'discover',
-          '-p', '*_test.py'])
+    call([sys.executable, '-m', 'unittest', 'discover', '-p', '*_test.py'])
 
 
 if __name__ == '__main__':

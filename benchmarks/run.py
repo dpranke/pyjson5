@@ -19,13 +19,7 @@ import os
 import sys
 import time
 
-THIS_DIR = os.path.abspath(os.path.dirname(__file__))
-REPO_DIR = os.path.dirname(THIS_DIR)
-if not REPO_DIR in sys.path:
-    sys.path.insert(0, REPO_DIR)
-
-import json5  # pylint: disable=wrong-import-position
-
+import json5
 
 ALL_BENCHMARKS = (
     '64KB-min.json',
@@ -33,8 +27,9 @@ ALL_BENCHMARKS = (
     'twitter.json',
 )
 
-
 DEFAULT_ITERATIONS = 3
+
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
 def main():
@@ -49,7 +44,7 @@ def main():
 
     file_contents = []
     for f in args.benchmarks:
-        with open(f) as fp:
+        with open(f, encoding='utf-8') as fp:
             file_contents.append(fp.read())
 
 
@@ -86,20 +81,20 @@ def main():
         if json5_time and json_time:
             if json5_time > json_time:
                 avg = json5_time / json_time
-                print("%-20s: JSON was %5.1fx faster (%.6fs to %.6fs)" % (
-                      fname, avg, json_time, json5_time))
+                print(f"{fname:-%20s}: JSON was {avg:5.1f}x faster "
+                      f"({json_time:.6f} to {json5_time:.6fs}")
             else:
                 avg = json_time / json5_time
-                print("%-20s: JSON5 was %5.1fx faster (%.6fs to %.6fs)" % (
-                      fname, avg, json5_time, json_time))
+                print(f"{fname:-%20s}: JSON5 was {avg:5.1f}x faster "
+                      f"({json5_time:.6f} to {json_time:.6fs}")
         elif json5_time:
-            print("%-20s: JSON5 took %.6f secs, JSON was too fast to measure" %
-                  (fname, json5_time))
+            print(f"{fname:-20s}: JSON5 took {json5_time:.6f} secs, "
+                  f"JSON was too fast to measure")
         elif json_time:
-            print("%-20s: JSON took %.6f secs, JSON5 was too fast to measure" %
-                  (fname, json_time))
+            print(f"{fname:-20s}: JSON took {json_time:.6f} secs, "
+                  f"JSON5 was too fast to measure")
         else:
-            print("%-20s: both were too fast to measure" % (fname,))
+            print(f"{fname:-20s}: both were too fast to measure")
 
     return 0
 

@@ -43,7 +43,7 @@ class TestLoads(unittest.TestCase):
 
         try:
             json5.loads('[ ,]')
-            self.fail()
+            self.fail()  # pragma: no cover
         except ValueError as e:
             self.assertIn('Unexpected "," at column 3', str(e))
 
@@ -586,13 +586,7 @@ class TestDumps(unittest.TestCase):
         )
 
     def test_supplemental_unicode(self):
-        try:
-            s = chr(0x10000)
-            self.check(s, '"\\ud800\\udc00"')
-        except ValueError:
-            # Python2 doesn't support supplemental unicode planes, so
-            # we can't test this there.
-            pass
+        self.check(chr(0x10000), '"\\ud800\\udc00"')
 
     def test_empty_key(self):
         self.assertEqual(json5.dumps({'': 'value'}), '{"": "value"}')

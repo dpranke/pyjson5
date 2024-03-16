@@ -24,7 +24,7 @@ def main(argv):
     subp = subps.add_parser('build', help='Build the package.')
     subp.set_defaults(func=run_build)
 
-    subp = subps.add_parser('check', help='Lint the source code.')
+    subp = subps.add_parser('check', help='Lint the source code w/ ruff.')
     subp.set_defaults(func=run_check)
 
     subp = subps.add_parser('clean', help='Remove any local files.')
@@ -59,6 +59,9 @@ def main(argv):
             "rather than the user's (requires root)."
         ),
     )
+
+    subp = subps.add_parser('lint', help='Lint the source code w/ pylint.')
+    subp.set_defaults(func=run_lint)
 
     subp = subps.add_parser('tests', help='run the tests')
     subp.set_defaults(func=run_tests)
@@ -121,6 +124,11 @@ def run_install(args):
     else:
         argv = ['--user']
     call([sys.executable, 'setup.py', 'install'] + argv)
+
+
+def run_lint(args):
+    del args
+    call(sys.executable + ' -m pylint run */*.py', shell=True)
 
 
 def run_tests(args):

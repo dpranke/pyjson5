@@ -122,7 +122,7 @@ def loads(
     if not allow_duplicate_keys:
         _orig_dictify = dictify
 
-        def dictify(pairs):
+        def dictify(pairs):  # pylint: disable=function-redefined
             return _reject_duplicate_keys(pairs, _orig_dictify)
 
     parse_float = parse_float or float

@@ -135,17 +135,17 @@ class TestLoads(unittest.TestCase):
         self.check('{\xc3: 1}', {'\xc3': 1})
 
         # Latin small A with Ring above, category Ll (lowercase letter)
-        self.check('{\u00E5: 1}', {'\u00E5': 1})
+        self.check('{\u00e5: 1}', {'\u00e5': 1})
 
         # Modifier Letter small H, category Lm (modifier letter)
-        self.check('{\u02B0: 1}', {'\u02B0': 1})
+        self.check('{\u02b0: 1}', {'\u02b0': 1})
 
         # Latin Letter Two with Stroke, category Lo (other letter)
-        self.check('{\u01BB: 1}', {'\u01BB': 1})
+        self.check('{\u01bb: 1}', {'\u01bb': 1})
 
         # Latin Capital Letter L with Small Letter J
         # (category Lt, titlecase letter)
-        self.check('{\u01C8: 1}', {'\u01C8': 1})
+        self.check('{\u01c8: 1}', {'\u01c8': 1})
 
         # Roman Numeral One (category Nl, letter number)
         self.check('{\u2160: 1}', {'\u2160': 1})
@@ -154,13 +154,13 @@ class TestLoads(unittest.TestCase):
         self.check('{a\u0308o: 1}', {'a\u0308o': 1})
 
         # Rejang Virama (category Mc, spacing mark)
-        self.check('{a\uA953o: 1}', {'a\uA953o': 1})
+        self.check('{a\ua953o: 1}', {'a\ua953o': 1})
 
         # Arabic-Indic Digit Zero (category Nd, decimal number)
         self.check('{a\u0660: 1}', {'a\u0660': 1})
 
         # Undertie (category Pc, connector punctuation)
-        self.check('{a\u203Fb: 1}', {'a\u203Fb': 1})
+        self.check('{a\u203fb: 1}', {'a\u203fb': 1})
 
     def test_null(self):
         self.check('null', None)
@@ -412,10 +412,12 @@ class TestDumps(unittest.TestCase):
         # float.__repr__ in order to get legal JSON values when
         # people have custom subclasses with customer __repr__ methods.
         # (This is what JSON does and we want to match it).
+        # pylint: disable=no-self-argument
         class MyInt(int):
             def __repr__(other):  # pragma: no cover
                 del other
                 self.fail()
+                return ''
 
         self.assertEqual(json5.dumps(MyInt(5)), '5')
 
@@ -423,6 +425,7 @@ class TestDumps(unittest.TestCase):
             def __repr__(other):  # pragma: no cover
                 del other
                 self.fail()
+                return ''
 
         self.assertEqual(json5.dumps(MyFloat(0.5)), '0.5')
 

@@ -40,18 +40,16 @@ class ArgumentParser(argparse.ArgumentParser):
 
         return rargs
 
-    # Redefining built-in 'file' pylint: disable=W0622
-
-    def _print_message(self, msg, file=None):
-        self._host.print_(msg=msg, stream=file, end='\n')
+    def _print_message(self, message, file=None):
+        self._host.print_(msg=message, stream=file, end='\n')
 
     def print_help(self, file=None):
-        self._print_message(msg=self.format_help(), file=file)
+        self._print_message(message=self.format_help(), file=file)
 
-    def error(self, message, bailout=True):  # pylint: disable=W0221
-        self.exit(2, '%s: error: %s\n' % (self.prog, message), bailout=bailout)
+    def error(self, message, bailout=True):
+        self.exit(2, f'{self.prog}: error: {message}\n', bailout=bailout)
 
-    def exit(self, status=0, message=None,  # pylint: disable=W0221
+    def exit(self, status=0, message=None,
              bailout=True):
         self.exit_status = status
         if message:

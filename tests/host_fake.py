@@ -58,7 +58,7 @@ class FakeHost:
         for c in comps:
             if c in ('', '.'):
                 continue
-            elif c.startswith('/'):
+            if c.startswith('/'):
                 p = c
             elif p:
                 p += '/' + c
@@ -86,7 +86,7 @@ class FakeHost:
             dir = self.sep + '__im_tmp'
         curno = self.current_tmpno
         self.current_tmpno += 1
-        self.last_tmpdir = self.join(dir, '%s_%u_%s' % (prefix, curno, suffix))
+        self.last_tmpdir = self.join(dir, f'{prefix}_{curno}_{suffix}')
         self.dirs.add(self.last_tmpdir)
         return self.last_tmpdir
 

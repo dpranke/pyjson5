@@ -35,5 +35,12 @@ dev = ["hypothesis"]
 [project.scripts]
 pyjson5 = "json5.tool:main"
 
+[tool.ruff]
+include = [ "run", "*/*.py" ]
+line-length = 79
+
+[tool.ruff.format]
+quote-style = "single"
+
 [tool.setuptools.dynamic]
 version = {attr = "json5.__version__"}

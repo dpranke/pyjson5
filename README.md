@@ -76,9 +76,19 @@ $ python3 -m twine upload dist/*
 
 ## Version History / Release Notes
 
+* v0.9.24 (2024-03-16)
+    * Update GitHub workflow config to remove unnecessary steps and
+      run on pull requests as well as commits.
+    * Added note about removing `hypothesize` in v0.9.23.
+    * No code changes.
 * v0.9.23 (2024-03-16)
     * Lots of cleanup:
       * Removed old code needed for Python2 compatibility.
+      * Removed tests using `hypothesize`. This ran model-based checks
+        and didn't really add anything useful in terms of coverage to
+        the test suite, and it introduced dependencies and slowed down
+        the tests significantly. It was a good experiment but I think
+        we're better off without it.
       * Got everything linting cleanly with pylint 3.1 and `ruff check`
         using ruff 0.3.3 (Note that commit message in 00d73a3 says pylint
         3.11, which is a typo).

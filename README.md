@@ -76,6 +76,10 @@ $ python3 -m twine upload dist/*
 
 ## Version History / Release Notes
 
+* v0.9.25 (2024-04-12)
+    * [GitHub issue #81](https://github.com/dpranke/pyjson5/issues/81)
+      Explicitly specify the directory to use for the package in
+      pyproject.toml.
 * v0.9.24 (2024-03-16)
     * Update GitHub workflow config to remove unnecessary steps and
       run on pull requests as well as commits.

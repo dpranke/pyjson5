@@ -39,5 +39,8 @@ line-length = 79
 [tool.ruff.format]
 quote-style = "single"
 
+[tool.setuptools]
+packages = [ "json5" ]
+
 [tool.setuptools.dynamic]
 version = {attr = "json5.__version__"}

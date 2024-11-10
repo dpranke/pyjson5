@@ -219,7 +219,7 @@ class Parser:
         self._not(lambda: self._not(self._ws__c8__s0_n_n_))
 
     def _ws__c8__s0_n_n_(self):
-        self._choose([self._ws__c8__s0_n_n_g__c0_])
+        (lambda: self._choose([self._ws__c8__s0_n_n_g__c0_]))()
 
     def _ws__c8__s0_n_n_g__c0_(self):
         self._seq(

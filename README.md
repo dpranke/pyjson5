@@ -100,6 +100,11 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
+* v0.9.28 (2024-11-11)
+    * Fix GitHub CI to install `uv` so `./run tests` works properly.
+    * Mark Python3.13 as supported in package metadata.
+    * Update dev package dependencies (note that the latest versions
+      of coverage and pylint no longer work w/ Python3.8)
 * v0.9.27 (2024-11-10)
     * Fix typo in //README.md
 * v0.9.26 (2024-11-10)

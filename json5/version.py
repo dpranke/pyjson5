@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-__version__ = '0.9.28_dev'
+__version__ = '0.9.28'
 
 # For backward-compatibility with earlier versions of json5:
 VERSION = __version__

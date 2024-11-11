@@ -35,7 +35,6 @@ disable=
     too-many-branches,
     too-many-instance-attributes,
     too-many-locals,
-    too-many-positional-arguments,
     too-many-public-methods,
     too-many-return-statements,
     unidiomatic-typecheck,

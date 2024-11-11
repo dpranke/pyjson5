@@ -135,7 +135,6 @@ def main(argv):
 
     global uv_path
     if args.func != run_tests:
-        # TODO(GH-83): Figure out how to get `uv` installed in the GitHub CI.
         uv_path = shutil.which('uv')
         if uv_path is None:
             print('You need to have `uv` installed to run this script.')
@@ -292,9 +291,7 @@ def run_regen(args):
 
 def run_tests(args):
     del args
-    # TODO(GH-83): Figure out how to get `uv` installed on the GitHub CI.
-    # call(run_cmd + ['-m', 'unittest', 'discover', '-p', '*_test.py'])
-    call([sys.executable, '-m', 'unittest', 'discover', '-p', '*_test.py'])
+    call(run_cmd + ['-m', 'unittest', 'discover', '-p', '*_test.py'])
 
 
 def _gen_parser():

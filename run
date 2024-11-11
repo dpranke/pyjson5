@@ -134,11 +134,10 @@ def main(argv):
     args = parser.parse_args(argv)
 
     global uv_path
-    if args.func != run_tests:
-        uv_path = shutil.which('uv')
-        if uv_path is None:
-            print('You need to have `uv` installed to run this script.')
-            sys.exit(2)
+    uv_path = shutil.which('uv')
+    if uv_path is None:
+        print('You need to have `uv` installed to run this script.')
+        sys.exit(2)
 
     global run_cmd
     if 'VIRTUAL_ENV' in os.environ:

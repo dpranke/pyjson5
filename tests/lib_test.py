@@ -24,8 +24,8 @@ import json5
 class TestLoads(unittest.TestCase):
     maxDiff = None
 
-    def check(self, s, obj):
-        self.assertEqual(json5.loads(s), obj)
+    def check(self, s, obj, strict=True):
+        self.assertEqual(json5.loads(s, strict=strict), obj)
 
     def check_fail(self, s, err=None):
         try:
@@ -233,6 +233,17 @@ class TestLoads(unittest.TestCase):
             },
             obj,
         )
+
+    def test_strict(self):
+        # From [GitHub issue #82](https://github.com/dpranke/pyjson5/issues/82)
+        foo=(
+            '{\n'
+            '"key": "value\n'
+            'over two lines",\n'
+            '}'
+        )
+        self.check_fail(foo, '<string>:2 Unexpected "\n" at column 14')
+        self.check(foo, {'key': 'value\nover two lines'}, strict=False)
 
     def test_strings(self):
         self.check('"foo"', 'foo')

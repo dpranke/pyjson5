@@ -76,6 +76,9 @@ $ python3 -m twine upload dist/*
 
 ## Version History / Release Notes
 
+* v0.9.26 (2024-11-10)
+    * [GitHub issue #82](https://github.com/dpranke/pyjson5/issues/82)
+      Add support for the `strict` parameter to `load()`/`loads()`.
 * v0.9.25 (2024-04-12)
     * [GitHub issue #81](https://github.com/dpranke/pyjson5/issues/81)
       Explicitly specify the directory to use for the package in

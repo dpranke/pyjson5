@@ -236,14 +236,14 @@ class TestLoads(unittest.TestCase):
 
     def test_strict(self):
         # From [GitHub issue #82](https://github.com/dpranke/pyjson5/issues/82)
-        foo=(
-            '{\n'
-            '"key": "value\n'
-            'over two lines",\n'
-            '}'
-        )
-        self.check_fail(foo, '<string>:2 Unexpected "\n" at column 14')
-        self.check(foo, {'key': 'value\nover two lines'}, strict=False)
+        d = '{\n"key": "value\nover two lines",\n}'
+        self.check_fail(d, '<string>:2 Unexpected "\n" at column 14')
+        self.check(d, {'key': 'value\nover two lines'}, strict=False)
+
+        # Test w/ single quotes to get coverage.
+        d = "{\n'key': 'value\nover two lines',\n}"
+        self.check_fail(d, '<string>:2 Unexpected "\n" at column 14')
+        self.check(d, {'key': 'value\nover two lines'}, strict=False)
 
     def test_strings(self):
         self.check('"foo"', 'foo')

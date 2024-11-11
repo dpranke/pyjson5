@@ -54,24 +54,49 @@ be legal object keys in JavaScript, but they aren't in JSON5.
   keyword *is* supported, though, and might be able to serve as a
   workaround.
 
-## Running the tests
-To run the tests, setup a venv and install the required dependencies with
-`pip install -e '.[dev]'`, then run the tests with `python setup.py test`.
+## Contributing
 
-## Updating the packages
+#### On Mac
+
+The easiest thing to do is to install [`uv`](https://docs.astral.sh/uv) and
+use `uv` and the `//run` script to develop things. See `./run --help` for
+the various commands that are supported. `glop` is the parser generator
+tool used to generate a parser from the grammar in `json5/json5.g`.
 
 ```
-# Install the build packages if need be
-$ python3 -m pip install build twine
+$ brew install uv
+$ git clone https://github.com/dpranke/pyjson5
+$ git clone https://github.com/dpranke/glop
+$ cd pyjson5
+$ source $(./run devenv)  # To activate a venv w/ all the needed dev tools.
+```
 
-# Build the distribution packages in //dist
-# (a wheel and a tarball by default)
-$ python3 -m build
+#### On other platforms
 
-# Upload the packages
-$ python3 -m twine upload dist/*
+Install `uv` via whatever mechanism is appropriate.
 
-(Assuming you have upload privileges to PyPI, of course.)
+### Running the tests
+
+```
+$ ./run tests
+```
+
+### Updating the packages
+
+```
+# Update the version in json5/version.py to $VERSION, which should be of
+# the form X.Y.Z where X, Y, and Z are numbers.
+$ git commit -a -m "Bump the version to $VERSION"
+$ ./run regen
+$ ./run presubmit
+$ git tag "v$VERSION"
+$ ./run build
+$ ./run publish --prod
+$ git push origin
+$ git push --tags origin
+```
+
+(Assuming you have upload privileges to PyPI and the GitHub repo, of course.)
 ```
 
 ## Version History / Release Notes
@@ -79,6 +104,8 @@ $ python3 -m twine upload dist/*
 * v0.9.26 (2024-11-10)
     * [GitHub issue #82](https://github.com/dpranke/pyjson5/issues/82)
       Add support for the `strict` parameter to `load()`/`loads()`.
+    * Significantly rework the infra and the `run` script to be
+      contemporary.
 * v0.9.25 (2024-04-12)
     * [GitHub issue #81](https://github.com/dpranke/pyjson5/issues/81)
       Explicitly specify the directory to use for the package in

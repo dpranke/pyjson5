@@ -39,6 +39,7 @@ def load(
     parse_float: Optional[Callable[[str], Any]] = None,
     parse_int: Optional[Callable[[str], Any]] = None,
     parse_constant: Optional[Callable[[str], Any]] = None,
+    strict: bool = True,
     object_pairs_hook: Optional[
         Callable[[Iterable[Tuple[str, Any]]], Any]
     ] = None,
@@ -64,6 +65,7 @@ def load(
         parse_float=parse_float,
         parse_int=parse_int,
         parse_constant=parse_constant,
+        strict=strict,
         object_pairs_hook=object_pairs_hook,
         allow_duplicate_keys=allow_duplicate_keys,
     )
@@ -78,6 +80,7 @@ def loads(
     parse_float: Optional[Callable[[str], Any]] = None,
     parse_int: Optional[Callable[[str], Any]] = None,
     parse_constant: Optional[Callable[[str], Any]] = None,
+    strict: bool = True,
     object_pairs_hook: Optional[
         Callable[[Iterable[Tuple[str, Any]]], Any]
     ] = None,
@@ -103,7 +106,7 @@ def loads(
     if not s:
         raise ValueError('Empty strings are not legal JSON5')
     parser = Parser(s, '<string>')
-    ast, err, _ = parser.parse()
+    ast, err, _ = parser.parse(global_vars={'_strict': strict})
     if err:
         raise ValueError(err)
 

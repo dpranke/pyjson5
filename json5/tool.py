@@ -86,6 +86,18 @@ def main(argv=None, host=None):
         'multi-line lists and objects',
     )
     parser.add_argument(
+        '--strict',
+        action='store_true',
+        default=True,
+        help='Do not allow control characters (\x00-\x1f) in strings (default)',
+    )
+    parser.add_argument(
+        '--no-strict',
+        dest='strict',
+        action='store_false',
+        help='Allow control characters (\x00-\x1f) in strings',
+    )
+    parser.add_argument(
         'file',
         metavar='FILE',
         nargs='?',
@@ -122,7 +134,7 @@ def main(argv=None, host=None):
         args.quote_keys = True
         args.trailing_commas = False
 
-    obj = lib.loads(inp)
+    obj = lib.loads(inp, strict=args.strict)
     s = lib.dumps(
         obj,
         indent=args.indent,

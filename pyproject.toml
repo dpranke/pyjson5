@@ -10,7 +10,7 @@ authors = [
 ]
 license = {file = "LICENSE"}
 readme = "README.md"
-requires-python = ">= 3.8"
+requires-python = ">= 3.8.0"
 classifiers= [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
@@ -23,6 +23,18 @@ classifiers= [
     'Programming Language :: Python :: 3.12',
 ]
 dynamic = [ "version" ]
+
+[project.optional-dependencies]
+dev = [
+    'build==1.2.1',
+    'coverage==7.5.3',
+    'mypy==1.10.0',
+    'pip==24.1',
+    'pylint==3.2.3',
+    'ruff==0.5.1',
+    'twine==5.1.1',
+    'uv==0.2.13',
+]
 
 [project.urls]
 Repository = "https://github.com/dpranke/pyjson5"

@@ -6,4 +6,3 @@
 build
 dist
 json5.egg-info
-uv.lock

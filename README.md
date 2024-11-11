@@ -97,10 +97,11 @@ $ git push --tags origin
 ```
 
 (Assuming you have upload privileges to PyPI and the GitHub repo, of course.)
-```
 
 ## Version History / Release Notes
 
+* v0.9.27 (2024-11-10)
+    * Fix typo in //README.md
 * v0.9.26 (2024-11-10)
     * [GitHub issue #82](https://github.com/dpranke/pyjson5/issues/82)
       Add support for the `strict` parameter to `load()`/`loads()`.

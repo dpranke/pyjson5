@@ -23,6 +23,5 @@ jobs:
     - name: Install uv
       run: |
         pipx install uv
-        pipx ensurepath
     - name: Run tests
       run: python run tests

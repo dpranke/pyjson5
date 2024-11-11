@@ -27,14 +27,14 @@ dynamic = [ "version" ]
 
 [project.optional-dependencies]
 dev = [
-    'build==1.2.1',
-    'coverage==7.5.3',
-    'mypy==1.10.0',
-    'pip==24.1',
-    'pylint==3.2.3',
-    'ruff==0.5.1',
+    'build==1.2.2.post1',
+    'coverage==7.6.4',
+    'mypy==1.13.0',
+    'pip==24.3.1',
+    'pylint==3.3.1',
+    'ruff==0.7.3',
     'twine==5.1.1',
-    'uv==0.2.13',
+    'uv==0.5.1',
 ]
 
 [project.urls]

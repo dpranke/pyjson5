@@ -134,10 +134,12 @@ def main(argv):
     args = parser.parse_args(argv)
 
     global uv_path
-    uv_path = shutil.which('uv')
-    if uv_path is None:
-        print('You need to have `uv` installed to run this script.')
-        sys.exit(2)
+    if args.func != run_tests:
+        # TODO(GH-83): Figure out how to get `uv` installed in the GitHub CI.
+        uv_path = shutil.which('uv')
+        if uv_path is None:
+            print('You need to have `uv` installed to run this script.')
+            sys.exit(2)
 
     global run_cmd
     if 'VIRTUAL_ENV' in os.environ:
@@ -290,7 +292,9 @@ def run_regen(args):
 
 def run_tests(args):
     del args
-    call(run_cmd + ['-m', 'unittest', 'discover', '-p', '*_test.py'])
+    # TODO(GH-83): Figure out how to get `uv` installed on the GitHub CI.
+    # call(run_cmd + ['-m', 'unittest', 'discover', '-p', '*_test.py'])
+    call([sys.executable, '-m', 'unittest', 'discover', '-p', '*_test.py'])
 
 
 def _gen_parser():

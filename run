@@ -371,7 +371,7 @@ class Runner:
             leading_args.append(argv[i])
             i += 1
 
-        return argv[i:i+1] + leading_args + argv[i+1:]
+        return argv[i : i + 1] + leading_args + argv[i + 1 :]
 
     def _gen_parser(self):
         tool = '../glop/glop/tool.py'
@@ -416,6 +416,7 @@ class Runner:
         if not m:
             print(f'Unexpected version format: "{self.version}"')
             sys.exit(1)
+
 
 if __name__ == '__main__':
     sys.exit(Runner().main(sys.argv[1:]))

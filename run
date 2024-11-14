@@ -3,321 +3,419 @@
 import argparse
 import glob
 import os
+import re
+import shlex
 import shutil
 import subprocess
 import sys
 
 import json5
 
-# pylint: disable=too-many-statements
 
-verbose = False
-no_execute = False
-uv_path = None
-run_cmd = None
+class Runner:
+    def __init__(self):
+        self.arg_parser = None
+        self.args = None
+        self.grammar = 'json5/json5.g'
+        self.package = 'json5'
+        self.parser_file = f'{self.package}/parser.py'
+        self.run_cmd = None
+        self.subps = None
+        self.uv_path = None
+        self.version = json5.__version__
 
+    def add_parser(self, cmd, help):  # pylint: disable=redefined-builtin
+        method = getattr(self, 'run_' + cmd.replace('-', '_'))
+        subp = self.subps.add_parser(cmd, help=help)
+        subp.add_argument(
+            '-n',
+            '--no-execute',
+            action='store_true',
+            help="Don't do anything that causes effects.",
+        )
+        subp.add_argument(
+            '-q',
+            '--quiet',
+            action='store_true',
+            help='Suppress output unless something fails.',
+        )
+        subp.add_argument(
+            '-v',
+            '--verbose',
+            action='store_true',
+            help='Echo commands as they are run.',
+        )
+        subp.set_defaults(func=lambda _: method())
+        return subp
 
-def call(*args, **kwargs):
-    if verbose:
-        print(' '.join(args[0]))
-    if not no_execute:
-        ret = subprocess.call(*args, **kwargs)
-        if ret != 0:
-            sys.exit(ret)
+    def call(self, *args, **kwargs):
+        cmd = shlex.join(*args)
+        if self.args.no_execute or self.args.verbose:
+            print(f'{cmd}')
+        if self.args.no_execute:
+            return None
+        capture_output = kwargs.get('capture_output', self.args.quiet)
+        if 'capture_output' in kwargs:
+            del kwargs['capture_output']
 
+        proc = subprocess.run(
+            *args, capture_output=capture_output, check=False, **kwargs
+        )
+        if proc.returncode != 0:
+            if self.args.quiet:
+                print(proc.stdout)
+                print(proc.stderr, file=sys.stderr)
+            sys.exit(proc.returncode)
+        return proc
 
-def main(argv):
-    parser = argparse.ArgumentParser(prog='run')
-    parser.add_argument('-n', '--no-execute', action='store_true')
-    parser.add_argument('-v', '--verbose', action='store_true')
-    parser.add_argument(
-        '-q',
-        '--quiet',
-        action='store_true',
-        help='Be quiet when running `uv run`',
-    )
-    subps = parser.add_subparsers()
+    def main(self, argv):
+        self.arg_parser = argparse.ArgumentParser(prog='run')
+        self.subps = self.arg_parser.add_subparsers(required=True)
 
-    subp = subps.add_parser('build', help='Build the package.')
-    subp.set_defaults(func=run_build)
+        self.add_parser('build', help='Build the package.')
+        self.add_parser('check', help='Check the source code with ruff.')
+        self.add_parser('checks', help='Same as `run check`.')
+        self.add_parser('clean', help='Remove any local files.')
 
-    subp = subps.add_parser('check', help='Same as `run checks`.')
-    subp.set_defaults(func=run_checks)
+        subp = self.add_parser(
+            'coverage', help='Run tests and report code coverage.'
+        )
+        subp.add_argument(
+            '-b',
+            '--branch',
+            action='store_true',
+            help='Report branch coverage.',
+        )
+        subp.add_argument(
+            '--omit',
+            help='Omit files whose paths match one of these patterns.',
+        )
+        subp.add_argument(
+            '-u', '--unit', action='store_true', help='Only run unit tests.'
+        )
+        subp.add_argument('test', nargs='*', action='store')
 
-    subp = subps.add_parser('checks', help='Lint the code w/ ruff.')
-    subp.set_defaults(func=run_checks)
+        self.add_parser(
+            'devenv',
+            help='Set up a dev venv at //.venv with all the needed packages.',
+        )
 
-    subp = subps.add_parser('clean', help='Remove any local files.')
-    subp.set_defaults(func=run_clean)
+        subp = self.add_parser(
+            'format', help='Format the source code with ruff.'
+        )
+        subp.add_argument(
+            '--check',
+            action='store_true',
+            help='Just check to see if any files would be modified.',
+        )
 
-    subp = subps.add_parser(
-        'coverage', help='Run tests and report code coverage.'
-    )
-    subp.set_defaults(func=run_coverage)
+        subp = self.add_parser('help', help='Get help on a subcommand.')
+        subp.add_argument(
+            nargs='?',
+            action='store',
+            dest='subcommand',
+            help='The command to get help for.',
+        )
 
-    subp = subps.add_parser(
-        'devenv',
-        help='Set up a dev venv at //.venv with all the needed packages.',
-    )
-    subp.set_defaults(func=run_devenv)
+        self.add_parser('lint', help='Lint the source code with pylint.')
 
-    subp = subps.add_parser('format', help='Format the code w/ ruff')
-    subp.add_argument(
-        '--check',
-        action='store_true',
-        help='Just check to see if any files would be modified.',
-    )
-    subp.set_defaults(func=run_format)
+        self.add_parser('mypy', help='Typecheck the code with mypy.')
 
-    subp = subps.add_parser('help', help='Get help on a subcommand.')
-    subp.add_argument(
-        nargs='?',
-        action='store',
-        dest='subcommand',
-        help='The command to get help for.',
-    )
-    subp.set_defaults(func=run_help)
+        subp = self.add_parser(
+            'presubmit',
+            help='Run all the steps that should be run prior to commiting.',
+        )
+        subp.add_argument(
+            '-b',
+            '--branch',
+            action='store_true',
+            help='Report branch coverage.',
+        )
+        subp.add_argument(
+            '-f',
+            '--failfast',
+            action='store_true',
+            help='Stop on first fail or error',
+        )
+        subp.add_argument(
+            '--omit',
+            help='Omit files whose paths match one of these patterns.',
+        )
+        subp.add_argument(
+            '-u', '--unit', action='store_true', help='Only run unit tests.'
+        )
+        subp.add_argument('test', nargs='*', action='store')
 
-    subp = subps.add_parser('install', help='Install the package locally.')
-    subp.add_argument(
-        '-e',
-        '--editable',
-        action='store_true',
-        help='Make the package editable',
-    )
-    subp.add_argument(
-        '--system',
-        action='store_true',
-        help=(
-            'Install to the system site-package dir '
-            "rather than the user's (requires root)."
-        ),
-    )
-    subp.set_defaults(func=run_install)
+        subp = self.add_parser('publish', help='Publish packages to PyPI.')
+        subp.add_argument(
+            '--test',
+            action='store_true',
+            help='Upload to the PyPI test instance.',
+        )
+        subp.add_argument(
+            '--prod',
+            action='store_true',
+            help='Upload to the real PyPI instance.',
+        )
 
-    subp = subps.add_parser('lint', help='Lint the code w/ pylint.')
-    subp.set_defaults(func=run_lint)
+        subp = self.add_parser('regen', help=f'Regenerate {self.parser_file}.')
+        subp.add_argument(
+            '--check',
+            action='store_true',
+            help='Just check to see if any files would be modified.',
+        )
 
-    subp = subps.add_parser('mypy', help='Typecheck the code w/ mypy.')
-    subp.set_defaults(func=run_mypy)
+        subp = self.add_parser('tests', help='Run the tests.')
+        subp.add_argument(
+            '-d',
+            '--durations',
+            metavar='N',
+            action='store',
+            help='show the N slowed test cases (N=0 for all)',
+        )
+        subp.add_argument(
+            '-f',
+            '--failfast',
+            action='store_true',
+            help='Stop on first fail or error',
+        )
+        subp.add_argument(
+            '-u', '--unit', action='store_true', help='Only run unit tests.'
+        )
+        subp.add_argument('test', nargs='*', action='store')
 
-    subp = subps.add_parser(
-        'presubmit',
-        help='Run all the steps that should be run prior to commiting.',
-    )
-    subp.set_defaults(func=run_presubmit)
+        self.args = self.arg_parser.parse_args(self._shuffle_argv(argv))
 
-    subp = subps.add_parser('publish', help='Publish the built packages')
-    subp.add_argument(
-        '--test',
-        action='store_true',
-        help='Upload to the PyPI test instance.',
-    )
-    subp.add_argument(
-        '--prod',
-        action='store_true',
-        help='Upload to the real PyPI instance.',
-    )
-    subp.set_defaults(func=run_publish)
+        self.uv_path = shutil.which('uv')
+        if self.uv_path is None:
+            print('You need to have `uv` installed to run this script.')
+            sys.exit(2)
 
-    subp = subps.add_parser('regen', help='Regenerate the parser w/ glop.')
-    subp.add_argument(
-        '--check',
-        action='store_true',
-        help='Just check to see if any files would be modified.',
-    )
-    subp.set_defaults(func=run_regen)
+        if 'VIRTUAL_ENV' in os.environ:
+            self.run_cmd = ['python']
+        elif self.args.quiet:
+            self.run_cmd = [self.uv_path, 'run', '--quiet', 'python']
+        else:
+            self.run_cmd = [self.uv_path, 'run', 'python']
 
-    subp = subps.add_parser('tests', help='Run the tests')
-    subp.set_defaults(func=run_tests)
+        self.args.func(self.args)
 
-    args = parser.parse_args(argv)
+    def run_build(self):
+        self._check_version()
+        cmd = [self.uv_path, 'build']
+        if self.args.quiet:
+            cmd.append('--quiet')
+        self.call(cmd)
 
-    global uv_path
-    uv_path = shutil.which('uv')
-    if uv_path is None:
-        print('You need to have `uv` installed to run this script.')
-        sys.exit(2)
+    def run_check(self):
+        self.call(self.run_cmd + ['-m', 'ruff', 'check'])
 
-    global run_cmd
-    if 'VIRTUAL_ENV' in os.environ:
-        run_cmd = ['python']
-    elif args.quiet:
-        run_cmd = [uv_path, 'run', '--quiet', 'python']
-    else:
-        run_cmd = [uv_path, 'run', 'python']
+    def run_checks(self):
+        self.run_check()
 
-    global verbose
-    if args.verbose:
-        verbose = True
-    global no_execute
-    if args.no_execute:
-        no_execute = True
-    args.func(args)
-
-
-def run_build(args):
-    del args
-    call(run_cmd + ['-m', 'build'])
-
-
-def run_checks(args):
-    del args
-    call(run_cmd + ['-m', 'ruff', 'check'])
-
-
-def run_clean(args):
-    del args
-    call(['git', 'clean', '-fxd'])
-
-
-def run_coverage(args):
-    del args
-    call(
-        run_cmd
-        + [
-            '-m',
-            'coverage',
-            'run',
-            '-m',
-            'unittest',
-            'discover',
-            '-p',
-            '*_test.py',
-        ]
-    )
-    call(run_cmd + ['-m', 'coverage', 'report', '--show-missing'])
-
-
-def run_devenv(args):
-    if args.quiet:
-        cmd = [uv_path, '--quiet']
-    else:
-        cmd = [uv_path]
-
-    in_venv = 'VIRTUAL_ENV' in os.environ
-    if not in_venv:
-        call(cmd + ['venv'])
-    call(cmd + ['pip', 'install', '-e', '.[dev]'])
-    if not in_venv:
-        print('.venv/bin/activate # to finish devenv setup.')
-
-
-def run_format(args):
-    if args.check:
-        call(run_cmd + ['-m', 'ruff', 'format', '--check'])
-    else:
-        call(run_cmd + ['-m', 'ruff', 'format'])
-
-
-def run_help(args):
-    if args.subcommand:
-        main([args.subcommand, '--help'])
-    main(['--help'])
-
-
-def run_install(args):
-    if args.editable:
-        cmd = [uv_path, 'run', 'pip', 'install', '--editable', '.']
-    else:
-        wheel = f'dist/json5-{json5.__version__}-py3-none-any.whl'
-        cmd = [uv_path, 'run', 'pip', 'install', wheel]
-    call(cmd)
-
-
-def run_lint(args):
-    del args
-    files = glob.glob('*/*.py')
-    call(run_cmd[:-1] + ['pylint', 'run'] + files)
-
-
-def run_mypy(args):
-    del args
-    files = glob.glob('*/*.py')
-    call(run_cmd + ['-m', 'mypy', 'run'] + files)
-
-
-def run_presubmit(args):
-    args.check = True
-    run_regen(args)
-    run_format(args)
-    run_checks(args)
-    run_lint(args)
-    run_mypy(args)
-    run_coverage(args)
-
-
-def run_publish(args):
-    if not args.test and not args.prod:
-        print('You must specify either --test or --prod to upload.')
-        sys.exit(2)
-    version = json5.__version__
-    tgz = f'dist{os.path.sep}json5-{version}.tar.gz'
-    wheel = f'dist{os.path.sep}json5-{version}-py3-none-any.whl'
-    if not os.path.exists(tgz) or not os.path.exists(wheel):
-        print('Run `./run build` first')
-        return
-    if args.test:
-        test = ['--repository', 'testpypi']
-    else:
-        test = []
-    call(run_cmd + ['-m', 'twine', 'upload'] + test + [tgz, wheel])
-
-
-def run_regen(args):
-    json5parser = 'json5/parser.py'
-    with open(json5parser, encoding='utf-8') as fp:
-        old = fp.read()
-    _gen_parser()
-    if args.no_execute:
-        print('diff -q parser.py json5/parser.py')
-        return
-
-    with open('parser.py', encoding='utf-8') as fp:
-        new = fp.read()
-    if args.check:
-        os.remove('parser.py')
-        if old != new:
-            print('Need to regenerate the parser with `run regen`.')
+    def run_clean(self):
+        path = shutil.which('git')
+        if path is None:
+            print('You must have git installed to clean out the right files.')
             sys.exit(1)
-        print(f'{json5parser} is up to date.')
-    elif old == new:
-        print(f'{json5parser} already up-to-date.')
-    else:
-        os.rename('parser.py', json5parser)
-        print(f'{json5parser} regenerated.')
 
+        self.call([path, 'clean', '-fd'])
 
-def run_tests(args):
-    del args
-    call(run_cmd + ['-m', 'unittest', 'discover', '-p', '*_test.py'])
+    def run_coverage(self):
+        env = os.environ.copy()
+        if self.args.unit:
+            env['SKIP'] = 'integration'
+            self.args.omit = '*_test.py'
+        cmd = self.run_cmd + ['-m', 'coverage', 'run']
+        if self.args.branch:
+            cmd.append('--branch')
+        cmd.extend(
+            [
+                '-m',
+                'unittest',
+                'discover',
+                '-p',
+                '*_test.py',
+            ],
+        )
+        if self.args.verbose:
+            cmd.append('-v')
+        for test in self.args.test:
+            cmd.extend(['-k', self._trim_test_glob(test)])
+        self.call(cmd, env=env)
+        cmd = self.run_cmd + ['-m', 'coverage', 'report', '--show-missing']
+        if self.args.omit:
+            cmd.append(f'--omit={self.args.omit}')
+        self.call(cmd)
 
+    def run_devenv(self):
+        if self.uv_path is None:
+            print('You need to have `uv` installed to set up a dev env.')
+            sys.exit(2)
 
-def _gen_parser():
-    tool = '../glop/glop/tool.py'
-    if not os.path.exists(tool):
-        print('Need `glop` repo to be at ../glop')
-        sys.exit(1)
+        cmd = [self.uv_path, 'sync', '--extra', 'dev']
+        if self.args.quiet:
+            cmd.append('--quiet')
 
-    call(
-        [
-            sys.executable,
-            tool,
-            '-o',
-            'parser.py',
-            '--no-main',
-            '--no-memoize',
-            '-c',
-            'json5/json5.g',
-        ]
-    )
-    with open('parser.py', encoding='utf-8') as fp:
-        contents = fp.read()
-    contents = contents.replace('glop -o parser.py', 'glop -o json5/parser.py')
-    with open('parser.py', 'w', encoding='utf-8') as fp:
-        fp.write(contents)
-    call(run_cmd + ['-m', 'ruff', 'format', 'parser.py'])
+        in_venv = 'VIRTUAL_ENV' in os.environ
+        self.call(cmd)
+        if not in_venv:
+            print('Run `source .venv/bin/activate` to finish devenv setup.')
 
+    def run_format(self):
+        cmd = self.run_cmd + ['-m', 'ruff', 'format']
+        if self.args.check:
+            cmd.append('--check')
+        self.call(cmd)
+
+    def run_help(self):
+        if self.args.subcommand:
+            self.main([self.args.subcommand, '--help'])
+        self.main(['--help'])
+
+    def run_lint(self):
+        self.call(self.run_cmd[:-1] + ['pylint', 'run'] + self._files())
+
+    def run_mypy(self):
+        self.call(self.run_cmd + ['-m', 'mypy'] + self._files())
+
+    def run_presubmit(self):
+        self.args.check = True
+        self.run_regen()
+        self.run_format()
+        self.run_check()
+        self.run_lint()
+        self.run_mypy()
+        self.run_coverage()
+
+    def run_publish(self):
+        if not self.args.test and not self.args.prod:
+            print('You must specify either --test or --prod to upload.')
+            sys.exit(2)
+
+        self._check_version()
+        sep = os.path.sep
+        tgz = f'dist{sep}{self.package}-{self.version}.tar.gz'
+        wheel = f'dist{sep}{self.package}-{self.version}-py3-none-any.whl'
+        if not os.path.exists(tgz) or not os.path.exists(wheel):
+            print('Run `./run build` first')
+            return
+        if self.args.test:
+            test = ['--repository', 'testpypi']
+        else:
+            test = []
+        self.call(
+            self.run_cmd + ['-m', 'twine', 'upload'] + test + [tgz, wheel]
+        )
+
+    def run_regen(self):
+        orig_file = f'{self.parser_file}.orig'
+        with open(self.parser_file, encoding='utf-8') as fp:
+            old = fp.read()
+        if self.args.no_execute or self.args.verbose:
+            print(f'mv {self.parser_file} {orig_file}')
+        else:
+            os.rename(self.parser_file, orig_file)
+        self._gen_parser()
+        if self.args.no_execute:
+            if self.args.check:
+                print(f'diff -q {orig_file} {self.parser_file}')
+                print(f'mv {orig_file} {self.parser_file}')
+            return
+
+        with open(self.parser_file, encoding='utf-8') as fp:
+            new = fp.read()
+        if self.args.check:
+            os.remove(self.parser_file)
+            os.rename(orig_file, self.parser_file)
+            if old != new:
+                print('Need to regenerate the parser with `run regen`.')
+                sys.exit(1)
+            print(f'{self.parser_file} is up to date.')
+        elif old == new:
+            print(f'{self.parser_file} is up to date.')
+        else:
+            print(f'{self.parser_file} regenerated.')
+
+    def run_tests(self):
+        cmd = self.run_cmd + ['-m', 'unittest', 'discover', '-p', '*_test.py']
+        if self.args.quiet:
+            cmd.append('-q')
+        if self.args.verbose:
+            cmd.append('-v')
+        if self.args.failfast:
+            cmd.append('-f')
+        if self.args.durations:
+            cmd.extend(['--durations', self.args.durations])
+
+        for test in self.args.test:
+            cmd.extend(['-k', self._trim_test_glob(test)])
+        env = os.environ.copy()
+        if self.args.unit:
+            env['SKIP'] = 'integration'
+        self.call(cmd, env=env)
+
+    def set_func(self, subp, method):
+        subp.set_defaults(func=lambda _: method())
+
+    def _shuffle_argv(self, argv):
+        # Take any flags that appear before the subcommand and append
+        # them after the subcommand but before any flags following the
+        # subcommand.
+        leading_args = []
+        argc = len(argv)
+        i = 0
+        while i < argc:
+            if argv[i][0] != '-':
+                break
+            leading_args.append(argv[i])
+            i += 1
+
+        return argv[i:i+1] + leading_args + argv[i+1:]
+
+    def _gen_parser(self):
+        tool = '../glop/glop/tool.py'
+        if not os.path.exists(tool):
+            print('Need `glop` repo to be at ../glop.')
+            sys.exit(1)
+
+        self.call(
+            [
+                sys.executable,
+                tool,
+                '-o',
+                self.parser_file,
+                '--no-main',
+                '--no-memoize',
+                '-c',
+                self.grammar,
+            ]
+        )
+        self.call(self.run_cmd + ['-m', 'ruff', 'format', self.parser_file])
+
+    def _files(self):
+        return (
+            ['run']
+            + glob.glob(f'{self.package}/*.py')
+            + glob.glob('tests/*.py')
+        )
+
+    def _trim_test_glob(self, test):
+        if test.startswith('^'):
+            test = test[1:]
+        else:
+            test = '*' + test
+        if test.endswith('$'):
+            test = test[:-1]
+        else:
+            test = test + '*'
+        return test
+
+    def _check_version(self):
+        m = re.match(r'\d+\.\d+\.\d+(\.dev\d+)?', self.version)
+        if not m:
+            print(f'Unexpected version format: "{self.version}"')
+            sys.exit(1)
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    sys.exit(Runner().main(sys.argv[1:]))

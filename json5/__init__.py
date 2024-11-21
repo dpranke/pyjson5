@@ -14,15 +14,16 @@
 
 """A pure Python implementation of the JSON5 configuration language."""
 
-from .lib import load, loads, dump, dumps
+from .lib import load, loads, dump, dumps, JSON5Encoder
 from .version import __version__, VERSION
 
 
 __all__ = [
+    'JSON5Encoder',
     '__version__',
     'VERSION',
-    'dump',
-    'dumps',
     'load',
     'loads',
+    'dump',
+    'dumps',
 ]

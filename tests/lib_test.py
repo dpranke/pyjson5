@@ -549,17 +549,86 @@ class TestDumps(unittest.TestCase):
             json5.dumps({'foo': 1}, quote_keys=True), '{"foo": 1}'
         )
 
-    def test_strings(self):
+    def test_strings_containing_backslashes_and_quotes(self):
+        # Understanding how things are escaped in test of JSON5 strings
+        # can be tricky.
+
+        # Normal Python escaping means that the following asserts are true:
+        self.assertEqual('\\z', "\\z")
+        self.assertEqual('\\z', r'\z')
+        self.assertEqual('\\z', r"\z")
+
+        # But, in Python, escaping quotes in a raw string is tricky, because
+        # the escape is left in the output. The results of this are:
+
+        # (1) You cannot use a raw string to match a value ending in a
+        # an odd number of backslashes: the first N-1 backslashes would
+        # be matched by the same number of backslashes in the raw string,
+        # leaving a single backslash followed by a quote. The quote
+        # would then be considered escaped, leaving the string unterminated.
+        # Ending in an even number of backslashes is fine:
+        self.assertEqual(len(r'\\'), 2)
+        self.assertEqual(r'\\', '\\\\')
+
+        # (2) You cannot use a raw string to represent a value that contains
+        # the same kind of quote you're using to enclose the string, unless the
+        # value actually contains an odd number of backslashes immediately
+        # preceding the quote:
+        self.assertEqual(len(r'\''), 2)
+        self.assertEqual(r'\'', '\\\'')
+        self.assertEqual(r'\'', "\\'")
+        self.assertEqual(r'\'', r"\'")
+
+        # Now, in JSON5, if the value doesn't contain backslashes, you can
+        # use normal quoting as you would in Python, but you can't use
+        # raw strings, since the raw strings would require the values to
+        # have backslashes in them:
         self.check("'single'", '"\'single\'"')
-        self.check('"double"', '"\\"double\\""')
-        self.check(
-            "'single \\' and double \"'", '"\'single \\\\\' and double \\"\'"'
-        )
+        self.check("'single'", "\"'single'\"")
+
+        # In order to represent a backslash in the value you also need to
+        # escape it in the JSON string: a string containing a single backslash
+        # is represented by "\\". So, in order to match that single backslash
+        # via non-raw strings in Python source code, you need to (3) double the
+        # backslashes (for JSON5) and then double them again, for python source
+        # code. I.e., you need *4* backslashes in the source code. In many
+        # cases you can also use single-quoted raw strings (where you have
+        # to (4) double the number of quotes in the output), but in this
+        # particular example, you cannot use single-quoted raw strings,
+        # due to (1).
+        self.check('\\', '"\\\\"')
+        self.check('\\', "\"\\\\\"")
+
+        # You cannot use a double-quoted raw string to represent
+        # double-quoted JSON5 strings, since the output needs to start with a
+        # double quote, and you can't represent that in a raw double-quoted
+        # string due to (2).
+
+        # Here you see the doubling of backslashes in single-quoted
+        # raw output strings, and the quadrupling in a non-raw string.
+        self.check(r'\z', r'"\\z"')
+        self.check(r'\\z', r'"\\\\z"')
+        self.check(r'\\\z', r'"\\\\\\z"')
+        self.check(r'\z', '"\\\\z"')
+
+        self.check('"', '"\\""')
+        self.check('"', "\"\\\"\"")
+
+        # Here it's okay to use a raw string for output since the output
+        # needs to have a single backslash and doesn't end in a single quote.
+        self.check('"', r'"\""')
+
+        # Here you cannot use raw strings for the output as the output
+        # would need to have only two backslashes in it.
+        self.check(r'\'', "\"\\\\'\"")
+        self.check(r'\'', '"\\\\\'"')
 
     def test_string_escape_sequences(self):
+        # self.check(r'\'', '"\\\\\'"')
+        self.check("'\\'", "\"'\\\\'\"")
         self.check(
             '\u2028\u2029\b\t\f\n\r\v\\\0',
-            '"\\u2028\\u2029\\b\\t\\f\\n\\r\\v\\\\\\0"',
+            r'"\u2028\u2029\b\t\f\n\r\v\\\0"',
         )
 
     def test_skip_keys(self):

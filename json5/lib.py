@@ -204,6 +204,7 @@ def dump(
     quote_keys: bool = False,
     trailing_commas: bool = True,
     allow_duplicate_keys: bool = True,
+    allow_custom_numbers: bool = True,
     **kw,
 ):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp``,
@@ -231,6 +232,7 @@ def dump(
             quote_keys=quote_keys,
             trailing_commas=trailing_commas,
             allow_duplicate_keys=allow_duplicate_keys,
+            allow_custom_numbers=allow_custom_numbers,
             **kw,
         )
     )
@@ -251,36 +253,46 @@ def dumps(
     quote_keys: bool = False,
     trailing_commas: bool = True,
     allow_duplicate_keys: bool = True,
+    allow_custom_numbers: bool = False,
     **kw,
 ):
     """Serialize ``obj`` to a JSON5-formatted string.
 
     Supports the same arguments as ``json.dumps()``, except that:
 
-    - The ``encoding`` keyword is ignored; Unicode strings are always
-      written.
-    - By default, object keys that are legal identifiers are not quoted;
-      if you pass ``quote_keys=True``, they will be.
+    - The ``encoding`` keyword is ignored; Unicode strings are always written.
+    - By default, object keys that are legal identifiers are not quoted; if you
+      pass ``quote_keys=True``, they will be.
     - By default, if lists and objects span multiple lines of output (i.e.,
-      when ``indent`` >=0), the last item will have a trailing comma
-      after it. If you pass ``trailing_commas=False``, it will not.
-    - If you use a number, a boolean, or ``None`` as a key value in a dict,
-      it will be converted to the corresponding JSON string value, e.g.
-      "1", "true", or "null". By default, ``dump()`` will match the `json`
-      modules behavior and produce malformed JSON if you mix keys of
-      different types that have the same converted value; e.g.,
-      ``{1: "foo", "1": "bar"}`` produces '{"1": "foo", "1": "bar"}', an
-      object with duplicated keys. If you pass
-      ``allow_duplicate_keys=False``, an exception will be raised instead.
-    - If `quote_keys` is true, then keys of objects will be enclosed
-      in quotes, as in regular JSON. Otheriwse, keys will not be enclosed
-      in quotes unless they contain whitespace.
-    - If `trailing_commas` is false, then commas will not be inserted after
-      the final elements of objects and arrays, as in regular JSON.
-      Otherwise, such commas will be inserted.
-    - If `allow_duplicate_keys` is false, then only the last entry with a
-      given key will be written. Otherwise, all entries with the same key
-      will be written.
+      when ``indent`` >=0), the last item will have a trailing comma after it.
+      If you pass ``trailing_commas=False``, it will not.
+    - If you use a number, a boolean, or ``None`` as a key value in a dict, it
+      will be converted to the corresponding JSON string value, e.g.  "1",
+      "true", or "null". By default, ``dump()`` will match the `json` modules
+      behavior and produce malformed JSON if you mix keys of different types
+      that have the same converted value; e.g., ``{1: "foo", "1": "bar"}``
+      produces '{"1": "foo", "1": "bar"}', an object with duplicated keys. If
+      you pass ``allow_duplicate_keys=False``, an exception will be raised
+      instead.
+    - If `quote_keys` is true, then keys of objects will be enclosed in quotes,
+      as in regular JSON. Otheriwse, keys will not be enclosed in quotes unless
+      they contain whitespace.
+    - If `trailing_commas` is false, then commas will not be inserted after the
+      final elements of objects and arrays, as in regular JSON.  Otherwise,
+      such commas will be inserted.
+    - If `allow_duplicate_keys` is false, then only the last entry with a given
+      key will be written. Otherwise, all entries with the same key will be
+      written.
+    - The standard `json` module will call intentionally call `int.__repr__`
+      and `float.__repr__` to encode subclasses of ints and floats, even if the
+      subclass had customized the __repr__. This kinda makes sense for JSON
+      since there can more-or-less only be one representation of those kinds of
+      numbers. JSON5 can support multiple versions (notably hexadecimal), and
+      so it would be nice if it didn't. if `allow_custom_numbers` is true (it
+      is false by default), the encoder will call obj.__repr__ instead of
+      int.__repr__ or float.__repr__.  If you really want more fine-grained
+      control over the conversion, you'll need to subclass the JSON5Encoder
+      class.
 
     Other keyword arguments are allowed and will be passed to the
     encoder so custom encoders can get them, but otherwise they will
@@ -304,6 +316,7 @@ def dumps(
         quote_keys=quote_keys,
         trailing_commas=trailing_commas,
         allow_duplicate_keys=allow_duplicate_keys,
+        allow_custom_numbers=allow_custom_numbers,
         **kw,
     )
     return enc.encode(obj)
@@ -324,6 +337,7 @@ class JSON5Encoder:
         quote_keys: bool = False,
         trailing_commas: bool = True,
         allow_duplicate_keys: bool = True,
+        allow_custom_numbers: bool = False,
         **kw,
     ):
         """Provides a class that may be overridden to customize the behavior
@@ -348,6 +362,7 @@ class JSON5Encoder:
         self.quote_keys = quote_keys
         self.trailing_commas = trailing_commas
         self.allow_duplicate_keys = allow_duplicate_keys
+        self.allow_custom_numbers = allow_custom_numbers
 
     def default(self, obj: Any) -> Any:
         """Provides a last-ditch option to encode a value that the encoder
@@ -383,98 +398,14 @@ class JSON5Encoder:
         `ValueError` if there's something wrong with the value, e.g.
         a float value of NaN when `allow_nan` is false.
 
-        If `as_key` is true, the return value should be handled the way
-        `self.encode_str(..., as_key=True)` will handle it, by returning either
-        something that is a legal identifier or a double-quoted string. If the
-        object should not be used as a key (and you don't want to raise a
+        If `as_key` is true, the return value should be a double-quoted string
+        representation of the object, unless obj is a string that can be an
+        identifier (and quote_keys is false and obj isn't a reserved word).  If
+        the object should not be used as a key (and you don't want to raise a
         TypeError), the method should return None, which will then allow the
         base implementation to implement `skipkeys` properly.
-
-        Note that there are other encoding methods that may also be
-        overridden to handle simpler datatypes, e.g., if you have a
-        custom class that is a subclass of `int`, you should probably
-        override `encode_int()`, not this method, though this one will
-        work as well.
         """
-        return self._encode(obj, seen or set(), level, as_key=as_key)
-
-    def encode_bool(self, obj: bool, *, as_key: bool) -> str:
-        """Returns a serialized version of a bool. If `as_key` is true,
-        the returned value needs to be a double-quoted string.
-
-        This method is provided for consistency only; since bools cannot
-        be subclassed and there are only two values (True and False),
-        there's probably no normal reason to want to override this."""
-        if obj is True:
-            return '"true"' if as_key else 'true'
-        assert obj is False
-        return '"false"' if as_key else 'false'
-
-    def encode_none(self, *, as_key: bool) -> str:
-        """Returns a serialized version of None. If `as_key` is true,
-        the returned value needs to be a double-quoted string.
-
-        This method is provided for consistency only; there's likely
-        no normal reason you'd want to change how `None` is encoded."""
-        return '"null"' if as_key else 'null'
-
-    def encode_int(self, obj: int, *, as_key: bool) -> str:
-        """Returns a serialized version of an int-like object (an `int`
-        or a subclass of `int`). If `as_key` is true, the value needs
-        to be a double-quoted string.
-
-        For compatibility with the built-in `json` module, by default
-        the encoder calls `int.__repr__` instead of `obj.__repr__`, so
-        if you want to customize the encoding of a subclass of `int`,
-        you'll want to override this."""
-        s = int.__repr__(obj)
-        return f'"{s}"' if as_key else s
-
-    def encode_float(self, obj: float, *, as_key: bool) -> str:
-        """Returns a serialized version of a float-like object (a `float`
-        or a subclass of `float`). If `as_key` is true, the returned value
-        needs to be a double-quoted string.
-
-        For compatibility with the built-in `json` module, by default
-        the encoder calls `int.__repr__` instead of `obj.__repr__`, so
-        if you want to customize the encoding of a subclass of `int`,
-        you'll want to override this."""
-        # See comment above in encode_int for why we explicitly call
-        # `float`'s repr directory. Custom encoders may override this
-        # if they want different behavior.
-        if obj == float('inf'):
-            allowed = self.allow_nan
-            s = 'Infinity'
-        elif obj == float('-inf'):
-            allowed = self.allow_nan
-            s = '-Infinity'
-        elif math.isnan(obj):
-            allowed = self.allow_nan
-            s = 'NaN'
-        else:
-            allowed = True
-            s = float.__repr__(obj)
-        if not allowed:
-            raise ValueError()
-        return f'"{s}"' if as_key else s
-
-    def encode_str(self, obj: str, *, as_key: bool) -> str:
-        """Returns a serialized version of a string-like object.
-        If `as_key` is true, self.quote_keys is False, obj is not
-        a reserved word (`self.is_reserved_work(obj)` returns False)
-        and obj may be represented as a valid identifier, then the
-        routine may return the value directly, otherwise the routine
-        must return a double-quoted string."""
-        if (
-            as_key
-            and self.is_identifier(obj)
-            and not self.quote_keys
-            and not self.is_reserved_word(obj)
-        ):
-            return obj
-        return self._encode_str(obj)
-
-    def _encode(self, obj, seen: Set, level: int, *, as_key: bool) -> str:
+        seen = seen or set()
         r = self._encode_basic_type(obj, as_key=as_key)
         if r is not None:
             return r
@@ -487,18 +418,57 @@ class JSON5Encoder:
 
     def _encode_basic_type(self, obj: Any, *, as_key: bool) -> str:
         if isinstance(obj, str):
-            return self.encode_str(obj, as_key=as_key)
-        if isinstance(obj, bool):
-            # We need to check for bools before ints because True
-            # and False are also instances of int.
-            return self.encode_bool(obj, as_key=as_key)
-        if isinstance(obj, int):
-            return self.encode_int(obj, as_key=as_key)
-        if isinstance(obj, float):
-            return self.encode_float(obj, as_key=as_key)
+            return self._encode_str(obj, as_key=as_key)
+
+        # Check for True/False before ints because True and False are
+        # also considered ints and so would be represented as 1 and 0
+        # if we did ints first.
+        if obj is True:
+            return '"true"' if as_key else 'true'
+        if obj is False:
+            return '"false"' if as_key else 'false'
         if obj is None:
-            return self.encode_none(as_key=as_key)
+            return '"null"' if as_key else 'null'
+
+        if isinstance(obj, int):
+            s = repr(obj) if self.allow_custom_numbers else int.__repr__(obj)
+            return f'"{s}"' if as_key else s
+
+        if isinstance(obj, float):
+            return self._encode_float(obj, as_key=as_key)
         return None
+
+    def _encode_float(self, obj: float, *, as_key: bool) -> str:
+        if obj == float('inf'):
+            allowed = self.allow_nan
+            s = 'Infinity'
+        elif obj == float('-inf'):
+            allowed = self.allow_nan
+            s = '-Infinity'
+        elif math.isnan(obj):
+            allowed = self.allow_nan
+            s = 'NaN'
+        else:
+            allowed = True
+            s = repr(obj) if self.allow_custom_numbers else float.__repr__(obj)
+        if not allowed:
+            raise ValueError()
+        return f'"{s}"' if as_key else s
+
+    def _encode_str(self, obj: str, *, as_key: bool) -> str:
+        if (
+            as_key
+            and self.is_identifier(obj)
+            and not self.quote_keys
+            and not self.is_reserved_word(obj)
+        ):
+            return obj
+
+        ret = ['"']
+        for ch in obj:
+            ret.append(self.encode_ch(ch))
+        ret.append('"')
+        return ''.join(ret)
 
     def _encode_non_basic_type(self, obj, seen: Set, level: int) -> str:
         # Basic types can't be recursive so we only check for circularity
@@ -599,45 +569,48 @@ class JSON5Encoder:
             end_str = ''
         return indent_str, end_str
 
-    def _encode_str(self, obj: str) -> str:
-        ret = ['"']
-        for ch in obj:
-            if ch == '\\':
-                ret.append('\\\\')
-            elif ch == '"':
-                ret.append('\\"')
-            elif ch == '\u2028':
-                ret.append('\\u2028')
-            elif ch == '\u2029':
-                ret.append('\\u2029')
-            elif ch == '\n':
-                ret.append('\\n')
-            elif ch == '\r':
-                ret.append('\\r')
-            elif ch == '\b':
-                ret.append('\\b')
-            elif ch == '\f':
-                ret.append('\\f')
-            elif ch == '\t':
-                ret.append('\\t')
-            elif ch == '\v':
-                ret.append('\\v')
-            elif ch == '\0':
-                ret.append('\\0')
-            elif not self.ensure_ascii:
-                ret.append(ch)
-            else:
-                o = ord(ch)
-                if 32 <= o < 128:
-                    ret.append(ch)
-                elif o < 65536:
-                    ret.append(f'\\u{o:04x}')
-                else:
-                    val = o - 0x10000
-                    high = 0xD800 + (val >> 10)
-                    low = 0xDC00 + (val & 0x3FF)
-                    ret.append(f'\\u{high:04x}\\u{low:04x}')
-        return ''.join(ret) + '"'
+    def encode_ch(self, ch: str) -> str:
+        """Returns a properly-escaped representation of a char.
+
+        The char will be as-is if possible, otherwise escaped."""
+        o = ord(ch)
+        if (32 <= o < 128) and (o != 34) and (o != 92):
+            return ch
+        if o < 32:
+            return self.escape_ch(ch)
+        if not self.ensure_ascii and not (ch in ('\u2028', '\u2029')):
+            return ch
+        return self.escape_ch(ch)
+        
+    def escape_ch(self, ch: str) -> str:
+        """Returns the backslash-escaped representation of the char."""
+        if ch == '\\':
+            return '\\\\'
+        if ch == '"':
+            return r'\"'
+        if ch == '\n':
+            return r'\n'
+        if ch == '\r':
+            return r'\r'
+        if ch == '\t':
+            return r'\t'
+        if ch == '\b':
+            return r'\b'
+        if ch == '\f':
+            return r'\f'
+        if ch == '\v':
+            return r'\v'
+        if ch == '\0':
+            return r'\0'
+
+        o = ord(ch)
+        if o < 65536:
+            return fr'\u{o:04x}'
+
+        val = o - 0x10000
+        high = 0xD800 + (val >> 10)
+        low = 0xDC00 + (val & 0x3FF)
+        return fr'\u{high:04x}\u{low:04x}'
 
     def is_identifier(self, key: Optional[str]) -> bool:
         """Returns whether the string could be used as a legal

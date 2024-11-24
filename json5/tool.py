@@ -26,9 +26,9 @@ Usage:
     }
 """
 
+import argparse
 import sys
 
-from . import arg_parser
 from . import lib
 from .host import Host
 from .version import __version__
@@ -37,12 +37,31 @@ from .version import __version__
 def main(argv=None, host=None):
     host = host or Host()
 
-    parser = arg_parser.ArgumentParser(host, prog='json5', desc=__doc__)
+    usage = 'json5 [options] [FILE]\n'
+
+    class CustomArgumentParser(argparse.ArgumentParser):
+        def error(self, message):
+            print(f'usage: {usage}', end='', file=sys.stderr)
+            print('    -h/--help for help\n', file=sys.stderr)
+            self.exit(2, f'error: {message}\n')
+
+    parser = CustomArgumentParser(
+        prog='json5',
+        usage=usage,
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        '-V',
+        '--version',
+        action='store_true',
+        help=f'show JSON5 library version ({__version__})',
+    )
     parser.add_argument(
         '-c',
         metavar='STR',
         dest='cmd',
-        help='inline json5 string to read instead of ' 'reading from a file',
+        help='inline json5 string to read instead of reading from a file',
     )
     parser.add_argument(
         '--as-json',
@@ -50,13 +69,13 @@ def main(argv=None, host=None):
         action='store_const',
         const=True,
         default=False,
-        help='output as JSON ' '(same as --quote-keys --no-trailing-commas)',
+        help='output as JSON (same as --quote-keys --no-trailing-commas)',
     )
     parser.add_argument(
         '--indent',
         dest='indent',
         default=4,
-        help='amount to indent each line ' '(default is 4 spaces)',
+        help='amount to indent each line (default is 4 spaces)',
     )
     parser.add_argument(
         '--quote-keys',
@@ -89,13 +108,14 @@ def main(argv=None, host=None):
         '--strict',
         action='store_true',
         default=True,
-        help='Do not allow control characters (\x00-\x1f) in strings (default)',
+        help='Do not allow control characters (\\x00-\\x1f) in strings '
+        '(default)',
     )
     parser.add_argument(
         '--no-strict',
         dest='strict',
         action='store_false',
-        help='Allow control characters (\x00-\x1f) in strings',
+        help='Allow control characters (\\x00-\\x1f) in strings',
     )
     parser.add_argument(
         'file',
@@ -107,9 +127,6 @@ def main(argv=None, host=None):
         'instead',
     )
     args = parser.parse_args(argv)
-
-    if parser.exit_status is not None:
-        return parser.exit_status
 
     if args.version:
         host.print_(__version__)

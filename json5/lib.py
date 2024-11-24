@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import enum
 import math
 import re
 from typing import (
@@ -33,6 +34,25 @@ from .parser import Parser
 # Used when encoding keys, below.
 _reserved_word_re: Optional[re.Pattern] = None
 
+
+class QuoteStyle(enum.Enum):
+    """Controls how strings will be quoted during encoding.
+
+    See description of the `quote_strings` keyword to dump/dumps/JSON5Encoder,
+    below.
+    """
+    ALWAYS_DOUBLE = 1
+    ALWAYS_SINGLE = 2
+    PREFER_DOUBLE = 3
+    PREFER_SINGLE = 4
+
+
+class _QuotesSeen(enum.IntFlag):
+    NONE = 0
+    SINGLE = 1
+    DOUBLE = 2
+    BOTH = 3
+    
 
 def load(
     fp: IO,
@@ -205,6 +225,7 @@ def dump(
     trailing_commas: bool = True,
     allow_duplicate_keys: bool = True,
     allow_custom_numbers: bool = True,
+    quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
     **kw,
 ):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp``,
@@ -233,6 +254,7 @@ def dump(
             trailing_commas=trailing_commas,
             allow_duplicate_keys=allow_duplicate_keys,
             allow_custom_numbers=allow_custom_numbers,
+            quote_style=quote_style,
             **kw,
         )
     )
@@ -254,6 +276,7 @@ def dumps(
     trailing_commas: bool = True,
     allow_duplicate_keys: bool = True,
     allow_custom_numbers: bool = False,
+    quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
     **kw,
 ):
     """Serialize ``obj`` to a JSON5-formatted string.
@@ -292,7 +315,26 @@ def dumps(
       is false by default), the encoder will call obj.__repr__ instead of
       int.__repr__ or float.__repr__.  If you really want more fine-grained
       control over the conversion, you'll need to subclass the JSON5Encoder
-      class.
+      class. *`allow_custom_numbers` was added in version 0.10.0*.
+    - `quote_style` controls how strings will be encoded. By default, for
+      compatibility with the `json` module and older versions of `json5`,
+      strings will always be double-quoted, and any double quotes in the string
+      will be escaped. This is `QuoteStyle.ALWAYS_DOUBLE`.  If you pass
+      `QuoteStyle.ALWAYS_SINGLE`, then strings will always be single-quoted,
+      and any single quotes in the string will be escaped.  If you pass
+      `QuoteStyle.PREFER_DOUBLE`, then the behavior is the same as
+      ALWAYS_DOUBLE and strings will be double-quoted *unless*g the string
+      contains double quotes (and not single quotes), in which case the string
+      will be single-quoted.  If the string contains both single and double
+      quotes, then the string will be double-quoted and the double quotes will
+      be escaped.  If you pass `QuoteStyle.PREFER_SINGLE`, then the behavior is
+      the same as ALWAYS_SINGLE and strings will be single-quoted *unless* the
+      string contains double quotes (and not single quotes), in which case the
+      string will be double-quoted. If the string contains both single and
+      double quotes, the string will be single-quoted and single quotes in the
+      string will be escaped. Strings that are being used as keys and that can
+      pass as identifiers are not affected by this parameter. 
+      *`quote_style` was added in version 0.10.0*.
 
     Other keyword arguments are allowed and will be passed to the
     encoder so custom encoders can get them, but otherwise they will
@@ -338,6 +380,7 @@ class JSON5Encoder:
         trailing_commas: bool = True,
         allow_duplicate_keys: bool = True,
         allow_custom_numbers: bool = False,
+        quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
         **kw,
     ):
         """Provides a class that may be overridden to customize the behavior
@@ -363,6 +406,7 @@ class JSON5Encoder:
         self.trailing_commas = trailing_commas
         self.allow_duplicate_keys = allow_duplicate_keys
         self.allow_custom_numbers = allow_custom_numbers
+        self.quote_style = quote_style
 
     def default(self, obj: Any) -> Any:
         """Provides a last-ditch option to encode a value that the encoder
@@ -464,11 +508,89 @@ class JSON5Encoder:
         ):
             return obj
 
-        ret = ['"']
+        quotes_seen = _QuotesSeen.NONE
+        ret = []
         for ch in obj:
-            ret.append(self.encode_ch(ch))
-        ret.append('"')
-        return ''.join(ret)
+            encoded_ch, quotes_seen = self._encode_ch(ch, quotes_seen)
+            ret.append(encoded_ch)
+        if self._use_double_quotes(quotes_seen):
+            return '"' + ''.join(ret) + '"'
+        else:
+            return "'" + ''.join(ret) + "'"
+
+    def _encode_ch(self, ch: str, quotes_seen: _QuotesSeen) -> (
+            str, _QuotesSeen
+        ):
+        """Returns a tuple of a string and what kinds of quotes we've seen
+        so far. The string is the `ch` if it doesn't need to be escaped,
+        or the escaped version if it does."""
+        if ch == '"':
+            return self._encode_double_quote(quotes_seen)
+        if ch == "'":
+            return self._encode_single_quote(quotes_seen)
+
+        o = ord(ch)
+        if 32 <= o < 128 and ch != '\\':
+            return ch, quotes_seen
+        if o < 32:
+            return self._escape_ch(ch), quotes_seen
+        if ch == '\\':
+            return self._escape_ch(ch), quotes_seen
+        if not self.ensure_ascii and not (ch in ('\u2028', '\u2029')):
+            return ch, quotes_seen
+        return self._escape_ch(ch), quotes_seen
+        
+    def _encode_double_quote(self, quotes_seen: _QuotesSeen) -> str:
+        quotes_seen |= _QuotesSeen.DOUBLE
+        if ((self.quote_style == QuoteStyle.ALWAYS_DOUBLE) or
+            (self.quote_style == QuoteStyle.PREFER_DOUBLE and
+             quote_seen == _QuotesSeen.BOTH)):
+            return self._escape_ch('"'), quotes_seen
+        return '"', quotes_seen
+
+    def _encode_single_quote(self, quotes_seen: _QuotesSeen) -> str:
+        quotes_seen |= _QuotesSeen.SINGLE 
+        if ((self.quote_style == QuoteStyle.ALWAYS_SINGLE) or
+            (self.quote_style == QuoteStyle.PREFER_SINGLE and
+             quotes_seen == _QuotesSeen.BOTH)):
+            return self._escape_ch("'"), quotes_seen
+        return "'", quotes_seen
+
+    def _escape_ch(self, ch: str) -> str:
+        """Returns the backslash-escaped representation of the char."""
+        if ch == '\\':
+            return '\\\\'
+        if ch == '"':
+            return r'\"'
+        if ch == '\n':
+            return r'\n'
+        if ch == '\r':
+            return r'\r'
+        if ch == '\t':
+            return r'\t'
+        if ch == '\b':
+            return r'\b'
+        if ch == '\f':
+            return r'\f'
+        if ch == '\v':
+            return r'\v'
+        if ch == '\0':
+            return r'\0'
+
+        o = ord(ch)
+        if o < 65536:
+            return fr'\u{o:04x}'
+
+        val = o - 0x10000
+        high = 0xD800 + (val >> 10)
+        low = 0xDC00 + (val & 0x3FF)
+        return fr'\u{high:04x}\u{low:04x}'
+
+    def _use_double_quotes(self, quotes_seen):
+        if (self.quote_style == QuoteStyle.ALWAYS_DOUBLE or
+            (self.quote_style == QuoteStyle.PREFER_SINGLE and 
+             quotes_seen == _QuotesSeen.SINGLE)):
+            return True
 
     def _encode_non_basic_type(self, obj, seen: Set, level: int) -> str:
         # Basic types can't be recursive so we only check for circularity
@@ -568,49 +690,6 @@ class JSON5Encoder:
             indent_str = ''
             end_str = ''
         return indent_str, end_str
-
-    def encode_ch(self, ch: str) -> str:
-        """Returns a properly-escaped representation of a char.
-
-        The char will be as-is if possible, otherwise escaped."""
-        o = ord(ch)
-        if (32 <= o < 128) and (o != 34) and (o != 92):
-            return ch
-        if o < 32:
-            return self.escape_ch(ch)
-        if not self.ensure_ascii and not (ch in ('\u2028', '\u2029')):
-            return ch
-        return self.escape_ch(ch)
-        
-    def escape_ch(self, ch: str) -> str:
-        """Returns the backslash-escaped representation of the char."""
-        if ch == '\\':
-            return '\\\\'
-        if ch == '"':
-            return r'\"'
-        if ch == '\n':
-            return r'\n'
-        if ch == '\r':
-            return r'\r'
-        if ch == '\t':
-            return r'\t'
-        if ch == '\b':
-            return r'\b'
-        if ch == '\f':
-            return r'\f'
-        if ch == '\v':
-            return r'\v'
-        if ch == '\0':
-            return r'\0'
-
-        o = ord(ch)
-        if o < 65536:
-            return fr'\u{o:04x}'
-
-        val = o - 0x10000
-        high = 0xD800 + (val >> 10)
-        low = 0xDC00 + (val & 0x3FF)
-        return fr'\u{high:04x}\u{low:04x}'
 
     def is_identifier(self, key: Optional[str]) -> bool:
         """Returns whether the string could be used as a legal

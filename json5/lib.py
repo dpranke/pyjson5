@@ -445,7 +445,7 @@ class JSON5Encoder:
         fall back to super.encode() if they've been passed a normal object.
 
         `seen` is used for duplicate object tracking when `check_circular`
-        is True. 
+        is True.
 
         `level` represents the current indentation level, which increases
         by one for each recursive invocation of encode (i.e., whenever

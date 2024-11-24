@@ -362,18 +362,25 @@ class TestDumps(unittest.TestCase):
         self.check(False, 'false')
 
     def test_check_circular(self):
+        # This tests that a non-cyclic object works w/ either flag value.
+        obj = [1, 2, 3]
+        self.check(obj, '[1, 2, 3]')  # testing the default
+        self.check(obj, '[1, 2, 3]', check_circular=True)
+        self.check(obj, '[1, 2, 3]', check_circular=False)
+
         # This tests a trivial cycle.
         obj = [1, 2, 3]
         obj[2] = obj
         self.assertRaises(ValueError, json5.dumps, obj)
 
-        # This checks that json5 doesn't raise an error. However,
+        # This checks that json5 doesn't raise an error with
+        # check_circular=false and a cycle. However,
         # the underlying Python implementation likely will.
         try:
             json5.dumps(obj, check_circular=False)
             self.fail()  # pragma: no cover
-        except Exception as e:
-            self.assertNotIn(str(e), 'Circular reference detected')
+        except RecursionError as e:
+            pass
 
         # This checks that repeated but non-circular references
         # are okay.
@@ -521,6 +528,13 @@ class TestDumps(unittest.TestCase):
 
     def test_null(self):
         self.check(None, 'null')
+
+    def test_separators(self):
+        # Check that custom separators work; these separators add an
+        # extra space.
+        self.check(
+            [{'foo': 1}, 2], '[{foo:  1},  2]', separators=(',  ', ':  ')
+        )
 
     def test_objects(self):
         self.check({'foo': 1}, '{foo: 1}')

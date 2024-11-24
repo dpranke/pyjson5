@@ -41,6 +41,7 @@ class QuoteStyle(enum.Enum):
     See description of the `quote_strings` keyword to dump/dumps/JSON5Encoder,
     below.
     """
+
     ALWAYS_DOUBLE = 1
     ALWAYS_SINGLE = 2
     PREFER_DOUBLE = 3
@@ -52,7 +53,7 @@ class _QuotesSeen(enum.IntFlag):
     SINGLE = 1
     DOUBLE = 2
     BOTH = 3
-    
+
 
 def load(
     fp: IO,
@@ -359,6 +360,7 @@ def dumps(
         trailing_commas=trailing_commas,
         allow_duplicate_keys=allow_duplicate_keys,
         allow_custom_numbers=allow_custom_numbers,
+        quote_style=quote_style,
         **kw,
     )
     return enc.encode(obj)
@@ -419,10 +421,11 @@ class JSON5Encoder:
 
     def encode(
         self,
-        obj: Any, seen: Optional[Set] = None,
+        obj: Any,
+        seen: Optional[Set] = None,
         level: int = 0,
         *,
-        as_key: bool = False
+        as_key: bool = False,
     ) -> str:
         """Returns an JSON5-encoded version of an arbitrary object. This can
         be used to provide customized serialization of objects. Overridden
@@ -462,7 +465,9 @@ class JSON5Encoder:
 
     def _encode_basic_type(self, obj: Any, *, as_key: bool) -> str:
         if isinstance(obj, str):
-            return self._encode_str(obj, as_key=as_key)
+            return self._encode_str(
+                obj, as_key=as_key, quote_style=self.quote_style
+            )
 
         # Check for True/False before ints because True and False are
         # also considered ints and so would be represented as 1 and 0
@@ -499,7 +504,9 @@ class JSON5Encoder:
             raise ValueError()
         return f'"{s}"' if as_key else s
 
-    def _encode_str(self, obj: str, *, as_key: bool) -> str:
+    def _encode_str(
+        self, obj: str, *, as_key: bool, quote_style: QuoteStyle
+    ) -> str:
         if (
             as_key
             and self.is_identifier(obj)
@@ -509,25 +516,55 @@ class JSON5Encoder:
             return obj
 
         quotes_seen = _QuotesSeen.NONE
+        if quote_style in (QuoteStyle.ALWAYS_SINGLE, QuoteStyle.ALWAYS_DOUBLE):
+            ret = []
+            for ch in obj:
+                encoded_ch, quotes_seen = self._encode_ch(
+                    ch, quote_style, quotes_seen
+                )
+                ret.append(encoded_ch)
+            if quote_style == QuoteStyle.ALWAYS_SINGLE:
+                return "'" + ''.join(ret) + "'"
+            else:
+                return '"' + ''.join(ret) + '"'
+
         ret = []
         for ch in obj:
-            encoded_ch, quotes_seen = self._encode_ch(ch, quotes_seen)
+            encoded_ch, quotes_seen = self._encode_ch(
+                ch, quote_style, quotes_seen
+            )
+            if quotes_seen == _QuotesSeen.BOTH:
+                # If we get here, at least one of the characters wasn't
+                # encoded correctly. To fix this, it's perhaps
+                # easiest to just start over and force the needed style.
+                if quote_style == QuoteStyle.PREFER_SINGLE:
+                    return self._encode_str(
+                        obj,
+                        as_key=as_key,
+                        quote_style=QuoteStyle.ALWAYS_SINGLE,
+                    )
+                else:
+                    return self._encode_str(
+                        obj,
+                        as_key=as_key,
+                        quote_style=QuoteStyle.ALWAYS_DOUBLE,
+                    )
             ret.append(encoded_ch)
         if self._use_double_quotes(quotes_seen):
             return '"' + ''.join(ret) + '"'
         else:
             return "'" + ''.join(ret) + "'"
 
-    def _encode_ch(self, ch: str, quotes_seen: _QuotesSeen) -> (
-            str, _QuotesSeen
-        ):
+    def _encode_ch(
+        self, ch: str, quote_style: QuoteStyle, quotes_seen: _QuotesSeen
+    ) -> (str, _QuotesSeen):
         """Returns a tuple of a string and what kinds of quotes we've seen
         so far. The string is the `ch` if it doesn't need to be escaped,
         or the escaped version if it does."""
         if ch == '"':
-            return self._encode_double_quote(quotes_seen)
+            return self._encode_double_quote(quote_style, quotes_seen)
         if ch == "'":
-            return self._encode_single_quote(quotes_seen)
+            return self._encode_single_quote(quote_style, quotes_seen)
 
         o = ord(ch)
         if 32 <= o < 128 and ch != '\\':
@@ -539,20 +576,26 @@ class JSON5Encoder:
         if not self.ensure_ascii and not (ch in ('\u2028', '\u2029')):
             return ch, quotes_seen
         return self._escape_ch(ch), quotes_seen
-        
-    def _encode_double_quote(self, quotes_seen: _QuotesSeen) -> str:
+
+    def _encode_double_quote(
+        self, quote_style: QuoteStyle, quotes_seen: _QuotesSeen
+    ) -> str:
         quotes_seen |= _QuotesSeen.DOUBLE
-        if ((self.quote_style == QuoteStyle.ALWAYS_DOUBLE) or
-            (self.quote_style == QuoteStyle.PREFER_DOUBLE and
-             quote_seen == _QuotesSeen.BOTH)):
+        if (quote_style == QuoteStyle.ALWAYS_DOUBLE) or (
+            quote_style == QuoteStyle.PREFER_DOUBLE
+            and quotes_seen == _QuotesSeen.BOTH
+        ):
             return self._escape_ch('"'), quotes_seen
         return '"', quotes_seen
 
-    def _encode_single_quote(self, quotes_seen: _QuotesSeen) -> str:
-        quotes_seen |= _QuotesSeen.SINGLE 
-        if ((self.quote_style == QuoteStyle.ALWAYS_SINGLE) or
-            (self.quote_style == QuoteStyle.PREFER_SINGLE and
-             quotes_seen == _QuotesSeen.BOTH)):
+    def _encode_single_quote(
+        self, quote_style: QuoteStyle, quotes_seen: _QuotesSeen
+    ) -> str:
+        quotes_seen |= _QuotesSeen.SINGLE
+        if (quote_style == QuoteStyle.ALWAYS_SINGLE) or (
+            quote_style == QuoteStyle.PREFER_SINGLE
+            and quotes_seen == _QuotesSeen.BOTH
+        ):
             return self._escape_ch("'"), quotes_seen
         return "'", quotes_seen
 
@@ -560,6 +603,8 @@ class JSON5Encoder:
         """Returns the backslash-escaped representation of the char."""
         if ch == '\\':
             return '\\\\'
+        if ch == "'":
+            return r'\''
         if ch == '"':
             return r'\"'
         if ch == '\n':
@@ -579,18 +624,27 @@ class JSON5Encoder:
 
         o = ord(ch)
         if o < 65536:
-            return fr'\u{o:04x}'
+            return rf'\u{o:04x}'
 
         val = o - 0x10000
         high = 0xD800 + (val >> 10)
         low = 0xDC00 + (val & 0x3FF)
-        return fr'\u{high:04x}\u{low:04x}'
+        return rf'\u{high:04x}\u{low:04x}'
 
     def _use_double_quotes(self, quotes_seen):
-        if (self.quote_style == QuoteStyle.ALWAYS_DOUBLE or
-            (self.quote_style == QuoteStyle.PREFER_SINGLE and 
-             quotes_seen == _QuotesSeen.SINGLE)):
+        if (
+            self.quote_style == QuoteStyle.ALWAYS_DOUBLE
+            or (
+                self.quote_style == QuoteStyle.PREFER_DOUBLE
+                and quotes_seen != _QuotesSeen.DOUBLE
+            )
+            or (
+                self.quote_style == QuoteStyle.PREFER_SINGLE
+                and quotes_seen == _QuotesSeen.SINGLE
+            )
+        ):
             return True
+        return False
 
     def _encode_non_basic_type(self, obj, seen: Set, level: int) -> str:
         # Basic types can't be recursive so we only check for circularity

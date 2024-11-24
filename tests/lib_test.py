@@ -334,8 +334,8 @@ class TestDump(unittest.TestCase):
 class TestDumps(unittest.TestCase):
     maxDiff = None
 
-    def check(self, obj, s):
-        self.assertEqual(json5.dumps(obj), s)
+    def check(self, obj, s, **kwargs):
+        self.assertEqual(json5.dumps(obj, **kwargs), s)
 
     def test_allow_duplicate_keys(self):
         self.assertIn(
@@ -554,9 +554,9 @@ class TestDumps(unittest.TestCase):
         # can be tricky.
 
         # Normal Python escaping means that the following asserts are true:
-        self.assertEqual('\\z', "\\z")
+        self.assertEqual('\\z', '\\z')
         self.assertEqual('\\z', r'\z')
-        self.assertEqual('\\z', r"\z")
+        self.assertEqual('\\z', r'\z')
 
         # But, in Python, escaping quotes in a raw string is tricky, because
         # the escape is left in the output. The results of this are:
@@ -575,16 +575,16 @@ class TestDumps(unittest.TestCase):
         # value actually contains an odd number of backslashes immediately
         # preceding the quote:
         self.assertEqual(len(r'\''), 2)
-        self.assertEqual(r'\'', '\\\'')
         self.assertEqual(r'\'', "\\'")
-        self.assertEqual(r'\'', r"\'")
+        self.assertEqual(r'\'', "\\'")
+        self.assertEqual(r'\'', r'\'')
 
         # Now, in JSON5, if the value doesn't contain backslashes, you can
         # use normal quoting as you would in Python, but you can't use
         # raw strings, since the raw strings would require the values to
         # have backslashes in them:
         self.check("'single'", '"\'single\'"')
-        self.check("'single'", "\"'single'\"")
+        self.check("'single'", '"\'single\'"')
 
         # In order to represent a backslash in the value you also need to
         # escape it in the JSON string: a string containing a single backslash
@@ -597,7 +597,7 @@ class TestDumps(unittest.TestCase):
         # particular example, you cannot use single-quoted raw strings,
         # due to (1).
         self.check('\\', '"\\\\"')
-        self.check('\\', "\"\\\\\"")
+        self.check('\\', '"\\\\"')
 
         # You cannot use a double-quoted raw string to represent
         # double-quoted JSON5 strings, since the output needs to start with a
@@ -612,7 +612,7 @@ class TestDumps(unittest.TestCase):
         self.check(r'\z', '"\\\\z"')
 
         self.check('"', '"\\""')
-        self.check('"', "\"\\\"\"")
+        self.check('"', '"\\""')
 
         # Here it's okay to use a raw string for output since the output
         # needs to have a single backslash and doesn't end in a single quote.
@@ -620,16 +620,78 @@ class TestDumps(unittest.TestCase):
 
         # Here you cannot use raw strings for the output as the output
         # would need to have only two backslashes in it.
-        self.check(r'\'', "\"\\\\'\"")
+        self.check(r'\'', '"\\\\\'"')
         self.check(r'\'', '"\\\\\'"')
 
     def test_string_escape_sequences(self):
         # self.check(r'\'', '"\\\\\'"')
-        self.check("'\\'", "\"'\\\\'\"")
+        self.check("'\\'", '"\'\\\\\'"')
         self.check(
             '\u2028\u2029\b\t\f\n\r\v\\\0',
             r'"\u2028\u2029\b\t\f\n\r\v\\\0"',
         )
+
+    def test_string_quote_styles(self):
+        def checkp(**kwargs):
+            return lambda obj, s: self.assertEqual(
+                s, json5.dumps(obj, **kwargs)
+            )
+
+        neither = 'a b c'
+        single_neither = "'a b c'"
+        double_neither = '"a b c"'
+
+        single = "a 'b' c"
+        single_single = "'a \\'b\\' c'"
+        double_single = '"a \'b\' c"'
+
+        double = 'a "b" c'
+        single_double = '\'a "b" c\''
+        double_double = '"a \\"b\\" c"'
+
+        both = 'a \'b\' "c" d'
+        single_both = "'a \\'b\\' \"c\" d'"
+        double_both = '"a \'b\' \\"c\\" d"'
+
+        reverse = 'a "b" \'c\' d'
+        single_reverse = "'a \"b\" \\'c\\' d'"
+        double_reverse = '"a \\"b\\" \'c\' d"'
+
+        # Default settings (should be ALWAYS_DOUBLE)
+        c = checkp()
+        c(neither, double_neither)
+        c(single, double_single)
+        c(double, double_double)
+        c(both, double_both)
+        c(reverse, double_reverse)
+
+        c = checkp(quote_style=json5.QuoteStyle.ALWAYS_DOUBLE)
+        c(neither, double_neither)
+        c(single, double_single)
+        c(double, double_double)
+        c(both, double_both)
+        c(reverse, double_reverse)
+
+        c = checkp(quote_style=json5.QuoteStyle.ALWAYS_SINGLE)
+        c(neither, single_neither)
+        c(single, single_single)
+        c(double, single_double)
+        c(both, single_both)
+        c(reverse, single_reverse)
+
+        c = checkp(quote_style=json5.QuoteStyle.PREFER_DOUBLE)
+        c(neither, double_neither)
+        c(single, double_single)
+        c(double, single_double)
+        c(both, double_both)
+        c(reverse, double_reverse)
+
+        c = checkp(quote_style=json5.QuoteStyle.PREFER_SINGLE)
+        c(neither, single_neither)
+        c(single, double_single)
+        c(double, single_double)
+        c(both, single_both)
+        c(reverse, single_reverse)
 
     def test_skip_keys(self):
         od = OrderedDict()

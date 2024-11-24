@@ -225,7 +225,6 @@ def dump(
     quote_keys: bool = False,
     trailing_commas: bool = True,
     allow_duplicate_keys: bool = True,
-    allow_custom_numbers: bool = True,
     quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
     **kw,
 ):
@@ -254,7 +253,6 @@ def dump(
             quote_keys=quote_keys,
             trailing_commas=trailing_commas,
             allow_duplicate_keys=allow_duplicate_keys,
-            allow_custom_numbers=allow_custom_numbers,
             quote_style=quote_style,
             **kw,
         )
@@ -276,7 +274,6 @@ def dumps(
     quote_keys: bool = False,
     trailing_commas: bool = True,
     allow_duplicate_keys: bool = True,
-    allow_custom_numbers: bool = False,
     quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
     **kw,
 ):
@@ -307,16 +304,6 @@ def dumps(
     - If `allow_duplicate_keys` is false, then only the last entry with a given
       key will be written. Otherwise, all entries with the same key will be
       written.
-    - The standard `json` module will call intentionally call `int.__repr__`
-      and `float.__repr__` to encode subclasses of ints and floats, even if the
-      subclass had customized the __repr__. This kinda makes sense for JSON
-      since there can more-or-less only be one representation of those kinds of
-      numbers. JSON5 can support multiple versions (notably hexadecimal), and
-      so it would be nice if it didn't. if `allow_custom_numbers` is true (it
-      is false by default), the encoder will call obj.__repr__ instead of
-      int.__repr__ or float.__repr__.  If you really want more fine-grained
-      control over the conversion, you'll need to subclass the JSON5Encoder
-      class. *`allow_custom_numbers` was added in version 0.10.0*.
     - `quote_style` controls how strings will be encoded. By default, for
       compatibility with the `json` module and older versions of `json5`,
       strings will always be double-quoted, and any double quotes in the string
@@ -341,6 +328,35 @@ def dumps(
     encoder so custom encoders can get them, but otherwise they will
     be ignored in an attempt to provide some amount of forward-compatibility.
 
+    Note: the standard JSON module explicitly calls `int.__repr(obj)__`
+    and `float.__repr(obj)__` to encode ints and floats, thereby bypassing
+    any custom representations you might have for objects that are subclasses
+    of ints and floats, and for compatibility, JSON5 does the same thing. 
+    To override this behavior, create a subclass of JSON5Encoder
+    that overrides `encode()` and handles your custom representation.
+
+    For example:
+
+    ```
+    >>> import json5
+    ... from typing import Any, Set
+    ...
+    ... class Hex(int):
+    ...    def __repr__(self):
+    ...        return hex(self)
+    ... 
+    ... class CustomEncoder(json5.JSON5Encoder):
+    ...    def encode(self, obj: Any, seen: Set, level: int, *, as_key: bool):
+    ...        if isinstance(obj, Hex):
+    ...            return repr(obj)
+    ...        return super().encode(obj, seen, level, as_key=as_key)
+    ... 
+    ... print(json5.dumps([20, Hex(20)], cls=CustomEncoder))
+    ...
+    [20, 0x14]
+    >>>
+    ```
+            
     Calling ``dumps(obj, quote_keys=True, trailing_commas=False, \
                     allow_duplicate_keys=True)``
     should produce exactly the same output as ``json.dumps(obj).``
@@ -359,11 +375,10 @@ def dumps(
         quote_keys=quote_keys,
         trailing_commas=trailing_commas,
         allow_duplicate_keys=allow_duplicate_keys,
-        allow_custom_numbers=allow_custom_numbers,
         quote_style=quote_style,
         **kw,
     )
-    return enc.encode(obj)
+    return enc.encode(obj, seen=set(), level=0, as_key=False)
 
 
 class JSON5Encoder:
@@ -381,12 +396,12 @@ class JSON5Encoder:
         quote_keys: bool = False,
         trailing_commas: bool = True,
         allow_duplicate_keys: bool = True,
-        allow_custom_numbers: bool = False,
         quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
         **kw,
     ):
         """Provides a class that may be overridden to customize the behavior
-        of `dumps()`. The keyword args are the same as for that function."""
+        of `dumps()`. The keyword args are the same as for that function.
+        *Added in version 0.10.0"""
         # Ignore unrecognized keyword arguments in the hope of providing
         # some level of backwards- and forwards-compatibility.
         del kw
@@ -398,16 +413,13 @@ class JSON5Encoder:
         self.indent = indent
         self.separators = separators
         if separators is None:
-            if indent is None:
-                self.item_separator, self.kv_separator = (', ', ': ')
-            else:
-                self.item_separator, self.kv_separator = (',', ': ')
+            separators = (', ', ': ') if indent is None else (',', ': ')
+        self.item_separator, self.kv_separator = separators
         self.default_fn = default or _raise_type_error
         self.sort_keys = sort_keys
         self.quote_keys = quote_keys
         self.trailing_commas = trailing_commas
         self.allow_duplicate_keys = allow_duplicate_keys
-        self.allow_custom_numbers = allow_custom_numbers
         self.quote_style = quote_style
 
     def default(self, obj: Any) -> Any:
@@ -422,10 +434,10 @@ class JSON5Encoder:
     def encode(
         self,
         obj: Any,
-        seen: Optional[Set] = None,
-        level: int = 0,
+        seen: Set,
+        level: int,
         *,
-        as_key: bool = False,
+        as_key: bool,
     ) -> str:
         """Returns an JSON5-encoded version of an arbitrary object. This can
         be used to provide customized serialization of objects. Overridden
@@ -433,8 +445,7 @@ class JSON5Encoder:
         fall back to super.encode() if they've been passed a normal object.
 
         `seen` is used for duplicate object tracking when `check_circular`
-        is True. If `set` is None, it should be initialized to an empty
-        set that is then passed to any recursive invocations of `encode`.
+        is True. 
 
         `level` represents the current indentation level, which increases
         by one for each recursive invocation of encode (i.e., whenever
@@ -480,12 +491,16 @@ class JSON5Encoder:
             return '"null"' if as_key else 'null'
 
         if isinstance(obj, int):
-            s = repr(obj) if self.allow_custom_numbers else int.__repr__(obj)
-            return f'"{s}"' if as_key else s
+            return self._encode_int(obj, as_key=as_key)
 
         if isinstance(obj, float):
             return self._encode_float(obj, as_key=as_key)
+
         return None
+
+    def _encode_int(self, obj: int, *, as_key: bool) -> str:
+        s = int.__repr__(obj)
+        return f'"{s}"' if as_key else s
 
     def _encode_float(self, obj: float, *, as_key: bool) -> str:
         if obj == float('inf'):
@@ -499,9 +514,10 @@ class JSON5Encoder:
             s = 'NaN'
         else:
             allowed = True
-            s = repr(obj) if self.allow_custom_numbers else float.__repr__(obj)
+            s = float.__repr__(obj)
+
         if not allowed:
-            raise ValueError()
+            raise ValueError('Illegal JSON5 value: f{obj}')
         return f'"{s}"' if as_key else s
 
     def _encode_str(
@@ -706,7 +722,11 @@ class JSON5Encoder:
             else:
                 s += item_sep
 
-            s += key_str + kv_sep + self.encode(obj[key], seen, level)
+            s += (
+                key_str
+                + kv_sep
+                + self.encode(obj[key], seen, level, as_key=False)
+            )
 
         s += end_str + '}'
         return s
@@ -720,7 +740,9 @@ class JSON5Encoder:
         return (
             '['
             + indent_str
-            + item_sep.join(self.encode(el, seen, level) for el in obj)
+            + item_sep.join(
+                self.encode(el, seen, level, as_key=False) for el in obj
+            )
             + end_str
             + ']'
         )

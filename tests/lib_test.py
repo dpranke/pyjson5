@@ -25,7 +25,7 @@ class TestLoads(unittest.TestCase):
     maxDiff = None
 
     def check(self, s, obj, strict=True):
-        self.assertEqual(json5.loads(s, strict=strict), obj)
+        self.assertEqual(obj, json5.loads(s, strict=strict))
 
     def check_fail(self, s, err=None):
         try:
@@ -50,9 +50,6 @@ class TestLoads(unittest.TestCase):
     def test_bools(self):
         self.check('true', True)
         self.check('false', False)
-
-    def test_cls_is_not_supported(self):
-        self.assertRaises(AssertionError, json5.loads, '1', cls=lambda x: x)
 
     def test_duplicate_keys_should_be_allowed(self):
         self.assertEqual(
@@ -335,7 +332,7 @@ class TestDumps(unittest.TestCase):
     maxDiff = None
 
     def check(self, obj, s, **kwargs):
-        self.assertEqual(json5.dumps(obj, **kwargs), s)
+        self.assertEqual(s, json5.dumps(obj, **kwargs))
 
     def test_allow_duplicate_keys(self):
         self.assertIn(

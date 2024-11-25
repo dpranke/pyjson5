@@ -100,6 +100,32 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
+* v0.10.0 (2024-11-24)
+    * [GitHub issue #57](https://github.com/dpranke/pyjson5/issues/57).
+      Added a `JSON5Encoder` class that can be overridden to do custom
+      encoding of values. This class is vaguely similar to the `JSONEncoder`
+      class in the standard `json` library, except that it has an
+      `encode()` method that can be overridden to customize *any*
+      value, not just ones the standard encoder doesn't know how to handle.
+      It does also support a `default()` method that can be used to
+      encode things not normally encodable, like the JSONEncoder class.
+      It does not support an `iterencode` method. One could probably
+      be added in the future, although exactly how that would work and
+      interact with `encode` is a little unclear.
+    * Restructured the code to use the new encoder class; doing so actually
+      allowed me to delete a bunch of tediously duplicative code.
+    * Added a new `quote_style` argument to `dump()`/`dumps()` to control
+      how strings are encoded by default. For compatibility with older
+      versions of the json5 library and the standard json library, it
+      uses `QuoteStyle.ALWAYS_DOUBLE` which encodes all strings with double
+      quotes all the time. You can also configure it to use single quotes
+      all the time (`ALWAYS_SINGLE`), and to switch between single and double
+      when doing so eliminates a need to escape quotes (`PREFER_SINGLE` and
+      `PREFER_DOUBLE`). This also adds a `--quote-style` argument to
+      `python -m json5`.
+    * This release has a fair number of changes, but is intended to be
+      completely backwards-compatible. Code without changes should run exactly
+      as it did before.
 * v0.9.28 (2024-11-11)
     * Fix GitHub CI to install `uv` so `./run tests` works properly.
     * Mark Python3.13 as supported in package metadata.

@@ -16,11 +16,11 @@
 
 Usage:
 
-    $ echo '{foo:"bar"}' | python -m json5.tool
+    $ echo '{foo:"bar"}' | python -m json5
     {
         foo: 'bar',
     }
-    $ echo '{foo:"bar"}' | python -m json5.tool --as-json
+    $ echo '{foo:"bar"}' | python -m json5 --as-json
     {
         "foo": "bar"
     }
@@ -29,9 +29,17 @@ Usage:
 import argparse
 import sys
 
-from json5 import lib
+import json5
 from json5.host import Host
 from json5.version import __version__
+
+
+QUOTE_STYLES = {
+    'always_double': json5.QuoteStyle.ALWAYS_DOUBLE,
+    'always_single': json5.QuoteStyle.ALWAYS_SINGLE,
+    'prefer_double': json5.QuoteStyle.PREFER_DOUBLE,
+    'prefer_single': json5.QuoteStyle.PREFER_SINGLE,
+}
 
 
 def main(argv=None, host=None):
@@ -61,13 +69,15 @@ def main(argv=None, host=None):
     if args.as_json:
         args.quote_keys = True
         args.trailing_commas = False
+        args.quote_style = 'always_double'
 
-    obj = lib.loads(inp, strict=args.strict)
-    s = lib.dumps(
+    obj = json5.loads(inp, strict=args.strict)
+    s = json5.dumps(
         obj,
         indent=args.indent,
         quote_keys=args.quote_keys,
         trailing_commas=args.trailing_commas,
+        quote_style=QUOTE_STYLES[args.quote_style]
     )
     host.print(s)
     return 0
@@ -169,6 +179,16 @@ def _parse_args(host, argv):
         dest='strict',
         action='store_false',
         help='Allow control characters (\\x00-\\x1f) in strings',
+    )
+    parser.add_argument(
+        '--quote-style',
+        action='store',
+        default='always_double',
+        choices=(
+            'always_double', 'always_single', 'prefer_double', 'prefer_single'
+        ),
+        help='Controls how strings are encoded. By default they are always '
+             'double-quoted ("always_double")'
     )
     parser.add_argument(
         'file',

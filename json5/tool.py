@@ -29,31 +29,76 @@ Usage:
 import argparse
 import sys
 
-from . import lib
-from .host import Host
-from .version import __version__
+from json5 import lib
+from json5.host import Host
+from json5.version import __version__
 
 
 def main(argv=None, host=None):
     host = host or Host()
 
+    args = _parse_args(host, argv)
+
+    if args.version:
+        host.print(__version__)
+        return 0
+
+    if args.cmd:
+        inp = args.cmd
+    elif args.file == '-':
+        inp = host.stdin.read()
+    else:
+        inp = host.read_text_file(args.file)
+
+    if args.indent == 'None':
+        args.indent = None
+    else:
+        try:
+            args.indent = int(args.indent)
+        except ValueError:
+            pass
+
+    if args.as_json:
+        args.quote_keys = True
+        args.trailing_commas = False
+
+    obj = lib.loads(inp, strict=args.strict)
+    s = lib.dumps(
+        obj,
+        indent=args.indent,
+        quote_keys=args.quote_keys,
+        trailing_commas=args.trailing_commas,
+    )
+    host.print(s)
+    return 0
+
+
+class _HostedArgumentParser(argparse.ArgumentParser):
+    """An argument parser that plays nicely w/ host objects."""
+
+    def __init__(self, host, **kwargs):
+        self.host = host
+        super().__init__(**kwargs)
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, self.host.stderr)
+        sys.exit(status)
+
+    def error(self, message):
+        self.host.print(f'usage: {self.usage}', end='', file=self.host.stderr)
+        self.host.print('    -h/--help for help\n', file=self.host.stderr)
+        self.exit(2, f'error: {message}\n')
+
+    def print_help(self, file=None):
+        self.host.print(self.format_help(), file=file)
+
+
+def _parse_args(host, argv):
     usage = 'json5 [options] [FILE]\n'
 
-    class CustomArgumentParser(argparse.ArgumentParser):
-        def exit(self, status=0, message=None):
-            if message:
-                self._print_message(message, host.stderr)
-            sys.exit(status)
-
-        def error(self, message):
-            host.print(f'usage: {usage}', end='', file=host.stderr)
-            host.print('    -h/--help for help\n', file=host.stderr)
-            self.exit(2, f'error: {message}\n')
-
-        def print_help(self, file=None):
-            host.print(self.format_help(), file=file)
-
-    parser = CustomArgumentParser(
+    parser = _HostedArgumentParser(
+        host,
         prog='json5',
         usage=usage,
         description=__doc__,
@@ -134,40 +179,7 @@ def main(argv=None, host=None):
         'not specified or "-", will read from stdin '
         'instead',
     )
-    args = parser.parse_args(argv)
-
-    if args.version:
-        host.print(__version__)
-        return 0
-
-    if args.cmd:
-        inp = args.cmd
-    elif args.file == '-':
-        inp = host.stdin.read()
-    else:
-        inp = host.read_text_file(args.file)
-
-    if args.indent == 'None':
-        args.indent = None
-    else:
-        try:
-            args.indent = int(args.indent)
-        except ValueError:
-            pass
-
-    if args.as_json:
-        args.quote_keys = True
-        args.trailing_commas = False
-
-    obj = lib.loads(inp, strict=args.strict)
-    s = lib.dumps(
-        obj,
-        indent=args.indent,
-        quote_keys=args.quote_keys,
-        trailing_commas=args.trailing_commas,
-    )
-    host.print(s)
-    return 0
+    return parser.parse_args(argv)
 
 
 if __name__ == '__main__':  # pragma: no cover

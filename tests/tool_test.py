@@ -60,8 +60,6 @@ class ToolTest(unittest.TestCase):
             tmpdir = fake_host.mkdtemp()
             fake_host.chdir(tmpdir)
 
-            # Write a dummy file to make branch coverage in
-            # host_fake.FakeHost.rmtree() happy.
             fake_host.write_text_file('/tmp/foo', '')
 
             if stdin:

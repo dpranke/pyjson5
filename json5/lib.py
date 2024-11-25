@@ -28,7 +28,7 @@ from typing import (
 )
 import unicodedata
 
-from .parser import Parser
+from json5.parser import Parser
 
 
 # Used when encoding keys, below.

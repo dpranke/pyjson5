@@ -12,10 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import sys  # pragma: no cover
+# pragma: no cover
 
-from .tool import main  # pragma: no cover
+import sys
+
+from json5.tool import main
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == '__main__':
     sys.exit(main())

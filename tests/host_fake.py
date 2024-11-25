@@ -113,6 +113,8 @@ class FakeHost:
         for f in self.files:
             if f.startswith(path):
                 self.remove(f)
+            else:  # pragma: no cover
+                pass
         self.dirs.remove(path)
 
     def write_text_file(self, path, contents):

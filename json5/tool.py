@@ -40,10 +40,18 @@ def main(argv=None, host=None):
     usage = 'json5 [options] [FILE]\n'
 
     class CustomArgumentParser(argparse.ArgumentParser):
+        def exit(self, status=0, message=None):
+            if message:
+                self._print_message(message, host.stderr)
+            sys.exit(status)
+
         def error(self, message):
-            print(f'usage: {usage}', end='', file=sys.stderr)
-            print('    -h/--help for help\n', file=sys.stderr)
+            host.print(f'usage: {usage}', end='', file=host.stderr)
+            host.print('    -h/--help for help\n', file=host.stderr)
             self.exit(2, f'error: {message}\n')
+
+        def print_help(self, file=None):
+            host.print(self.format_help(), file=file)
 
     parser = CustomArgumentParser(
         prog='json5',
@@ -129,7 +137,7 @@ def main(argv=None, host=None):
     args = parser.parse_args(argv)
 
     if args.version:
-        host.print_(__version__)
+        host.print(__version__)
         return 0
 
     if args.cmd:
@@ -158,7 +166,7 @@ def main(argv=None, host=None):
         quote_keys=args.quote_keys,
         trailing_commas=args.trailing_commas,
     )
-    host.print_(s)
+    host.print(s)
     return 0
 
 

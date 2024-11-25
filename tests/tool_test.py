@@ -21,6 +21,8 @@ from json5 import __version__, VERSION
 from json5.host import Host
 from json5.tool import main
 
+from tests.host_fake import FakeHost
+
 
 class ToolTest(unittest.TestCase):
     maxDiff = None
@@ -47,48 +49,57 @@ class ToolTest(unittest.TestCase):
         # if we had command line args to toggle the two modes off and on.
         # Or, we could also figure out how to get the coverage in the 
         # subprocess correctly accounted for.
-        host = Host()
-        orig_wd = host.getcwd()
-        tmpdir = host.mkdtemp()
-        try:
-            host.chdir(tmpdir)
+        in_proc = True
+        out_of_proc = True
+        assert (
+            in_proc or out_of_proc
+        ), 'At least one of in_proc or out_of_proc must be true'
+
+        if in_proc:
+            fake_host = FakeHost()
+            orig_wd = fake_host.getcwd()
+            tmpdir = fake_host.mkdtemp()
+            fake_host.chdir(tmpdir)
+
+            # Write a dummy file to make branch coverage in 
+            # host_fake.FakeHost.rmtree() happy.
+            fake_host.write_text_file('/tmp/foo', '')
+
+            if stdin:
+                fake_host.stdin.write(stdin)
+                fake_host.stdin.seek(0)
             if files:
-                self._write_files(host, files)
+                self._write_files(fake_host, files)
 
-            out_of_proc = True
-            in_proc = True
-            assert (
-                in_proc or out_of_proc
-            ), 'At least one of in_proc or out_of_proc must be true'
-            if in_proc:
-                try:
-                    # TODO: See if we can figure out a way to do this
-                    # that is works under the debugger.
-                    orig_stdin = sys.stdin
-                    orig_stdout = sys.stdout
-                    orig_stderr = sys.stderr
-                    sys.stdin = io.StringIO(stdin)
-                    sys.stdout = io.StringIO()
-                    sys.stderr = io.StringIO()
-                    try:
-                        mock_ret = main(args)
-                    except SystemExit as e:
-                        mock_ret = e.code
-                    mock_out = sys.stdout.getvalue()
-                    mock_err = sys.stderr.getvalue()
-                finally:
-                    sys.stdin = orig_stdin
-                    sys.stderr = orig_stderr
-                    sys.stdout = orig_stdout
+            try:
+                mock_ret = main(args, fake_host)
+            except SystemExit as e:
+                mock_ret = e.code
 
-                if returncode is not None:
-                    self.assertEqual(returncode, mock_ret)
-                if out is not None:
-                    self.assertMultiLineEqual(out, mock_out)
-                if err is not None:
-                    self.assertMultiLineEqual(err, mock_err)
+            fake_host.rmtree(tmpdir)
+            fake_host.chdir(orig_wd)
 
-            if out_of_proc:  # pragma: no cover
+            mock_out = fake_host.stdout.getvalue()
+            mock_err = fake_host.stderr.getvalue()
+
+            if returncode is not None:
+                self.assertEqual(returncode, mock_ret)
+            if out is not None:
+                self.assertMultiLineEqual(out, mock_out)
+            if err is not None:
+                self.assertMultiLineEqual(err, mock_err)
+        else:  # pragma: no cover
+            pass
+
+        if out_of_proc:
+            host = Host()
+            orig_wd = host.getcwd()
+            tmpdir = host.mkdtemp()
+            try:
+                host.chdir(tmpdir)
+                if files:
+                    self._write_files(host, files)
+
                 args = [sys.executable, '-m', 'json5'] + args
                 proc = subprocess.Popen(
                     args,
@@ -106,9 +117,11 @@ class ToolTest(unittest.TestCase):
                 if err is not None:
                     self.assertMultiLineEqual(err, actual_err)
 
-        finally:
-            host.rmtree(tmpdir)
-            host.chdir(orig_wd)
+            finally:
+                host.rmtree(tmpdir)
+                host.chdir(orig_wd)
+        else:  # pragma: no cover
+            pass
 
         if in_proc:
             return mock_ret, mock_out, mock_err

@@ -12,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import io
 import subprocess
 import sys
 import unittest
@@ -37,7 +36,7 @@ class ToolTest(unittest.TestCase):
         # We can run the tests two ways: as a full out-of-process integration
         # test (launching a subprocess and checking stdin/out/err) and as
         # a mocked-out in-process pseudo-integration test.
-        # 
+        #
         # The code coverage between the two is identical (excluding the
         # coverage in this file, of course). The full integration tests
         # are slower, and running `python -m coverage` won't account for
@@ -47,7 +46,7 @@ class ToolTest(unittest.TestCase):
         # TODO: If there was some convention for how to pass arguments from
         # a caller of the unittest module to this code, it would be nice
         # if we had command line args to toggle the two modes off and on.
-        # Or, we could also figure out how to get the coverage in the 
+        # Or, we could also figure out how to get the coverage in the
         # subprocess correctly accounted for.
         in_proc = True
         out_of_proc = True
@@ -61,7 +60,7 @@ class ToolTest(unittest.TestCase):
             tmpdir = fake_host.mkdtemp()
             fake_host.chdir(tmpdir)
 
-            # Write a dummy file to make branch coverage in 
+            # Write a dummy file to make branch coverage in
             # host_fake.FakeHost.rmtree() happy.
             fake_host.write_text_file('/tmp/foo', '')
 
@@ -101,15 +100,15 @@ class ToolTest(unittest.TestCase):
                     self._write_files(host, files)
 
                 args = [sys.executable, '-m', 'json5'] + args
-                proc = subprocess.Popen(
+                with subprocess.Popen(
                     args,
                     stdin=subprocess.PIPE,
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE,
                     encoding='utf-8',
-                )
-                actual_out, actual_err = proc.communicate(input=stdin)
-                actual_ret = proc.returncode
+                ) as proc:
+                    actual_out, actual_err = proc.communicate(input=stdin)
+                    actual_ret = proc.returncode
                 if returncode is not None:
                     self.assertEqual(returncode, actual_ret)
                 if out is not None:

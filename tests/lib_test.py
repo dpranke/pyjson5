@@ -376,7 +376,7 @@ class TestDumps(unittest.TestCase):
         try:
             json5.dumps(obj, check_circular=False)
             self.fail()  # pragma: no cover
-        except RecursionError as e:
+        except RecursionError:
             pass
 
         # This checks that repeated but non-circular references

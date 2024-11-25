@@ -14,7 +14,7 @@
 
 """A pure Python implementation of the JSON5 configuration language."""
 
-from .lib import load, loads, dump, dumps, JSON5Encoder, QuoteStyle
+from .lib import JSON5Encoder, QuoteStyle, load, loads, dump, dumps
 from .version import __version__, VERSION
 
 

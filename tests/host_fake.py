@@ -85,7 +85,7 @@ class FakeHost:
         if dir is None:
             dir = self.sep + '__im_tmp'
         else:  # pragma: no cover
-            pass 
+            pass
         curno = self.current_tmpno
         self.current_tmpno += 1
         self.last_tmpdir = self.join(dir, f'{prefix}_{curno}_{suffix}')

@@ -49,6 +49,8 @@ class QuoteStyle(enum.Enum):
 
 
 class _QuotesSeen(enum.IntFlag):
+    # TODO: Figure out how to get rid of this disable.
+    # pylint: disable=implicit-flag-alias
     NONE = 0
     SINGLE = 1
     DOUBLE = 2
@@ -321,7 +323,7 @@ def dumps(
       string will be double-quoted. If the string contains both single and
       double quotes, the string will be single-quoted and single quotes in the
       string will be escaped. Strings that are being used as keys and that can
-      pass as identifiers are not affected by this parameter. 
+      pass as identifiers are not affected by this parameter.
       *`quote_style` was added in version 0.10.0*.
 
     Other keyword arguments are allowed and will be passed to the
@@ -331,7 +333,7 @@ def dumps(
     Note: the standard JSON module explicitly calls `int.__repr(obj)__`
     and `float.__repr(obj)__` to encode ints and floats, thereby bypassing
     any custom representations you might have for objects that are subclasses
-    of ints and floats, and for compatibility, JSON5 does the same thing. 
+    of ints and floats, and for compatibility, JSON5 does the same thing.
     To override this behavior, create a subclass of JSON5Encoder
     that overrides `encode()` and handles your custom representation.
 
@@ -344,25 +346,38 @@ def dumps(
     ... class Hex(int):
     ...    def __repr__(self):
     ...        return hex(self)
-    ... 
+    ...
     ... class CustomEncoder(json5.JSON5Encoder):
-    ...    def encode(self, obj: Any, seen: Set, level: int, *, as_key: bool):
+    ...    def encode(
+    ...        self, obj: Any, seen: Set, level: int, *, as_key: bool
+    ...    ) -> str:
     ...        if isinstance(obj, Hex):
     ...            return repr(obj)
     ...        return super().encode(obj, seen, level, as_key=as_key)
-    ... 
+    ...
     ... print(json5.dumps([20, Hex(20)], cls=CustomEncoder))
     ...
     [20, 0x14]
     >>>
     ```
-            
+
     Calling ``dumps(obj, quote_keys=True, trailing_commas=False, \
                     allow_duplicate_keys=True)``
     should produce exactly the same output as ``json.dumps(obj).``
     """
 
-    cls = cls or JSON5Encoder
+    # TODO: Without these pragmas, mypy will complain with:
+    #   error: Incompatible types in assignment (expression has type
+    #       "JSON5Encoder | type[JSON5Encoder]", variable has type
+    #       "JSON5Encoder | None")  [assignment]
+    #   error: "JSON5Encoder" not callable  [operator]
+    #   error: "None" not callable  [misc]
+    # As best I can tell, I think these are bugs in mypy's type inference.
+    # I should either file bugs against mypy or find some way to not need
+    # these pragmas and the assert.
+
+    cls = cls or JSON5Encoder  # type: ignore[assignment]
+    assert cls is not None
     enc = cls(
         skipkeys=skipkeys,
         ensure_ascii=ensure_ascii,
@@ -377,7 +392,7 @@ def dumps(
         allow_duplicate_keys=allow_duplicate_keys,
         quote_style=quote_style,
         **kw,
-    )
+    )  # type: ignore[operator]
     return enc.encode(obj, seen=set(), level=0, as_key=False)
 
 
@@ -458,23 +473,23 @@ class JSON5Encoder:
 
         If `as_key` is true, the return value should be a double-quoted string
         representation of the object, unless obj is a string that can be an
-        identifier (and quote_keys is false and obj isn't a reserved word).  If
-        the object should not be used as a key (and you don't want to raise a
-        TypeError), the method should return None, which will then allow the
-        base implementation to implement `skipkeys` properly.
+        identifier (and quote_keys is false and obj isn't a reserved word).
+        If the object should not be used as a key, `TypeError` should be
+        raised; that allows the base implementation to implement `skipkeys`
+        properly.
         """
         seen = seen or set()
-        r = self._encode_basic_type(obj, as_key=as_key)
-        if r is not None:
-            return r
+        s = self._encode_basic_type(obj, as_key=as_key)
+        if s is not None:
+            return s
+
         if as_key:
-            # Complex types can't be used as keys by default; a subclass
-            # would have to override `encode(..., as_key=True)` to handle
-            # them.
-            return None
+            raise TypeError(f'Invalid key f{obj}')
         return self._encode_non_basic_type(obj, seen, level)
 
-    def _encode_basic_type(self, obj: Any, *, as_key: bool) -> str:
+    def _encode_basic_type(self, obj: Any, *, as_key: bool) -> Optional[str]:
+        """Returns None if the object is not a basic type."""
+
         if isinstance(obj, str):
             return self._encode_str(
                 obj, as_key=as_key, quote_style=self.quote_style
@@ -541,8 +556,7 @@ class JSON5Encoder:
                 ret.append(encoded_ch)
             if quote_style == QuoteStyle.ALWAYS_SINGLE:
                 return "'" + ''.join(ret) + "'"
-            else:
-                return '"' + ''.join(ret) + '"'
+            return '"' + ''.join(ret) + '"'
 
         ret = []
         for ch in obj:
@@ -559,21 +573,19 @@ class JSON5Encoder:
                         as_key=as_key,
                         quote_style=QuoteStyle.ALWAYS_SINGLE,
                     )
-                else:
-                    return self._encode_str(
-                        obj,
-                        as_key=as_key,
-                        quote_style=QuoteStyle.ALWAYS_DOUBLE,
-                    )
+                return self._encode_str(
+                    obj,
+                    as_key=as_key,
+                    quote_style=QuoteStyle.ALWAYS_DOUBLE,
+                )
             ret.append(encoded_ch)
         if self._use_double_quotes(quotes_seen):
             return '"' + ''.join(ret) + '"'
-        else:
-            return "'" + ''.join(ret) + "'"
+        return "'" + ''.join(ret) + "'"
 
     def _encode_ch(
         self, ch: str, quote_style: QuoteStyle, quotes_seen: _QuotesSeen
-    ) -> (str, _QuotesSeen):
+    ) -> Tuple[str, _QuotesSeen]:
         """Returns a tuple of a string and what kinds of quotes we've seen
         so far. The string is the `ch` if it doesn't need to be escaped,
         or the escaped version if it does."""
@@ -589,13 +601,13 @@ class JSON5Encoder:
             return self._escape_ch(ch), quotes_seen
         if ch == '\\':
             return self._escape_ch(ch), quotes_seen
-        if not self.ensure_ascii and not (ch in ('\u2028', '\u2029')):
+        if not self.ensure_ascii and ch not in ('\u2028', '\u2029'):
             return ch, quotes_seen
         return self._escape_ch(ch), quotes_seen
 
     def _encode_double_quote(
         self, quote_style: QuoteStyle, quotes_seen: _QuotesSeen
-    ) -> str:
+    ) -> Tuple[str, _QuotesSeen]:
         quotes_seen |= _QuotesSeen.DOUBLE
         if (quote_style == QuoteStyle.ALWAYS_DOUBLE) or (
             quote_style == QuoteStyle.PREFER_DOUBLE
@@ -606,7 +618,7 @@ class JSON5Encoder:
 
     def _encode_single_quote(
         self, quote_style: QuoteStyle, quotes_seen: _QuotesSeen
-    ) -> str:
+    ) -> Tuple[str, _QuotesSeen]:
         quotes_seen |= _QuotesSeen.SINGLE
         if (quote_style == QuoteStyle.ALWAYS_SINGLE) or (
             quote_style == QuoteStyle.PREFER_SINGLE
@@ -676,13 +688,13 @@ class JSON5Encoder:
         # Ideally we'd use collections.abc.Mapping and collections.abc.Sequence
         # here, but for backwards-compatibility with potential old callers,
         # we only check for the two attributes we need in each case.
-        s = None
         if hasattr(obj, 'keys') and hasattr(obj, '__getitem__'):
             s = self._encode_dict(obj, seen, level + 1)
         elif hasattr(obj, '__getitem__') and hasattr(obj, '__iter__'):
             s = self._encode_array(obj, seen, level + 1)
         else:
             s = self.encode(self.default(obj), seen, level + 1, as_key=False)
+            assert s is not None
 
         if self.check_circular:
             seen.remove(i)
@@ -706,11 +718,12 @@ class JSON5Encoder:
         first_key = True
         new_keys = set()
         for key in keys:
-            key_str = self.encode(key, seen, level, as_key=True)
-            if key_str is None:
+            try:
+                key_str = self.encode(key, seen, level, as_key=True)
+            except TypeError:
                 if self.skipkeys:
                     continue
-                raise TypeError(f'invalid key {repr(obj)}')
+                raise
 
             if not self.allow_duplicate_keys:
                 if key_str in new_keys:
@@ -722,11 +735,8 @@ class JSON5Encoder:
             else:
                 s += item_sep
 
-            s += (
-                key_str
-                + kv_sep
-                + self.encode(obj[key], seen, level, as_key=False)
-            )
+            val_str = self.encode(obj[key], seen, level, as_key=False)
+            s += key_str + kv_sep + val_str
 
         s += end_str + '}'
         return s
@@ -747,7 +757,7 @@ class JSON5Encoder:
             + ']'
         )
 
-    def _spacers(self, level: int) -> (str, str):
+    def _spacers(self, level: int) -> Tuple[str, str]:
         if self.indent is not None:
             end_str = ''
             if self.trailing_commas:
@@ -767,7 +777,7 @@ class JSON5Encoder:
             end_str = ''
         return indent_str, end_str
 
-    def is_identifier(self, key: Optional[str]) -> bool:
+    def is_identifier(self, key: str) -> bool:
         """Returns whether the string could be used as a legal
         EcmaScript/JavaScript identifier.
 

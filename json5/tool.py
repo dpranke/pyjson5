@@ -16,33 +16,109 @@
 
 Usage:
 
-    $ echo '{foo:"bar"}' | python -m json5.tool
+    $ echo '{foo:"bar"}' | python -m json5
     {
         foo: 'bar',
     }
-    $ echo '{foo:"bar"}' | python -m json5.tool --as-json
+    $ echo '{foo:"bar"}' | python -m json5 --as-json
     {
         "foo": "bar"
     }
 """
 
+import argparse
 import sys
 
-from . import arg_parser
-from . import lib
-from .host import Host
-from .version import __version__
+import json5
+from json5.host import Host
+from json5.version import __version__
+
+QUOTE_STYLES = {q.value: q for q in json5.QuoteStyle}
 
 
 def main(argv=None, host=None):
     host = host or Host()
 
-    parser = arg_parser.ArgumentParser(host, prog='json5', desc=__doc__)
+    args = _parse_args(host, argv)
+
+    if args.version:
+        host.print(__version__)
+        return 0
+
+    if args.cmd:
+        inp = args.cmd
+    elif args.file == '-':
+        inp = host.stdin.read()
+    else:
+        inp = host.read_text_file(args.file)
+
+    if args.indent == 'None':
+        args.indent = None
+    else:
+        try:
+            args.indent = int(args.indent)
+        except ValueError:
+            pass
+
+    if args.as_json:
+        args.quote_keys = True
+        args.trailing_commas = False
+        args.quote_style = json5.QuoteStyle.ALWAYS_DOUBLE.value
+
+    obj = json5.loads(inp, strict=args.strict)
+    s = json5.dumps(
+        obj,
+        indent=args.indent,
+        quote_keys=args.quote_keys,
+        trailing_commas=args.trailing_commas,
+        quote_style=QUOTE_STYLES[args.quote_style],
+    )
+    host.print(s)
+    return 0
+
+
+class _HostedArgumentParser(argparse.ArgumentParser):
+    """An argument parser that plays nicely w/ host objects."""
+
+    def __init__(self, host, **kwargs):
+        self.host = host
+        super().__init__(**kwargs)
+
+    def exit(self, status=0, message=None):
+        if message:
+            self._print_message(message, self.host.stderr)
+        sys.exit(status)
+
+    def error(self, message):
+        self.host.print(f'usage: {self.usage}', end='', file=self.host.stderr)
+        self.host.print('    -h/--help for help\n', file=self.host.stderr)
+        self.exit(2, f'error: {message}\n')
+
+    def print_help(self, file=None):
+        self.host.print(self.format_help(), file=file)
+
+
+def _parse_args(host, argv):
+    usage = 'json5 [options] [FILE]\n'
+
+    parser = _HostedArgumentParser(
+        host,
+        prog='json5',
+        usage=usage,
+        description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    parser.add_argument(
+        '-V',
+        '--version',
+        action='store_true',
+        help=f'show JSON5 library version ({__version__})',
+    )
     parser.add_argument(
         '-c',
         metavar='STR',
         dest='cmd',
-        help='inline json5 string to read instead of ' 'reading from a file',
+        help='inline json5 string to read instead of reading from a file',
     )
     parser.add_argument(
         '--as-json',
@@ -50,13 +126,13 @@ def main(argv=None, host=None):
         action='store_const',
         const=True,
         default=False,
-        help='output as JSON ' '(same as --quote-keys --no-trailing-commas)',
+        help='output as JSON (same as --quote-keys --no-trailing-commas)',
     )
     parser.add_argument(
         '--indent',
         dest='indent',
         default=4,
-        help='amount to indent each line ' '(default is 4 spaces)',
+        help='amount to indent each line (default is 4 spaces)',
     )
     parser.add_argument(
         '--quote-keys',
@@ -89,13 +165,22 @@ def main(argv=None, host=None):
         '--strict',
         action='store_true',
         default=True,
-        help='Do not allow control characters (\x00-\x1f) in strings (default)',
+        help='Do not allow control characters (\\x00-\\x1f) in strings '
+        '(default)',
     )
     parser.add_argument(
         '--no-strict',
         dest='strict',
         action='store_false',
-        help='Allow control characters (\x00-\x1f) in strings',
+        help='Allow control characters (\\x00-\\x1f) in strings',
+    )
+    parser.add_argument(
+        '--quote-style',
+        action='store',
+        default='always_double',
+        choices=QUOTE_STYLES.keys(),
+        help='Controls how strings are encoded. By default they are always '
+        'double-quoted ("always_double")',
     )
     parser.add_argument(
         'file',
@@ -106,43 +191,7 @@ def main(argv=None, host=None):
         'not specified or "-", will read from stdin '
         'instead',
     )
-    args = parser.parse_args(argv)
-
-    if parser.exit_status is not None:
-        return parser.exit_status
-
-    if args.version:
-        host.print_(__version__)
-        return 0
-
-    if args.cmd:
-        inp = args.cmd
-    elif args.file == '-':
-        inp = host.stdin.read()
-    else:
-        inp = host.read_text_file(args.file)
-
-    if args.indent == 'None':
-        args.indent = None
-    else:
-        try:
-            args.indent = int(args.indent)
-        except ValueError:
-            pass
-
-    if args.as_json:
-        args.quote_keys = True
-        args.trailing_commas = False
-
-    obj = lib.loads(inp, strict=args.strict)
-    s = lib.dumps(
-        obj,
-        indent=args.indent,
-        quote_keys=args.quote_keys,
-        trailing_commas=args.trailing_commas,
-    )
-    host.print_(s)
-    return 0
+    return parser.parse_args(argv)
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -36,10 +36,10 @@ class Host:
     def mkdtemp(self, **kwargs):
         return tempfile.mkdtemp(**kwargs)
 
-    def print_(self, msg='', end='\n', stream=None):
-        stream = stream or self.stdout
-        stream.write(str(msg) + end)
-        stream.flush()
+    def print(self, msg='', end='\n', file=None):
+        file = file or self.stdout
+        file.write(str(msg) + end)
+        file.flush()
 
     def rmtree(self, path):
         shutil.rmtree(path, ignore_errors=True)

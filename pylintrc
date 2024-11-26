@@ -26,6 +26,7 @@ persistent=yes
 
 disable=
     broad-except,
+    fixme,
     global-statement,
     locally-disabled,
     missing-docstring,

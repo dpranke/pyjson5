@@ -39,7 +39,7 @@ class HostTest(unittest.TestCase):
     def test_print(self):
         s = io.StringIO()
         h = Host()
-        h.print_('hello, world', stream=s)
+        h.print('hello, world', file=s)
         self.assertEqual('hello, world\n', s.getvalue())
 
 

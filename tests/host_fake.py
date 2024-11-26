@@ -84,16 +84,18 @@ class FakeHost:
     def mkdtemp(self, suffix='', prefix='tmp', dir=None, **_kwargs):
         if dir is None:
             dir = self.sep + '__im_tmp'
+        else:  # pragma: no cover
+            pass
         curno = self.current_tmpno
         self.current_tmpno += 1
         self.last_tmpdir = self.join(dir, f'{prefix}_{curno}_{suffix}')
         self.dirs.add(self.last_tmpdir)
         return self.last_tmpdir
 
-    def print_(self, msg='', end='\n', stream=None):
-        stream = stream or self.stdout
-        stream.write(msg + end)
-        stream.flush()
+    def print(self, msg='', end='\n', file=None):
+        file = file or self.stdout
+        file.write(msg + end)
+        file.flush()
 
     def read_text_file(self, *comps):
         return self._read(comps)
@@ -111,6 +113,8 @@ class FakeHost:
         for f in self.files:
             if f.startswith(path):
                 self.remove(f)
+            else:  # pragma: no cover
+                pass
         self.dirs.remove(path)
 
     def write_text_file(self, path, contents):

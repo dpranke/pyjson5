@@ -77,7 +77,7 @@ def main(argv=None, host=None):
         indent=args.indent,
         quote_keys=args.quote_keys,
         trailing_commas=args.trailing_commas,
-        quote_style=QUOTE_STYLES[args.quote_style]
+        quote_style=QUOTE_STYLES[args.quote_style],
     )
     host.print(s)
     return 0
@@ -185,10 +185,13 @@ def _parse_args(host, argv):
         action='store',
         default='always_double',
         choices=(
-            'always_double', 'always_single', 'prefer_double', 'prefer_single'
+            'always_double',
+            'always_single',
+            'prefer_double',
+            'prefer_single',
         ),
         help='Controls how strings are encoded. By default they are always '
-             'double-quoted ("always_double")'
+        'double-quoted ("always_double")',
     )
     parser.add_argument(
         'file',

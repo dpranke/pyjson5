@@ -818,12 +818,20 @@ class JSON5Encoder:
                         'for',
                         'function',
                         'if',
+                        'implements',
                         'import',
                         'in',
                         'instanceof',
+                        'interface',
+                        'let',
                         'new',
                         'null',
+                        'package',
+                        'private',
+                        'protected',
+                        'public',
                         'return',
+                        'static',
                         'super',
                         'switch',
                         'this',
@@ -835,6 +843,7 @@ class JSON5Encoder:
                         'void',
                         'while',
                         'with',
+                        'yield',
                     ]
                 )
                 + ')$'

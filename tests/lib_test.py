@@ -648,25 +648,44 @@ class TestDumps(unittest.TestCase):
                 s, json5.dumps(obj, **kwargs)
             )
 
+        sq = "'"
+        dq = '"'
+
         neither = 'a b c'
-        single_neither = "'a b c'"
-        double_neither = '"a b c"'
+        single_neither = sq + neither + sq
+        double_neither = dq + neither + dq
 
         single = "a 'b' c"
-        single_single = "'a \\'b\\' c'"
-        double_single = '"a \'b\' c"'
+        single_single = sq + r'a \'b\' c' + sq
+        double_single = dq + single + dq
 
         double = 'a "b" c'
-        single_double = '\'a "b" c\''
-        double_double = '"a \\"b\\" c"'
+        single_double = sq + double + sq
+        double_double = dq + r'a \"b\" c' + dq
 
         both = 'a \'b\' "c" d'
-        single_both = "'a \\'b\\' \"c\" d'"
-        double_both = '"a \'b\' \\"c\\" d"'
+        single_both = sq + r'a \'b\' "c" d' + sq
+        double_both = dq + r"a 'b' \"c\" d" + dq
 
         reverse = 'a "b" \'c\' d'
-        single_reverse = "'a \"b\" \\'c\\' d'"
-        double_reverse = '"a \\"b\\" \'c\' d"'
+        single_reverse = sq + r'a "b" \'c\' d' + sq
+        double_reverse = dq + r"a \"b\" 'c' d" + dq
+
+        more_single = "a 'b' 'c' \"d\" e"
+        single_more_single = sq + r'a \'b\' \'c\' "d" e' + sq
+        double_more_single = dq + r"a 'b' 'c' \"d\" e" + dq
+
+        more_double = 'a "b" "c" \'d\' e'
+        single_more_double = sq + r'a "b" "c" \'d\' e' + sq
+        double_more_double = dq + r"a \"b\" \"c\" 'd' e" + dq
+
+        more_single_double_first = "a \"b\" 'c' 'd' e"
+        single_more_single_double_first = sq + r'a "b" \'c\' \'d\' e' + sq
+        double_more_single_double_first = dq + r"a \"b\" 'c' 'd' e" + dq
+
+        more_double_single_first = 'a \'b\' "c" "d" e'
+        single_more_double_single_first = sq + r'a \'b\' "c" "d" e' + sq
+        double_more_double_single_first = dq + r"a 'b' \"c\" \"d\" e" + dq
 
         # Default settings (should be ALWAYS_DOUBLE)
         c = checkp()
@@ -675,6 +694,10 @@ class TestDumps(unittest.TestCase):
         c(double, double_double)
         c(both, double_both)
         c(reverse, double_reverse)
+        c(more_single, double_more_single)
+        c(more_double, double_more_double)
+        c(more_single_double_first, double_more_single_double_first)
+        c(more_double_single_first, double_more_double_single_first)
 
         c = checkp(quote_style=json5.QuoteStyle.ALWAYS_DOUBLE)
         c(neither, double_neither)
@@ -682,6 +705,10 @@ class TestDumps(unittest.TestCase):
         c(double, double_double)
         c(both, double_both)
         c(reverse, double_reverse)
+        c(more_single, double_more_single)
+        c(more_double, double_more_double)
+        c(more_single_double_first, double_more_single_double_first)
+        c(more_double_single_first, double_more_double_single_first)
 
         c = checkp(quote_style=json5.QuoteStyle.ALWAYS_SINGLE)
         c(neither, single_neither)
@@ -689,6 +716,10 @@ class TestDumps(unittest.TestCase):
         c(double, single_double)
         c(both, single_both)
         c(reverse, single_reverse)
+        c(more_single, single_more_single)
+        c(more_double, single_more_double)
+        c(more_single_double_first, single_more_single_double_first)
+        c(more_double_single_first, single_more_double_single_first)
 
         c = checkp(quote_style=json5.QuoteStyle.PREFER_DOUBLE)
         c(neither, double_neither)
@@ -696,6 +727,10 @@ class TestDumps(unittest.TestCase):
         c(double, single_double)
         c(both, double_both)
         c(reverse, double_reverse)
+        c(more_single, double_more_single)
+        c(more_double, single_more_double)
+        c(more_single_double_first, double_more_single_double_first)
+        c(more_double_single_first, single_more_double_single_first)
 
         c = checkp(quote_style=json5.QuoteStyle.PREFER_SINGLE)
         c(neither, single_neither)
@@ -703,6 +738,10 @@ class TestDumps(unittest.TestCase):
         c(double, single_double)
         c(both, single_both)
         c(reverse, single_reverse)
+        c(more_single, double_more_single)
+        c(more_double, single_more_double)
+        c(more_single_double_first, double_more_single_double_first)
+        c(more_double_single_first, single_more_double_single_first)
 
     def test_skip_keys(self):
         od = OrderedDict()

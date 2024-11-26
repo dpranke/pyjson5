@@ -100,7 +100,7 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
-* v0.10.0 (2024-11-24)
+* v0.10.0 (2024-11-25)
     * [GitHub issue #57](https://github.com/dpranke/pyjson5/issues/57).
       Added a `JSON5Encoder` class that can be overridden to do custom
       encoding of values. This class is vaguely similar to the `JSONEncoder`

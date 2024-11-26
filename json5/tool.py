@@ -33,13 +33,7 @@ import json5
 from json5.host import Host
 from json5.version import __version__
 
-
-QUOTE_STYLES = {
-    'always_double': json5.QuoteStyle.ALWAYS_DOUBLE,
-    'always_single': json5.QuoteStyle.ALWAYS_SINGLE,
-    'prefer_double': json5.QuoteStyle.PREFER_DOUBLE,
-    'prefer_single': json5.QuoteStyle.PREFER_SINGLE,
-}
+QUOTE_STYLES = {q.value: q for q in json5.QuoteStyle}
 
 
 def main(argv=None, host=None):
@@ -69,7 +63,7 @@ def main(argv=None, host=None):
     if args.as_json:
         args.quote_keys = True
         args.trailing_commas = False
-        args.quote_style = 'always_double'
+        args.quote_style = json5.QuoteStyle.ALWAYS_DOUBLE.value
 
     obj = json5.loads(inp, strict=args.strict)
     s = json5.dumps(
@@ -184,12 +178,7 @@ def _parse_args(host, argv):
         '--quote-style',
         action='store',
         default='always_double',
-        choices=(
-            'always_double',
-            'always_single',
-            'prefer_double',
-            'prefer_single',
-        ),
+        choices=QUOTE_STYLES.keys(),
         help='Controls how strings are encoded. By default they are always '
         'double-quoted ("always_double")',
     )

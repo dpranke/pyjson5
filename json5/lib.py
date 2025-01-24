@@ -24,6 +24,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
 )
 import unicodedata
@@ -231,7 +232,7 @@ def dump(
     ensure_ascii: bool = True,
     check_circular: bool = True,
     allow_nan: bool = True,
-    cls: Optional['JSON5Encoder'] = None,
+    cls: Optional[Type['JSON5Encoder']] = None,
     indent: Optional[Union[int, str]] = None,
     separators: Optional[Tuple[str, str]] = None,
     default: Optional[Callable[[Any], Any]] = None,
@@ -280,7 +281,7 @@ def dumps(
     ensure_ascii: bool = True,
     check_circular: bool = True,
     allow_nan: bool = True,
-    cls: Optional['JSON5Encoder'] = None,
+    cls: Optional[Type['JSON5Encoder']] = None,
     indent: Optional[Union[int, str]] = None,
     separators: Optional[Tuple[str, str]] = None,
     default: Optional[Callable[[Any], Any]] = None,

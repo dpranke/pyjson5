@@ -83,6 +83,8 @@ def load(
         Callable[[Iterable[Tuple[str, Any]]], Any]
     ] = None,
     allow_duplicate_keys: bool = True,
+    consume_trailing: bool = True,
+    start: Optional[int] = None,
 ) -> Any:
     """Deserialize ``fp`` (a ``.read()``-supporting file-like object
     containing a JSON document) to a Python object.
@@ -93,6 +95,25 @@ def load(
           duplicate keys in a object; by default, this is True for
           compatibility with ``json.load()``, but if set to False and
           the object contains duplicate keys, a ValueError will be raised.
+        - an extra `consume_trailing` parameter specifies whether to
+          consume any trailing characters after a valid object has been
+          parsed. By default, this value is True and the only legal
+          trailing characters are whitespace. If this value is set to False,
+          parsing will stop when a valid object has been parsed and any
+          trailing characters in the string will be ignored.
+        - an extra `start` parameter specifies the zero-based offset into the
+          file to start parsing at. If `start` is None, parsing will
+          start at the current position in the file, and line number
+          and column values will be reported as if starting from the
+          beginning of the file; If `start` is not None,
+          `load` will seek to zero and then read (and discard) the
+          appropriate number of characters before beginning parsing;
+          the file must be seekable for this to work correctly.
+
+    You can use `load(..., consume_trailing=False)` to repeatedly read
+    values from a file. However, in the current implementation `load` does
+    this by reading the entire file into memory before doing anything, so
+    it is not very efficient.
 
     Raises
         - `ValueError` if given an invalid document. This is different
@@ -103,7 +124,7 @@ def load(
     """
 
     s = fp.read()
-    return loads(
+    val, err, pos = parse(
         s,
         encoding=encoding,
         cls=cls,
@@ -114,7 +135,12 @@ def load(
         strict=strict,
         object_pairs_hook=object_pairs_hook,
         allow_duplicate_keys=allow_duplicate_keys,
+        consume_trailing=consume_trailing,
+        start=start,
     )
+    if err:
+        raise ValueError(err)
+    return val
 
 
 def loads(
@@ -131,6 +157,8 @@ def loads(
         Callable[[Iterable[Tuple[str, Any]]], Any]
     ] = None,
     allow_duplicate_keys: bool = True,
+    consume_trailing: bool = True,
+    start: Optional[int] = None,
 ):
     """Deserialize ``s`` (a string containing a JSON5 document) to a Python
     object.
@@ -141,6 +169,14 @@ def loads(
           duplicate keys in a object; by default, this is True for
           compatibility with ``json.load()``, but if set to False and
           the object contains duplicate keys, a ValueError will be raised.
+        - an extra `consume_trailing` parameter specifies whether to
+          consume any trailing characters after a valid object has been
+          parsed. By default, this value is True and the only legal
+          trailing characters are whitespace. If this value is set to False,
+          parsing will stop when a valid object has been parsed and any
+          trailing characters in the string will be ignored.
+        - an extra `start` parameter specifies the zero-based offset into the
+          string to start parsing at.
 
     Raises
         - `ValueError` if given an invalid document. This is different
@@ -150,6 +186,78 @@ def loads(
           `encoding`). This matches the `json` module.
     """
 
+    val, err, _ = parse(
+        s=s,
+        encoding=encoding,
+        cls=cls,
+        object_hook=object_hook,
+        parse_float=parse_float,
+        parse_int=parse_int,
+        parse_constant=parse_constant,
+        strict=strict,
+        object_pairs_hook=object_pairs_hook,
+        allow_duplicate_keys=allow_duplicate_keys,
+        consume_trailing=consume_trailing,
+        start=start
+    )
+    if err:
+        raise ValueError(err)
+    return val
+
+
+def parse(
+    s: str,
+    *,
+    encoding: Optional[str] = None,
+    cls: Any = None,
+    object_hook: Optional[Callable[[Mapping[str, Any]], Any]] = None,
+    parse_float: Optional[Callable[[str], Any]] = None,
+    parse_int: Optional[Callable[[str], Any]] = None,
+    parse_constant: Optional[Callable[[str], Any]] = None,
+    strict: bool = True,
+    object_pairs_hook: Optional[
+        Callable[[Iterable[Tuple[str, Any]]], Any]
+    ] = None,
+    allow_duplicate_keys: bool = True,
+    consume_trailing: bool = True,
+    start: Optional[int] = None,
+):
+    """Parse ```s``, returning positional information along with a value.
+
+    This works exactly like `loads()`, except that (a) it returns the
+    position in the string where the parsing stopped (either due to
+    hitting an error or parsing a valid value) and any error as a string,
+    (b) it takes an optional `consume_trailing` parameter that says whether
+    to keep parsing the string after a valid value has been parsed; if True
+    (the default), any trailing characters must be whitespace. If False,
+    parsing stops when a valid value has been reached, (c) it takes an
+    optional `start` parameter that specifies a zero-based offset to start
+    parsing from in the string, and (d) the return value is different, as
+    described below.
+
+    `parse()` is useful if you have a string that might contain multiple
+    values and you need to extract all of them; you can do so by repeatedly
+    calling `parse`, setting `start` to the value returned in `position`
+    from the previous call.
+
+    Returns a tuple of (value, error_string, position). If the string
+        was a legal value, `value` will be the deserialized value,
+        `error_string` will be `None`, and `position` will be one
+        past the zero-based offset where the parser stopped reading.
+        If the string was not a legal value,
+        `value` will be `None`, `error_string` will be the string value
+        of the exception that would've been raised, and `position` will
+        be the zero-based farthest offset into the string where the parser
+        hit an error.
+
+    Raises:
+        - `UnicodeDecodeError` if given a byte string that is not a
+          legal UTF-8 document (or the equivalent, if using a different
+          `encoding`). This matches the `json` module.
+
+    Note that this does *not* raise a `ValueError`; instead any error is
+    returned as the second value in the tuple.
+    """
     assert cls is None, 'Custom decoders are not supported'
 
     if isinstance(s, bytes):
@@ -158,11 +266,28 @@ def loads(
 
     if not s:
         raise ValueError('Empty strings are not legal JSON5')
-    parser = Parser(s, '<string>')
-    ast, err, _ = parser.parse(global_vars={'_strict': strict})
+    start = start or 0
+    parser = Parser(s, '<string>', pos=start)
+    ast, err, pos = parser.parse(
+        global_vars={'_strict': strict, '_consume_trailing': consume_trailing}
+    )
     if err:
-        raise ValueError(err)
+        return None, err, pos
 
+    try:
+        value = _convert(ast, object_hook=object_hook,
+                        parse_float=parse_float,
+                        parse_int=parse_int,
+                        parse_constant=parse_constant,
+                        object_pairs_hook=object_pairs_hook,
+                        allow_duplicate_keys=allow_duplicate_keys)
+        return value, None, pos
+    except ValueError as e:
+        return None, str(e), pos
+
+
+def _convert(ast, object_hook, parse_float, parse_int, parse_constant,
+             object_pairs_hook, allow_duplicate_keys):
     def _fp_constant_parser(s):
         return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
 

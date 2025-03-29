@@ -100,6 +100,17 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
+* v0.11.0.dev0 (2025-03-29)
+    * Introduce a new `parse` method that can be used to iterate through
+      a string, extracting multiple values.
+    * Add a new `consume_trailing` parameter to `load`/`loads`/`parse`
+      that specifies whether to keep parsing after a valid object is
+      reached. By default, this is True and the string must only contain
+      trailing whitespace. If set to False, parsing will stop when a
+      valid object is reached.
+    * [GitHub issue #60](https://github.com/dpranke/pyjson5/issues/60).
+      Fix a bug where we were attempting to allow '--4' as a valid number.
+ 
 * v0.10.0 (2024-11-25)
     * [GitHub issue #57](https://github.com/dpranke/pyjson5/issues/57).
       Added a `JSON5Encoder` class that can be overridden to do custom

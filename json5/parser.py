@@ -9,14 +9,14 @@ import unicodedata
 
 
 class Parser:
-    def __init__(self, msg, fname):
+    def __init__(self, msg, fname, pos=0):
         self.msg = msg
         self.end = len(self.msg)
         self.fname = fname
         self.val = None
-        self.pos = 0
+        self.pos = pos
         self.failed = False
-        self.errpos = 0
+        self.errpos = pos
         self._scopes = []
         self._cache = {}
         self._global_vars = {}
@@ -170,12 +170,34 @@ class Parser:
             [
                 self._sp_,
                 lambda: self._bind(self._value_, 'v'),
-                self._sp_,
-                self._end_,
+                self._trailing_,
                 lambda: self._succeed(self._get('v')),
             ]
         )
         self._pop('grammar')
+
+    def _trailing_(self):
+        self._choose([self._trailing__c0_, self._trailing__c1_])
+
+    def _trailing__c0_(self):
+        self._seq([self._trailing__c0__s0_, self._sp_, self._end_])
+
+    def _trailing__c0__s0_(self):
+        v = self._get('_consume_trailing')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _trailing__c1_(self):
+        self._not(self._trailing__c1_n_)
+
+    def _trailing__c1_n_(self):
+        v = self._get('_consume_trailing')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
 
     def _sp_(self):
         self._star(self._ws_)

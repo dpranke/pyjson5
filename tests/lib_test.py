@@ -82,6 +82,8 @@ class TestLoads(unittest.TestCase):
 
     def test_encoding(self):
         self.assertEqual(json5.loads(b'"\xf6"', encoding='iso-8859-1'), '\xf6')
+        with self.assertRaises(UnicodeDecodeError):
+            json5.load(io.BytesIO(b'\xff'))
 
     def test_numbers(self):
         # decimal literals

@@ -93,6 +93,13 @@ def load(
           duplicate keys in a object; by default, this is True for
           compatibility with ``json.load()``, but if set to False and
           the object contains duplicate keys, a ValueError will be raised.
+
+    Raises
+        - `ValueError` if given an invalid document. This is different
+          from the `json` module, which raises `json.JSONDecodeError`.
+        - `UnicodeDecodeError` if given a byte string that is not a
+          legal UTF-8 document (or the equivalent, if using a different
+          `encoding`). This matches the `json` module.
     """
 
     s = fp.read()
@@ -134,6 +141,13 @@ def loads(
           duplicate keys in a object; by default, this is True for
           compatibility with ``json.load()``, but if set to False and
           the object contains duplicate keys, a ValueError will be raised.
+
+    Raises
+        - `ValueError` if given an invalid document. This is different
+          from the `json` module, which raises `json.JSONDecodeError`.
+        - `UnicodeDecodeError` if given a byte string that is not a
+          legal UTF-8 document (or the equivalent, if using a different
+          `encoding`). This matches the `json` module.
     """
 
     assert cls is None, 'Custom decoders are not supported'

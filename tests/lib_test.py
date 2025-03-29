@@ -88,6 +88,9 @@ class TestLoads(unittest.TestCase):
         self.check('1', 1)
         self.check('-1', -1)
         self.check('+1', 1)
+        self.check_fail('--6', '<string>:1 Unexpected "-" at column 2')
+        self.check_fail('++6', '<string>:1 Unexpected "+" at column 2')
+        self.check_fail('+-6', '<string>:1 Unexpected "-" at column 2')
 
         # hex literals
         self.check('0xf', 15)
@@ -101,6 +104,9 @@ class TestLoads(unittest.TestCase):
         self.check('1.5', 1.5)
         self.check('1.5e3', 1500.0)
         self.check('-0.5e-2', -0.005)
+        self.check_fail('--6.0', '<string>:1 Unexpected "-" at column 2')
+        self.check_fail('++6.0', '<string>:1 Unexpected "+" at column 2')
+        self.check_fail('+-6.0', '<string>:1 Unexpected "-" at column 2')
 
         # names
         self.check('Infinity', float('inf'))

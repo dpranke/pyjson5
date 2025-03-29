@@ -99,9 +99,11 @@ id_continue    = ascii_id_start
                | '\u200C'
                | '\u200D'
 
-num_literal    = '-' num_literal:n                   -> '-' + n
-               | '+' num_literal:n                   -> n
-               | dec_literal:d ~id_start             -> d
+num_literal    = '-' unsigned_lit:n                  -> '-' + n
+               | '+' unsigned_lit:n                  -> n
+               | unsigned_lit:n                      -> n
+
+unsigned_lit   = dec_literal:d ~id_start             -> d
                | hex_literal
                | 'Infinity'
                | 'NaN'

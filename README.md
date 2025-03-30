@@ -108,9 +108,11 @@ $ git push --tags origin
       reached. By default, this is True and the string must only contain
       trailing whitespace. If set to False, parsing will stop when a
       valid object is reached.
+    * Add a new `start` parameter to `load`/`loads`/`parse` to specify
+      the zero-based offset to start parsing the string or file from.
     * [GitHub issue #60](https://github.com/dpranke/pyjson5/issues/60).
       Fix a bug where we were attempting to allow '--4' as a valid number.
- 
+
 * v0.10.0 (2024-11-25)
     * [GitHub issue #57](https://github.com/dpranke/pyjson5/issues/57).
       Added a `JSON5Encoder` class that can be overridden to do custom

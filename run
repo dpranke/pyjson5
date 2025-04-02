@@ -225,6 +225,7 @@ class Runner:
             sys.exit(1)
 
         self.call([path, 'clean', '-fd'])
+        self.call(['rm', '-fr', '.coverage', 'build', 'dist', 'json5.egg-info'])
 
     def run_coverage(self):
         env = os.environ.copy()

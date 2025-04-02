@@ -8,6 +8,7 @@ description = "A Python implementation of the JSON5 data format."
 authors = [
     {name = "Dirk Pranke", email = "dpranke@chromium.org"},
 ]
+keywords = [ "json5" ]
 license = "Apache-2.0"
 license-files = [ "LICENSE" ]
 readme = "README.md"

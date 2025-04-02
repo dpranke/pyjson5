@@ -24,6 +24,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     Union,
 )
 import unicodedata
@@ -370,7 +371,7 @@ def dump(
     ensure_ascii: bool = True,
     check_circular: bool = True,
     allow_nan: bool = True,
-    cls: Optional['JSON5Encoder'] = None,
+    cls: Optional[Type['JSON5Encoder']] = None,
     indent: Optional[Union[int, str]] = None,
     separators: Optional[Tuple[str, str]] = None,
     default: Optional[Callable[[Any], Any]] = None,
@@ -419,7 +420,7 @@ def dumps(
     ensure_ascii: bool = True,
     check_circular: bool = True,
     allow_nan: bool = True,
-    cls: Optional['JSON5Encoder'] = None,
+    cls: Optional[Type['JSON5Encoder']] = None,
     indent: Optional[Union[int, str]] = None,
     separators: Optional[Tuple[str, str]] = None,
     default: Optional[Callable[[Any], Any]] = None,
@@ -505,18 +506,7 @@ def dumps(
     should produce exactly the same output as ``json.dumps(obj).``
     """
 
-    # TODO: Without these pragmas, mypy will complain with:
-    #   error: Incompatible types in assignment (expression has type
-    #       "JSON5Encoder | type[JSON5Encoder]", variable has type
-    #       "JSON5Encoder | None")  [assignment]
-    #   error: "JSON5Encoder" not callable  [operator]
-    #   error: "None" not callable  [misc]
-    # As best I can tell, I think these are bugs in mypy's type inference.
-    # I should either file bugs against mypy or find some way to not need
-    # these pragmas and the assert.
-
-    cls = cls or JSON5Encoder  # type: ignore[assignment]
-    assert cls is not None
+    cls = cls or JSON5Encoder
     enc = cls(
         skipkeys=skipkeys,
         ensure_ascii=ensure_ascii,
@@ -531,7 +521,7 @@ def dumps(
         allow_duplicate_keys=allow_duplicate_keys,
         quote_style=quote_style,
         **kw,
-    )  # type: ignore[operator]
+    )
     return enc.encode(obj, seen=set(), level=0, as_key=False)
 
 

@@ -101,6 +101,8 @@ $ git push --tags origin
 ## Version History / Release Notes
 
 * v0.11.0.dev0 (2025-03-29)
+    * Fix a typing issue in dump and dumps with the `cls` argument; turns
+      out mypy was right and I was wrong and I didn't realize it :).
     * Introduce a new `parse` method that can be used to iterate through
       a string, extracting multiple values.
     * Add a new `consume_trailing` parameter to `load`/`loads`/`parse`

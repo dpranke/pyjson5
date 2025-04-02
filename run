@@ -148,6 +148,11 @@ class Runner:
 
         subp = self.add_parser('publish', help='Publish packages to PyPI.')
         subp.add_argument(
+            '--check',
+            action='store_true',
+            help='Check the package intead of publishing.',
+        )
+        subp.add_argument(
             '--test',
             action='store_true',
             help='Upload to the PyPI test instance.',
@@ -288,8 +293,16 @@ class Runner:
         self.run_mypy()
         self.run_coverage()
 
+        # Build is way too noisy by default
+        quiet = self.args.quiet
+        self.args.quiet = True
+        self.run_build()
+        self.args.quiet = quiet
+
+        self.run_publish()
+
     def run_publish(self):
-        if not self.args.test and not self.args.prod:
+        if not self.args.check and not self.args.test and not self.args.prod:
             print('You must specify either --test or --prod to upload.')
             sys.exit(2)
 
@@ -304,9 +317,12 @@ class Runner:
             test = ['--repository', 'testpypi']
         else:
             test = []
-        self.call(
-            self.run_cmd + ['-m', 'twine', 'upload'] + test + [tgz, wheel]
-        )
+        if self.args.check:
+            self.call(self.run_cmd + ['-m', 'twine', 'check'] + [tgz, wheel])
+        else:
+            self.call(
+                self.run_cmd + ['-m', 'twine', 'upload'] + test + [tgz, wheel]
+            )
 
     def run_regen(self):
         orig_file = f'{self.parser_file}.orig'
@@ -338,6 +354,8 @@ class Runner:
             print(f'{self.parser_file} regenerated.')
 
     def run_tests(self):
+        self.call(self.run_cmd + ['-m', 'doctest', 'json5/lib.py'])
+
         cmd = self.run_cmd + ['-m', 'unittest', 'discover', '-p', '*_test.py']
         if self.args.quiet:
             cmd.append('-q')

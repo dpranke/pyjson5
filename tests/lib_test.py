@@ -329,6 +329,41 @@ class TestLoads(unittest.TestCase):
         self.check_fail('0 a', '<string>:1 Unexpected "a" at column 3')
 
 
+class TestParse(unittest.TestCase):
+    maxDiff = None
+
+    def check(self, s, obj, err, pos, consume_trailing=True, start=0):
+        actual_obj, actual_err, actual_pos = json5.parse(
+            s, consume_trailing=consume_trailing, start=start
+        )
+        self.assertEqual(obj, actual_obj)
+        self.assertEqual(err, actual_err)
+        self.assertEqual(pos, actual_pos)
+
+    def test_parse(self):
+        self.check('4', 4, err=None, pos=1)
+        self.check('4 ', 4, err=None, pos=2)
+        self.check('4 ', 4, err=None, pos=1, consume_trailing=False)
+        self.check('x', None, err='<string>:1 Unexpected "x" at column 1',
+                   pos=0)
+        self.check('4 x', None, err='<string>:1 Unexpected "x" at column 3',
+                   pos=2)
+        self.check('4 x', 4, err=None, pos=1, consume_trailing=False)
+        self.check('x 4', 4, err=None, pos=3, start=1)
+        self.check('x y', None, err='<string>:1 Unexpected "y" at column 3',
+                   pos=2, start=1)
+
+        val, err, pos = json5.parse('[][]', consume_trailing=False)
+        self.assertEqual(val, [])
+        self.assertEqual(err, None)
+        self.assertEqual(pos, 2)
+        val, err, pos = json5.parse('[][]', consume_trailing=False, start=pos)
+        self.assertEqual(val, [])
+        self.assertEqual(err, None)
+        self.assertEqual(pos, 4)
+
+
+
 class TestDump(unittest.TestCase):
     def test_basic(self):
         sio = io.StringIO()

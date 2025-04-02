@@ -1,4 +1,8 @@
-grammar        = sp value:v sp end                    -> v
+grammar        = sp value:v trailing                  -> v
+
+trailing       = ?( _consume_trailing) sp end
+               | ~?( _consume_trailing)
+
 
 sp             = ws*
 

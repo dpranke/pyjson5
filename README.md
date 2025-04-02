@@ -56,6 +56,13 @@ be legal object keys in JavaScript, but they aren't in JSON5.
 
 ## Contributing
 
+`json5` have no runtime dependencies and it is supported on Python version 3.8
+or later. However, by default, in order to develop and build the package you
+need 3.9 or newer in order to run the latest versions of the tools used
+during development. If you wish to develop on 3.8, it is still possible; see
+the comments in `pyproject.toml` for what you need to change to install
+older versions of the tools.
+
 #### On Mac
 
 The easiest thing to do is to install [`uv`](https://docs.astral.sh/uv) and
@@ -107,6 +114,10 @@ $ git push --tags origin
 (Assuming you have upload privileges to PyPI and the GitHub repo, of course.)
 
 ## Version History / Release Notes
+
+* v0.12.0dev0 (prerelease)
+    * Upgrade devenv package dependencies to latest versions; they now need
+      Python 3.9 or newer, though json5 itself still supports 3.8.
 
 * v0.11.0 (2025-04-01)
     * Add a couple examples to the documentation and run doctest over

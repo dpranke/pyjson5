@@ -94,9 +94,9 @@ $ ./run tests
 ```
 # Update the version in json5/version.py to $VERSION, which should be of
 # the form X.Y.Z where X, Y, and Z are numbers.
-$ git commit -a -m "Bump the version to $VERSION"
 $ ./run regen
 $ ./run presubmit
+$ git commit -a -m "Bump the version to $VERSION"
 $ git tag "v$VERSION"
 $ ./run build
 $ ./run publish --prod

@@ -239,6 +239,11 @@ class TestLoads(unittest.TestCase):
             obj,
         )
 
+    def test_load_fails(self):
+        s = io.StringIO('x')
+        with self.assertRaises(ValueError):
+            json5.load(s)
+
     def test_strict(self):
         # From [GitHub issue #82](https://github.com/dpranke/pyjson5/issues/82)
         d = '{\n"key": "value\nover two lines",\n}'
@@ -344,14 +349,21 @@ class TestParse(unittest.TestCase):
         self.check('4', 4, err=None, pos=1)
         self.check('4 ', 4, err=None, pos=2)
         self.check('4 ', 4, err=None, pos=1, consume_trailing=False)
-        self.check('x', None, err='<string>:1 Unexpected "x" at column 1',
-                   pos=0)
-        self.check('4 x', None, err='<string>:1 Unexpected "x" at column 3',
-                   pos=2)
+        self.check(
+            'x', None, err='<string>:1 Unexpected "x" at column 1', pos=0
+        )
+        self.check(
+            '4 x', None, err='<string>:1 Unexpected "x" at column 3', pos=2
+        )
         self.check('4 x', 4, err=None, pos=1, consume_trailing=False)
         self.check('x 4', 4, err=None, pos=3, start=1)
-        self.check('x y', None, err='<string>:1 Unexpected "y" at column 3',
-                   pos=2, start=1)
+        self.check(
+            'x y',
+            None,
+            err='<string>:1 Unexpected "y" at column 3',
+            pos=2,
+            start=1,
+        )
 
         val, err, pos = json5.parse('[][]', consume_trailing=False)
         self.assertEqual(val, [])
@@ -361,7 +373,6 @@ class TestParse(unittest.TestCase):
         self.assertEqual(val, [])
         self.assertEqual(err, None)
         self.assertEqual(pos, 4)
-
 
 
 class TestDump(unittest.TestCase):

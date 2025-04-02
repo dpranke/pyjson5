@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# pylint: disable=too-many-lines
+
 import enum
 import math
 import re
@@ -125,7 +127,7 @@ def load(
     """
 
     s = fp.read()
-    val, err, pos = parse(
+    val, err, _ = parse(
         s,
         encoding=encoding,
         cls=cls,
@@ -199,7 +201,7 @@ def loads(
         object_pairs_hook=object_pairs_hook,
         allow_duplicate_keys=allow_duplicate_keys,
         consume_trailing=consume_trailing,
-        start=start
+        start=start,
     )
     if err:
         raise ValueError(err)
@@ -258,6 +260,28 @@ def parse(
 
     Note that this does *not* raise a `ValueError`; instead any error is
     returned as the second value in the tuple.
+
+    You can use this method to read in a series of values from a string
+    `s` as follows:
+
+    >>> import json5
+    >>> s = '1 2 3 4'
+    >>> values = []
+    >>> start = 0
+    >>> while True:
+    ...     v, err, pos = json5.parse(s, start=start, consume_trailing=False)
+    ...     if v:
+    ...         values.append(v)
+    ...         start = pos
+    ...         if start == len(s) or s[start:].isspace():
+    ...             # Reached the end of the string (ignoring trailing
+    ...             # whitespace
+    ...             break
+    ...         continue
+    ...     raise ValueError(err)
+    >>> values
+    [1, 2, 3, 4]
+
     """
     assert cls is None, 'Custom decoders are not supported'
 
@@ -276,19 +300,29 @@ def parse(
         return None, err, pos
 
     try:
-        value = _convert(ast, object_hook=object_hook,
-                        parse_float=parse_float,
-                        parse_int=parse_int,
-                        parse_constant=parse_constant,
-                        object_pairs_hook=object_pairs_hook,
-                        allow_duplicate_keys=allow_duplicate_keys)
+        value = _convert(
+            ast,
+            object_hook=object_hook,
+            parse_float=parse_float,
+            parse_int=parse_int,
+            parse_constant=parse_constant,
+            object_pairs_hook=object_pairs_hook,
+            allow_duplicate_keys=allow_duplicate_keys,
+        )
         return value, None, pos
     except ValueError as e:
         return None, str(e), pos
 
 
-def _convert(ast, object_hook, parse_float, parse_int, parse_constant,
-             object_pairs_hook, allow_duplicate_keys):
+def _convert(
+    ast,
+    object_hook,
+    parse_float,
+    parse_int,
+    parse_constant,
+    object_pairs_hook,
+    allow_duplicate_keys,
+):
     def _fp_constant_parser(s):
         return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
 
@@ -481,13 +515,13 @@ def dumps(
 
     ```
     >>> import json5
-    ... from typing import Any, Set
-    ...
-    ... class Hex(int):
+    >>> from typing import Any, Set
+    >>>
+    >>> class Hex(int):
     ...    def __repr__(self):
     ...        return hex(self)
-    ...
-    ... class CustomEncoder(json5.JSON5Encoder):
+    >>>
+    >>> class CustomEncoder(json5.JSON5Encoder):
     ...    def encode(
     ...        self, obj: Any, seen: Set, level: int, *, as_key: bool
     ...    ) -> str:
@@ -495,10 +529,9 @@ def dumps(
     ...            return repr(obj)
     ...        return super().encode(obj, seen, level, as_key=as_key)
     ...
-    ... print(json5.dumps([20, Hex(20)], cls=CustomEncoder))
-    ...
-    [20, 0x14]
-    >>>
+    >>> json5.dumps([20, Hex(20)], cls=CustomEncoder)
+    '[20, 0x14]'
+
     ```
 
     *Note:* calling ``dumps(obj, quote_keys=True, trailing_commas=False, \

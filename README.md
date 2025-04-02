@@ -75,6 +75,14 @@ $ source $(./run devenv)  # To activate a venv w/ all the needed dev tools.
 
 Install `uv` via whatever mechanism is appropriate.
 
+### Create the venv
+
+```
+$ ./run devenv
+```
+
+(This calls `uv sync --extra dev`.)
+
 ### Running the tests
 
 ```
@@ -100,7 +108,9 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
-* v0.11.0.dev0 (2025-03-29)
+* v0.11.0 (2025-04-01)
+    * Add a couple examples to the documentation and run doctest over
+      them.
     * Fix a typing issue in dump and dumps with the `cls` argument; turns
       out mypy was right and I was wrong and I didn't realize it :).
     * Introduce a new `parse` method that can be used to iterate through

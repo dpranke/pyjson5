@@ -57,11 +57,10 @@ be legal object keys in JavaScript, but they aren't in JSON5.
 ## Contributing
 
 `json5` have no runtime dependencies and it is supported on Python version 3.8
-or later. However, by default, in order to develop and build the package you
-need 3.9 or newer in order to run the latest versions of the tools used
-during development. If you wish to develop on 3.8, it is still possible; see
-the comments in `pyproject.toml` for what you need to change to install
-older versions of the tools.
+or later. However, in order to develop and build the package you need a 
+bunch of extra tools and the latest versions of those tools may require 3.9
+or later. You can install the extra environment on 3.8 (and get older versions
+of the tools), but they may not run completely cleanly.
 
 #### On Mac
 

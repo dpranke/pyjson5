@@ -117,7 +117,7 @@ class Runner:
             help='The command to get help for.',
         )
 
-        self.add_parser('lint', help='Lint the source code with pylint.')
+        self.add_parser('pylint', help='Lint the source code with pylint.')
 
         self.add_parser('mypy', help='Typecheck the code with mypy.')
 
@@ -278,7 +278,7 @@ class Runner:
             self.main([self.args.subcommand, '--help'])
         self.main(['--help'])
 
-    def run_lint(self):
+    def run_pylint(self):
         self.call(self.run_cmd[:-1] + ['pylint', 'run'] + self._files())
 
     def run_mypy(self):
@@ -289,7 +289,7 @@ class Runner:
         self.run_regen()
         self.run_format()
         self.run_check()
-        self.run_lint()
+        self.run_pylint()
         self.run_mypy()
         self.run_coverage()
 

@@ -595,13 +595,9 @@ class TestDumps(unittest.TestCase):
     def test_reserved_words_in_object_keys_are_quoted(self):
         self.check({'new': 1}, '{"new": 1}')
 
-    # pylint: disable=invalid-name
-    def test_identifiers_only_starting_with_reserved_words_are_not_quoted(
-        self,
-    ):
+    def test_identifiers_starting_with_reserved_words(self):
+        # `newbie` should not be quoted.
         self.check({'newbie': 1}, '{newbie: 1}')
-
-    # pylint: enable=invalid-name
 
     def test_non_string_keys(self):
         self.assertEqual(

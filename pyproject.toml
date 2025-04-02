@@ -51,6 +51,50 @@ Changelog = "https://github.com/dpranke/pyjson5/blob/master/README.md"
 [project.scripts]
 pyjson5 = "json5.tool:main"
 
+[tool.pylint.basic]
+
+# By default, pylint wants method names to be at most 31 chars long,
+# but we want to allow up to 49 to allow for longer test names.
+method-rgx = "[a-zA-Z_][a-zA-Z0-9_]{0,48}$"
+
+# By default, pylint only allows UPPER_CASE constants, but we want to
+# allow snake_case as well in some situations.
+const-rgx = "[a-zA-Z_][a-zA-Z0-9_]{0,30}$"
+
+# By default, pylint wants all parameter names to be at least two chars long,
+# but we want to allow single-char parameter names as well.
+argument-rgx = "[a-z_][a-z0-9_]{0,30}$"
+
+# By default, pylint wants all variable names to be at least two chars long,
+# but we want to allow single-char variable names as well.
+variable-rgx = "[a-z_][a-z0-9_]{0,30}$"
+
+[tool.pylint.main]
+persistent = "yes"
+
+[tool.pylint."message control"]
+disable = [
+    "broad-except",
+    "fixme",
+    "global-statement",
+    "locally-disabled",
+    "missing-docstring",
+    "too-many-arguments",
+    "too-few-public-methods",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-lines",
+    "too-many-locals",
+    "too-many-positional-arguments",
+    "too-many-public-methods",
+    "too-many-return-statements",
+    "too-many-statements",
+    "unidiomatic-typecheck",
+]
+
+[tool.pylint.reports]
+reports = "no"
+score = "no"
 [tool.ruff]
 include = [ "run", "*/*.py" ]
 line-length = 79

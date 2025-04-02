@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# pylint: disable=too-many-lines
-
 import enum
 import math
 import re
@@ -326,35 +324,25 @@ def _convert(
     def _fp_constant_parser(s):
         return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
 
-    if object_pairs_hook:
-        dictify = object_pairs_hook
-    elif object_hook:
+    def _dictify(pairs):
+        if not allow_duplicate_keys:
+            keys = set()
+            for key, _ in pairs:
+                if key in keys:
+                    raise ValueError(f'Duplicate key "{key}" found in object')
+                keys.add(key)
 
-        def dictify(pairs):
+        if object_pairs_hook:
+            return object_pairs_hook(pairs)
+        if object_hook:
             return object_hook(dict(pairs))
-    else:
-        dictify = dict
-
-    if not allow_duplicate_keys:
-        _orig_dictify = dictify
-
-        def dictify(pairs):  # pylint: disable=function-redefined
-            return _reject_duplicate_keys(pairs, _orig_dictify)
+        return dict(pairs)
 
     parse_float = parse_float or float
     parse_int = parse_int or int
     parse_constant = parse_constant or _fp_constant_parser
 
-    return _walk_ast(ast, dictify, parse_float, parse_int, parse_constant)
-
-
-def _reject_duplicate_keys(pairs, dictify):
-    keys = set()
-    for key, _ in pairs:
-        if key in keys:
-            raise ValueError(f'Duplicate key "{key}" found in object')
-        keys.add(key)
-    return dictify(pairs)
+    return _walk_ast(ast, _dictify, parse_float, parse_int, parse_constant)
 
 
 def _walk_ast(

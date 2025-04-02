@@ -16,10 +16,6 @@ import io
 
 
 class FakeHost:
-    # "too many instance attributes" pylint: disable=R0902
-    # "redefining built-in" pylint: disable=W0622
-    # "unused arg" pylint: disable=W0613
-
     python_interpreter = 'python'
 
     def __init__(self):
@@ -81,6 +77,8 @@ class FakeHost:
         if path not in self.dirs:
             self.dirs.add(path)
 
+    # We use `dir` as an argument name to mirror tempfile.mkdtemp.
+    # pylint: disable=redefined-builtin
     def mkdtemp(self, suffix='', prefix='tmp', dir=None, **_kwargs):
         if dir is None:
             dir = self.sep + '__im_tmp'
@@ -91,6 +89,8 @@ class FakeHost:
         self.last_tmpdir = self.join(dir, f'{prefix}_{curno}_{suffix}')
         self.dirs.add(self.last_tmpdir)
         return self.last_tmpdir
+
+    # pylint: enable=redefined-builtin
 
     def print(self, msg='', end='\n', file=None):
         file = file or self.stdout

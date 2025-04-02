@@ -50,9 +50,9 @@ class ToolTest(unittest.TestCase):
         # subprocess correctly accounted for.
         in_proc = True
         out_of_proc = True
-        assert (
-            in_proc or out_of_proc
-        ), 'At least one of in_proc or out_of_proc must be true'
+        assert in_proc or out_of_proc, (
+            'At least one of in_proc or out_of_proc must be true'
+        )
 
         if in_proc:
             fake_host = FakeHost()

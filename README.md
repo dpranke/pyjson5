@@ -114,11 +114,12 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
+* v0.12.1.dev0 (dev version)
+    *
+
 * v0.12.0 (2025-04-03)
     * Roll back pyproject.toml change for licensing so that we can still
       build the package on 3.8.
-
-* v0.12.0dev0 (prerelease)
     * Upgrade devenv package dependencies to latest versions; they now need
       Python 3.9 or newer, though json5 itself still supports 3.8.
 

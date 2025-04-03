@@ -57,7 +57,7 @@ be legal object keys in JavaScript, but they aren't in JSON5.
 ## Contributing
 
 `json5` have no runtime dependencies and it is supported on Python version 3.8
-or later. However, in order to develop and build the package you need a 
+or later. However, in order to develop and build the package you need a
 bunch of extra tools and the latest versions of those tools may require 3.9
 or later. You can install the extra environment on 3.8 (and get older versions
 of the tools), but they may not run completely cleanly.
@@ -113,6 +113,10 @@ $ git push --tags origin
 (Assuming you have upload privileges to PyPI and the GitHub repo, of course.)
 
 ## Version History / Release Notes
+
+* v0.12.0 (2025-04-03)
+    * Roll back pyproject.toml change for licensing so that we can still
+      build the package on 3.8.
 
 * v0.12.0dev0 (prerelease)
     * Upgrade devenv package dependencies to latest versions; they now need

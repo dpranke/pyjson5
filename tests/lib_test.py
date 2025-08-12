@@ -515,6 +515,24 @@ class TestDumps(unittest.TestCase):
 
         self.assertEqual(json5.dumps(MyDict()), '{a: 1, b: 2}')
 
+    def test_custom_encoder(self):
+        class Test:
+            pass
+
+        class Encoder(json5.JSON5Encoder):
+            def default(self, obj):
+                assert isinstance(obj, Test)
+                return {'foo': 'bar'}
+
+        # This tests that the custom value is indented at the same level
+        # that a regular object would be. This is also testing that
+        # Encoder.default is only being called when we don't otherwise know
+        # how to encode something.
+        self.assertEqual(
+            '{\n    baz: {\n        foo: "bar",\n    },\n    quux: 4,\n}',
+            json5.dumps({'baz': Test(), 'quux': 4}, indent=4, cls=Encoder),
+        )
+
     def test_custom_strings(self):
         class MyStr(str):
             pass

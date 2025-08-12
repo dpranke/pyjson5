@@ -803,7 +803,7 @@ class JSON5Encoder:
         elif hasattr(obj, '__getitem__') and hasattr(obj, '__iter__'):
             s = self._encode_array(obj, seen, level + 1)
         else:
-            s = self.encode(self.default(obj), seen, level + 1, as_key=False)
+            s = self.encode(self.default(obj), seen, level, as_key=False)
             assert s is not None
 
         if self.check_circular:

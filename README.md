@@ -114,8 +114,9 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
-* v0.12.1.dev0 (dev version)
-    * No changes yet
+* v0.12.1 (2025-08-12)
+    * Fix [#94](https://github.com/dpranke/pyjson5/issues/94), where objects
+      returned from a custom encoder were not being indented properly.
 
 * v0.12.0 (2025-04-03)
     * Roll back pyproject.toml change for licensing so that we can still

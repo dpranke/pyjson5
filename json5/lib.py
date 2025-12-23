@@ -451,7 +451,7 @@ def dumps(
     trailing_commas: bool = True,
     allow_duplicate_keys: bool = True,
     quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
-    **kw,
+    **kw: Any,
 ):
     """Serialize ``obj`` to a JSON5-formatted string.
 

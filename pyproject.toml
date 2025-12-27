@@ -11,14 +11,12 @@ authors = [
 keywords = [ "json5" ]
 license = {file = "LICENSE"}
 readme = "README.md"
-requires-python = ">= 3.8.0"
+requires-python = ">= 3.10.0"
 classifiers= [
     'Development Status :: 5 - Production/Stable',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: Apache Software License',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.8',
-    'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
@@ -28,16 +26,12 @@ classifiers= [
 dynamic = [ "version" ]
 
 [project.optional-dependencies]
-# Note that not everything is guaranteed to work on 3.8.
 dev = [
     'build==1.2.2.post1',
-    'coverage==7.5.4; python_version < "3.9"',
-    'coverage==7.8.0; python_version >= "3.9"',
-    'mypy==1.14.1; python_version < "3.9"',
-    'mypy==1.15.0; python_version >= "3.9"',
+    'coverage==7.8.0',
+    'mypy==1.15.0',
     'pip==25.0.1',
-    'pylint==3.2.7; python_version < "3.9"',
-    'pylint==3.3.6; python_version >= "3.9"',
+    'pylint==3.3.6',
     'ruff==0.11.2',
     'twine==6.1.0',
     'uv==0.6.11',

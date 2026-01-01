@@ -333,7 +333,7 @@ class Runner:
             old = fp.read()
         if self.args.no_execute or self.args.verbose:
             print(f'mv {self.parser_file} {orig_file}')
-        else:
+        if not self.args.no_execute:
             os.rename(self.parser_file, orig_file)
         self._gen_parser()
         if self.args.no_execute:

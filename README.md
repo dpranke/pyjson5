@@ -116,8 +116,13 @@ $ git push --tags origin
 
 * v0.13.0 (2026-01-01)
     * No code changes.
-    * Add 3.14 to project config, dependencies
+    * Add Python 3.14 to supported version, project config, dependencies
     * Update dependencies to latest stuff < 2025-12-01
+      * This relaxes the versions specified in pyproject.toml to just
+        use 'newer than' rather than exact matches.
+      * Sets 'uv.tool.exclude-newer' in pyproject.toml to tell uv not
+        to look at packages published within the past 30 days; this will
+        hopefully help prevent dependencies on compromised projects.
     * Switch to using dependency-groups for 'dev' group.
 
 * v0.12.1 (2025-08-12)

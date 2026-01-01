@@ -114,6 +114,12 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
+* v0.13.0 (2026-01-01)
+    * No code changes.
+    * Add 3.14 to project config, dependencies
+    * Update dependencies to latest stuff < 2025-12-01
+    * Switch to using dependency-groups for 'dev' group.
+
 * v0.12.1 (2025-08-12)
     * Fix [#94](https://github.com/dpranke/pyjson5/issues/94), where objects
       returned from a custom encoder were not being indented properly.

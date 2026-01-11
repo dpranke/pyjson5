@@ -144,8 +144,8 @@ def _parse_args(host, argv):
         '--no-quote-keys',
         action='store_false',
         dest='quote_keys',
-        help="don't quote object keys that are identifiers"
-        ' (this is the default)',
+        help="don't quote object keys that are identifiers "
+        '(this is the default)',
     )
     parser.add_argument(
         '--trailing-commas',
@@ -158,8 +158,8 @@ def _parse_args(host, argv):
         '--no-trailing-commas',
         dest='trailing_commas',
         action='store_false',
-        help='do not add commas after the last item in '
-        'multi-line lists and objects',
+        help='do not add commas after the last item in multi-line lists '
+        'and objects',
     )
     parser.add_argument(
         '--strict',

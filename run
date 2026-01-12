@@ -292,7 +292,7 @@ class Runner:
         proc = self.call(cmd, exit_on_error=False, capture_output=True)
         if self.args.check and proc.returncode:
             print('pyproject.toml needs formatting')
-        elif proc.returncode:
+        elif proc.returncode and not proc.stdout:
             sys.exit(proc.returncode)
         if not self.args.check and not self.args.no_execute:
             with open('pyproject.toml') as fp:

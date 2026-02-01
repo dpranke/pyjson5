@@ -48,8 +48,8 @@ class Runner:
         subp.set_defaults(func=lambda _: method())
         return subp
 
-    def call(self, *args, **kwargs):
-        cmd = shlex.join(*args)
+    def call(self, args, exit_on_error=True, **kwargs):
+        cmd = shlex.join(args)
         if self.args.no_execute or self.args.verbose:
             print(f'{cmd}')
         if self.args.no_execute:
@@ -59,13 +59,16 @@ class Runner:
             del kwargs['capture_output']
 
         proc = subprocess.run(
-            *args, capture_output=capture_output, check=False, **kwargs
+            args, capture_output=capture_output, check=False, **kwargs
         )
         if proc.returncode != 0:
             if self.args.quiet:
-                print(proc.stdout)
-                print(proc.stderr, file=sys.stderr)
-            sys.exit(proc.returncode)
+                if proc.stdout:
+                    print(proc.stdout)
+                if proc.stderr:
+                    print(proc.stderr, file=sys.stderr)
+            if exit_on_error:
+                sys.exit(proc.returncode)
         return proc
 
     def main(self, argv):
@@ -101,7 +104,8 @@ class Runner:
         )
 
         subp = self.add_parser(
-            'format', help='Format the source code with ruff.'
+            'format',
+            help='Format the source code with ruff and pyproject-fmt.',
         )
         subp.add_argument(
             '--check',
@@ -271,6 +275,31 @@ class Runner:
             print('Run `source .venv/bin/activate` to finish devenv setup.')
 
     def run_format(self):
+        cmd = [
+            self.uv_path,
+            'run',
+            'pyproject-fmt',
+            '--column-width',
+            '80',
+            '--no-print-diff',
+            'pyproject.toml',
+        ]
+
+        if self.args.check:
+            cmd.append('--check')
+        else:
+            cmd.append('--stdout')
+        proc = self.call(cmd, exit_on_error=False, capture_output=True)
+        if self.args.check and proc.returncode:
+            print('pyproject.toml needs formatting')
+        elif proc.returncode and not proc.stdout:
+            sys.exit(proc.returncode)
+        if not self.args.check and not self.args.no_execute:
+            with open('pyproject.toml') as fp:
+                orig_file = fp.read()
+            if proc.stdout != 'no change for pyproject.toml\n'.encode('utf8'):
+                with open('pyproject.toml', 'wb') as fp:
+                    fp.write(proc.stdout)
         cmd = self.run_cmd + ['-m', 'ruff', 'format']
         if self.args.check:
             cmd.append('--check')

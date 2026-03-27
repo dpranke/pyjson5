@@ -481,12 +481,11 @@ class TestDumps(unittest.TestCase):
         # float.__repr__ in order to get legal JSON values when
         # people have custom subclasses with customer __repr__ methods.
         # (This is what JSON does and we want to match it).
-        # pylint: disable=no-self-argument
+        # pylint: disable=no-self-argument, invalid-repr-returned
         class MyInt(int):
             def __repr__(other):  # pragma: no cover
                 del other
                 self.fail()
-                return ''
 
         self.assertEqual(json5.dumps(MyInt(5)), '5')
 
@@ -494,7 +493,6 @@ class TestDumps(unittest.TestCase):
             def __repr__(other):  # pragma: no cover
                 del other
                 self.fail()
-                return ''
 
         self.assertEqual(json5.dumps(MyFloat(0.5)), '0.5')
 

@@ -295,8 +295,6 @@ class Runner:
         elif proc.returncode and not proc.stdout:
             sys.exit(proc.returncode)
         if not self.args.check and not self.args.no_execute:
-            with open('pyproject.toml') as fp:
-                orig_file = fp.read()
             if proc.stdout != 'no change for pyproject.toml\n'.encode('utf8'):
                 with open('pyproject.toml', 'wb') as fp:
                     fp.write(proc.stdout)

@@ -114,6 +114,12 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
+* v0.14.0 (2026-03-27)
+  This is really just a dependency bump release.
+    * No (non-test) code changes.
+    * Upgraded to latest packages for dev dependencies
+    * Silenced a couple of warnings from the latest pylint where it
+      can't deal with both unreachable code and a bad return value.
 * v0.13.0 (2026-01-01)
     * No code changes.
     * Add Python 3.14 to supported version, project config, dependencies

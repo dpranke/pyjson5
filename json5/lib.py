@@ -160,7 +160,7 @@ def loads(
     allow_duplicate_keys: bool = True,
     consume_trailing: bool = True,
     start: Optional[int] = None,
-):
+) -> Any:
     """Deserialize ``s`` (a string containing a JSON5 document) to a Python
     object.
 
@@ -222,7 +222,7 @@ def parse(
     allow_duplicate_keys: bool = True,
     consume_trailing: bool = True,
     start: Optional[int] = None,
-):
+) -> tuple[Any, None, int] | tuple[None, str, int]:
     """Parse ```s``, returning positional information along with a value.
 
     This works exactly like `loads()`, except that (a) it returns the

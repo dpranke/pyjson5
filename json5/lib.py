@@ -222,7 +222,7 @@ def parse(
     allow_duplicate_keys: bool = True,
     consume_trailing: bool = True,
     start: Optional[int] = None,
-) -> tuple[Any, None, int] | tuple[None, str, int]:
+) -> Union[tuple[Any, None, int], tuple[None, str, int]]:
     """Parse ```s``, returning positional information along with a value.
 
     This works exactly like `loads()`, except that (a) it returns the

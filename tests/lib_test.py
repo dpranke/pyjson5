@@ -293,6 +293,30 @@ class TestLoads(unittest.TestCase):
         self.check_fail("'\\u0j00'")
         self.check_fail("'\\uj000'")
 
+    def test_supplemental_unicode(self):
+        # Code points above U+FFFF are escaped as a UTF-16 surrogate pair, so
+        # loads() must rejoin the pair into the original code point. This is
+        # the counterpart to TestDumps.test_supplemental_unicode and the
+        # inverse of what dumps() produces.
+        self.check(r'"\ud834\udd1e"', '\U0001d11e')
+        self.check(r'"\ud83d\ude00"', '\U0001f600')
+        self.check(r'"\ud800\udc00"', '\U00010000')
+        self.check(r'"\udbff\udfff"', '\U0010ffff')
+
+        # A pair embedded among other characters.
+        self.check(r'"a\ud834\udd1eb"', 'a\U0001d11eb')
+
+        # A supplemental code point used as an object key.
+        self.check(r'{"\ud834\udd1e": 1}', {'\U0001d11e': 1})
+
+        # dumps()/loads() must round-trip a supplemental character.
+        self.assertEqual(json5.loads(json5.dumps('\U0001f600')), '\U0001f600')
+
+        # Unpaired surrogates are left untouched, matching json.loads().
+        self.check(r'"\ud834"', '\ud834')
+        self.check(r'"\udd1e"', '\udd1e')
+        self.check(r'"\ud834x\udd1e"', '\ud834x\udd1e')
+
     def test_unrecognized_escape_char(self):
         self.check(r'"\/"', '/')
 

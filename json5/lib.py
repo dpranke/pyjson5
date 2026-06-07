@@ -345,6 +345,26 @@ def _convert(
     return _walk_ast(ast, _dictify, parse_float, parse_int, parse_constant)
 
 
+_SURROGATE_RE = re.compile('[\ud800-\udfff]')
+
+
+def _join_surrogates(s):
+    """Combine UTF-16 surrogate-pair escapes into the code point they encode.
+
+    A ``\\uXXXX`` escape can only represent a code point in the Basic
+    Multilingual Plane, so code points above U+FFFF are written as a
+    surrogate pair, e.g. ``\\uD834\\uDD1E`` for U+1D11E. The grammar resolves
+    each ``\\uXXXX`` escape on its own, leaving the two halves as lone
+    surrogates; this rejoins valid high+low pairs (matching ``json.loads``)
+    while leaving unpaired surrogates untouched.
+    """
+    if not _SURROGATE_RE.search(s):
+        return s
+    return s.encode('utf-16-le', 'surrogatepass').decode(
+        'utf-16-le', 'surrogatepass'
+    )
+
+
 def _walk_ast(
     el,
     dictify: Callable[[Iterable[Tuple[str, Any]]], Any],
@@ -368,14 +388,14 @@ def _walk_ast(
             return parse_constant(v)
         return parse_int(v)
     if ty == 'string':
-        return v
+        return _join_surrogates(v)
     if ty == 'object':
         pairs = []
         for key, val_expr in v:
             val = _walk_ast(
                 val_expr, dictify, parse_float, parse_int, parse_constant
             )
-            pairs.append((key, val))
+            pairs.append((_join_surrogates(key), val))
         return dictify(pairs)
     if ty == 'array':
         return [

@@ -164,7 +164,7 @@ def loads(
     """Deserialize ``s`` (a string containing a JSON5 document) to a Python
     object.
 
-    Supports the same arguments as ``json.load()`` except that:
+    Supports the same arguments as ``json.loads()`` except that:
         - the `cls` keyword is ignored.
         - an extra `allow_duplicate_keys` parameter supports checking for
           duplicate keys in a object; by default, this is True for

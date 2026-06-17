@@ -360,7 +360,8 @@ def _walk_ast(
         return False
     ty, v = el
     if ty == 'number':
-        if v.startswith('0x') or v.startswith('0X'):
+        unsigned = v[1:] if v[:1] == '-' else v
+        if unsigned.startswith('0x') or unsigned.startswith('0X'):
             return parse_int(v, base=16)
         if '.' in v or 'e' in v or 'E' in v:
             return parse_float(v)

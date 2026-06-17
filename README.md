@@ -114,6 +114,11 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
+* v0.14.1 (unreleased)
+    * Fixed parsing of signed hexadecimal literals such as `-0x1f` and
+      `+0xff`, which previously raised a `ValueError` instead of parsing
+      to an integer.
+
 * v0.14.0 (2026-03-27)
   This is really just a dependency bump release.
     * No (non-test) code changes.

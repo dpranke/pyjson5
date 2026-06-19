@@ -114,10 +114,17 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
-* v0.14.1 (unreleased)
-    * Fixed parsing of signed hexadecimal literals such as `-0x1f` and
-      `+0xff`, which previously raised a `ValueError` instead of parsing
-      to an integer.
+* v0.15.0 (2026-06-19)
+    * [Fix #113](https://github.com/dpranke/pyjson5/issues/113), where parsing
+      of signed hexadecimal literals such as `-0x1f` and `+0xff` was raising
+      a ValueError instead of being allowed.
+    * [Fix #111](https://github.com/dpranke/pyjson5/issues/111), with a slight
+      docstring typo fix/improvement.
+    * upgraded package dependences to their "latest" versions (without changing
+      any direct dependencies and not pulling in anything newer than 30 days
+      old). This resolves some potential security issues in a dev environment
+      that Dependabot was warning about; no effect on the production code
+      since the production library has no dependencies.
 
 * v0.14.0 (2026-03-27)
   This is really just a dependency bump release.

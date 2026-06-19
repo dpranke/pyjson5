@@ -102,6 +102,12 @@ class TestLoads(unittest.TestCase):
         self.check('0x123456', 1193046)
         self.check_fail('0x+', '<string>:1 Unexpected "+" at column 3')
 
+        # signed hex literals
+        self.check('+0xf', 15)
+        self.check('-0xf', -15)
+        self.check('-0XABCD', -43981)
+        self.check('-0x0', 0)
+
         # floats
         self.check('1.5', 1.5)
         self.check('1.5e3', 1500.0)

@@ -680,7 +680,7 @@ class JSON5Encoder:
             s = float.__repr__(obj)
 
         if not allowed:
-            raise ValueError('Illegal JSON5 value: f{obj}')
+            raise ValueError(f'Illegal JSON5 value: {obj}')
         return f'"{s}"' if as_key else s
 
     def _encode_str(self, obj: str, *, as_key: bool) -> str:

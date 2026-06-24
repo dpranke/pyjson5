@@ -583,15 +583,10 @@ class TestDumps(unittest.TestCase):
         self.check(float('-inf'), '-Infinity')
         self.check(float('nan'), 'NaN')
 
-        self.assertRaises(
-            ValueError, json5.dumps, float('inf'), allow_nan=False
-        )
-        self.assertRaises(
-            ValueError, json5.dumps, float('-inf'), allow_nan=False
-        )
-        self.assertRaises(
-            ValueError, json5.dumps, float('nan'), allow_nan=False
-        )
+        for v in (float('inf'), float('-inf'), float('nan')):
+            with self.assertRaises(ValueError) as ctx:
+                json5.dumps(v, allow_nan=False)
+            self.assertIn(str(v), str(ctx.exception))
 
     def test_null(self):
         self.check(None, 'null')

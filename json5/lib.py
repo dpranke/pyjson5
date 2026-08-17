@@ -71,7 +71,7 @@ class QuoteStyle(enum.Enum):
 
 
 def load(
-    fp: IO,
+    fp: Union[IO[str], IO[bytes]],
     *,
     encoding: Optional[str] = None,
     cls: Any = None,
@@ -145,7 +145,7 @@ def load(
 
 
 def loads(
-    s: str,
+    s: Union[str, bytes],
     *,
     encoding: Optional[str] = None,
     cls: Any = None,
@@ -207,7 +207,7 @@ def loads(
 
 
 def parse(
-    s: str,
+    s: Union[str, bytes],
     *,
     encoding: Optional[str] = None,
     cls: Any = None,
@@ -388,7 +388,7 @@ def _walk_ast(
 
 def dump(
     obj: Any,
-    fp: IO,
+    fp: IO[str],
     *,
     skipkeys: bool = False,
     ensure_ascii: bool = True,

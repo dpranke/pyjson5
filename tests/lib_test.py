@@ -250,6 +250,50 @@ class TestLoads(unittest.TestCase):
         with self.assertRaises(ValueError):
             json5.load(s)
 
+    def test_load_start_is_absolute(self):
+        for stream_type in (io.StringIO, io.BytesIO):
+            for prefix in ('', 'ignored\n', '\u00e9\u4e2d\n'):
+                text = prefix + '{answer: 42}'
+                data = (
+                    text.encode('utf-8') if stream_type is io.BytesIO else text
+                )
+                for position in (0, 1, len(data)):
+                    with self.subTest(
+                        stream=stream_type, prefix=prefix, position=position
+                    ):
+                        fp = stream_type(data)
+                        fp.seek(position)
+                        self.assertEqual(
+                            {'answer': 42}, json5.load(fp, start=len(prefix))
+                        )
+
+    def test_load_without_start_uses_current_position(self):
+        for stream_type in (io.StringIO, io.BytesIO):
+            text = 'ignored\n{answer: 42}'
+            data = text.encode('utf-8') if stream_type is io.BytesIO else text
+            fp = stream_type(data)
+            fp.read(len('ignored\n'))
+            self.assertEqual({'answer': 42}, json5.load(fp))
+
+    def test_load_start_does_not_change_numbers(self):
+        for text, position, start in (('123', 1, 0), ('x 123', 2, 2)):
+            with self.subTest(text=text, position=position, start=start):
+                fp = io.StringIO(text)
+                fp.seek(position)
+                self.assertEqual(123, json5.load(fp, start=start))
+
+    def test_load_without_start_does_not_seek(self):
+        class NonSeekable(io.StringIO):
+            def seek(self, offset, whence=0):
+                del offset, whence
+                raise io.UnsupportedOperation('not seekable')
+
+        self.assertEqual(
+            {'answer': 42}, json5.load(NonSeekable('{answer: 42}'))
+        )
+        with self.assertRaises(io.UnsupportedOperation):
+            json5.load(NonSeekable('{answer: 42}'), start=0)
+
     def test_strict(self):
         # From [GitHub issue #82](https://github.com/dpranke/pyjson5/issues/82)
         d = '{\n"key": "value\nover two lines",\n}'

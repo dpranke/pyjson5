@@ -124,6 +124,8 @@ def load(
           `encoding`). This matches the `json` module.
     """
 
+    if start is not None:
+        fp.seek(0)
     s = fp.read()
     val, err, _ = parse(
         s,

@@ -36,11 +36,13 @@ string         = squote sqchar*:cs squote             -> join('', cs)
 sqchar         = bslash esc_char:c                    -> c
                | bslash eol                           -> ''
                | ~bslash ~squote ~eol anything:c      -> c
+               | '\u2028' | '\u2029'
                | ~?(_strict) '\x00'..'\x1f'
 
 dqchar         = bslash esc_char:c                    -> c
                | bslash eol                           -> ''
                | ~bslash ~dquote ~eol anything:c      -> c
+               | '\u2028' | '\u2029'
                | ~?( _strict ) '\x00'..'\x1f'
 
 bslash         = '\u005C'

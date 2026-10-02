@@ -480,6 +480,8 @@ class Parser:
                 self._sqchar__c1_,
                 self._sqchar__c2_,
                 self._sqchar__c3_,
+                self._sqchar__c4_,
+                self._sqchar__c5_,
             ]
         )
 
@@ -511,14 +513,20 @@ class Parser:
         self._pop('sqchar__c2')
 
     def _sqchar__c3_(self):
+        self._ch('\u2028')
+
+    def _sqchar__c4_(self):
+        self._ch('\u2029')
+
+    def _sqchar__c5_(self):
         self._seq(
             [
-                lambda: self._not(self._sqchar__c3__s0_n_),
+                lambda: self._not(self._sqchar__c5__s0_n_),
                 lambda: self._range('\x00', '\x1f'),
             ]
         )
 
-    def _sqchar__c3__s0_n_(self):
+    def _sqchar__c5__s0_n_(self):
         v = self._get('_strict')
         if v:
             self._succeed(v)
@@ -532,6 +540,8 @@ class Parser:
                 self._dqchar__c1_,
                 self._dqchar__c2_,
                 self._dqchar__c3_,
+                self._dqchar__c4_,
+                self._dqchar__c5_,
             ]
         )
 
@@ -563,14 +573,20 @@ class Parser:
         self._pop('dqchar__c2')
 
     def _dqchar__c3_(self):
+        self._ch('\u2028')
+
+    def _dqchar__c4_(self):
+        self._ch('\u2029')
+
+    def _dqchar__c5_(self):
         self._seq(
             [
-                lambda: self._not(self._dqchar__c3__s0_n_),
+                lambda: self._not(self._dqchar__c5__s0_n_),
                 lambda: self._range('\x00', '\x1f'),
             ]
         )
 
-    def _dqchar__c3__s0_n_(self):
+    def _dqchar__c5__s0_n_(self):
         v = self._get('_strict')
         if v:
             self._succeed(v)

@@ -33,17 +33,13 @@ array          = '[' sp element_list:v sp ']'         -> v
 string         = squote sqchar*:cs squote             -> join('', cs)
                | dquote dqchar*:cs dquote             -> join('', cs)
 
-sqchar         = bslash esc_char:c                    -> c
+sqchar         = ~(bslash | squote | ?(_strict) ('\r' | '\n')) anything:c -> c
+               | bslash esc_char:c                    -> c
                | bslash eol                           -> ''
-               | ~bslash ~squote ~eol anything:c      -> c
-               | '\u2028' | '\u2029'
-               | ~?(_strict) '\x00'..'\x1f'
 
-dqchar         = bslash esc_char:c                    -> c
+dqchar         = ~(bslash | dquote | ?(_strict) ('\r' | '\n')) anything:c -> c
+               | bslash esc_char:c                    -> c
                | bslash eol                           -> ''
-               | ~bslash ~dquote ~eol anything:c      -> c
-               | '\u2028' | '\u2029'
-               | ~?( _strict ) '\x00'..'\x1f'
 
 bslash         = '\u005C'
 

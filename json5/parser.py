@@ -474,69 +474,62 @@ class Parser:
         self._bind(lambda: self._star(self._dqchar_), 'cs')
 
     def _sqchar_(self):
-        self._choose(
-            [
-                self._sqchar__c0_,
-                self._sqchar__c1_,
-                self._sqchar__c2_,
-                self._sqchar__c3_,
-            ]
-        )
+        self._choose([self._sqchar__c0_, self._sqchar__c1_, self._sqchar__c2_])
 
     def _sqchar__c0_(self):
         self._push('sqchar__c0')
         self._seq(
             [
-                self._bslash_,
-                lambda: self._bind(self._esc_char_, 'c'),
+                self._sqchar__c0__s0_,
+                lambda: self._bind(self._anything_, 'c'),
                 lambda: self._succeed(self._get('c')),
             ]
         )
         self._pop('sqchar__c0')
 
-    def _sqchar__c1_(self):
-        self._seq([self._bslash_, self._eol_, lambda: self._succeed('')])
+    def _sqchar__c0__s0_(self):
+        self._not(lambda: (self._sqchar__c0__s0_n_g_)())
 
-    def _sqchar__c2_(self):
-        self._push('sqchar__c2')
-        self._seq(
+    def _sqchar__c0__s0_n_g_(self):
+        self._choose(
             [
-                lambda: self._not(self._bslash_),
-                lambda: self._not(self._squote_),
-                lambda: self._not(self._eol_),
-                lambda: self._bind(self._anything_, 'c'),
-                lambda: self._succeed(self._get('c')),
-            ]
-        )
-        self._pop('sqchar__c2')
-
-    def _sqchar__c3_(self):
-        self._seq(
-            [
-                lambda: self._not(self._sqchar__c3__s0_n_),
-                lambda: self._range('\x00', '\x1f'),
+                lambda: self._seq([self._bslash_]),
+                lambda: self._seq([self._squote_]),
+                self._sqchar__c0__s0_n_g__c2_,
             ]
         )
 
-    def _sqchar__c3__s0_n_(self):
+    def _sqchar__c0__s0_n_g__c2_(self):
+        self._seq(
+            [
+                self._sqchar__c0__s0_n_g__c2__s0_,
+                lambda: (self._sqchar__c0__s0_n_g__c2__s1_g_)(),
+            ]
+        )
+
+    def _sqchar__c0__s0_n_g__c2__s0_(self):
         v = self._get('_strict')
         if v:
             self._succeed(v)
         else:
             self._fail()
 
-    def _dqchar_(self):
+    def _sqchar__c0__s0_n_g__c2__s1_g_(self):
         self._choose(
             [
-                self._dqchar__c0_,
-                self._dqchar__c1_,
-                self._dqchar__c2_,
-                self._dqchar__c3_,
+                self._sqchar__c0__s0_n_g__c2__s1_g__c0_,
+                self._sqchar__c0__s0_n_g__c2__s1_g__c1_,
             ]
         )
 
-    def _dqchar__c0_(self):
-        self._push('dqchar__c0')
+    def _sqchar__c0__s0_n_g__c2__s1_g__c0_(self):
+        self._seq([lambda: self._ch('\r')])
+
+    def _sqchar__c0__s0_n_g__c2__s1_g__c1_(self):
+        self._seq([lambda: self._ch('\n')])
+
+    def _sqchar__c1_(self):
+        self._push('sqchar__c1')
         self._seq(
             [
                 self._bslash_,
@@ -544,38 +537,79 @@ class Parser:
                 lambda: self._succeed(self._get('c')),
             ]
         )
-        self._pop('dqchar__c0')
+        self._pop('sqchar__c1')
 
-    def _dqchar__c1_(self):
+    def _sqchar__c2_(self):
         self._seq([self._bslash_, self._eol_, lambda: self._succeed('')])
 
-    def _dqchar__c2_(self):
-        self._push('dqchar__c2')
+    def _dqchar_(self):
+        self._choose([self._dqchar__c0_, self._dqchar__c1_, self._dqchar__c2_])
+
+    def _dqchar__c0_(self):
+        self._push('dqchar__c0')
         self._seq(
             [
-                lambda: self._not(self._bslash_),
-                lambda: self._not(self._dquote_),
-                lambda: self._not(self._eol_),
+                self._dqchar__c0__s0_,
                 lambda: self._bind(self._anything_, 'c'),
                 lambda: self._succeed(self._get('c')),
             ]
         )
-        self._pop('dqchar__c2')
+        self._pop('dqchar__c0')
 
-    def _dqchar__c3_(self):
-        self._seq(
+    def _dqchar__c0__s0_(self):
+        self._not(lambda: (self._dqchar__c0__s0_n_g_)())
+
+    def _dqchar__c0__s0_n_g_(self):
+        self._choose(
             [
-                lambda: self._not(self._dqchar__c3__s0_n_),
-                lambda: self._range('\x00', '\x1f'),
+                lambda: self._seq([self._bslash_]),
+                lambda: self._seq([self._dquote_]),
+                self._dqchar__c0__s0_n_g__c2_,
             ]
         )
 
-    def _dqchar__c3__s0_n_(self):
+    def _dqchar__c0__s0_n_g__c2_(self):
+        self._seq(
+            [
+                self._dqchar__c0__s0_n_g__c2__s0_,
+                lambda: (self._dqchar__c0__s0_n_g__c2__s1_g_)(),
+            ]
+        )
+
+    def _dqchar__c0__s0_n_g__c2__s0_(self):
         v = self._get('_strict')
         if v:
             self._succeed(v)
         else:
             self._fail()
+
+    def _dqchar__c0__s0_n_g__c2__s1_g_(self):
+        self._choose(
+            [
+                self._dqchar__c0__s0_n_g__c2__s1_g__c0_,
+                self._dqchar__c0__s0_n_g__c2__s1_g__c1_,
+            ]
+        )
+
+    def _dqchar__c0__s0_n_g__c2__s1_g__c0_(self):
+        self._seq([lambda: self._ch('\r')])
+
+    def _dqchar__c0__s0_n_g__c2__s1_g__c1_(self):
+        self._seq([lambda: self._ch('\n')])
+
+    def _dqchar__c1_(self):
+        self._push('dqchar__c1')
+        self._seq(
+            [
+                self._bslash_,
+                lambda: self._bind(self._esc_char_, 'c'),
+                lambda: self._succeed(self._get('c')),
+            ]
+        )
+        self._pop('dqchar__c1')
+
+    def _dqchar__c2_(self):
+        self._seq([self._bslash_, self._eol_, lambda: self._succeed('')])
 
     def _bslash_(self):
         self._ch('\\')

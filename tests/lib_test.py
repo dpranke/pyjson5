@@ -325,9 +325,15 @@ class TestLoads(unittest.TestCase):
         self.check('"foo\\\nbar"', 'foobar')
         self.check("'foo\\\nbar'", 'foobar')
 
+        # U+2028 and U+2029 are allowed unescaped, as in JSON.
+        self.check('"foo\u2028bar\u2029"', 'foo\u2028bar\u2029')
+        self.check("'foo\u2028bar\u2029'", 'foo\u2028bar\u2029')
+        self.check('"foo\\\u2028bar"', 'foobar')
+
         # unterminated string literals.
         self.check_fail('"\n')
         self.check_fail("'\n")
+        self.check_fail('"\r"')
 
         # bad hex literals
         self.check_fail("'\\x0'")

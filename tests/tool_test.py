@@ -16,10 +16,9 @@ import subprocess
 import sys
 import unittest
 
-from json5 import __version__, VERSION
+from json5 import VERSION, __version__
 from json5.host import Host
 from json5.tool import main
-
 from tests.host_fake import FakeHost
 
 

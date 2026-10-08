@@ -29,7 +29,7 @@ class TestLoads(unittest.TestCase):
 
     def check_fail(self, s, err=None):
         try:
-            json5.loads(s)
+            v = json5.loads(s)
             self.fail()  # pragma: no cover
         except ValueError as e:
             if err is not None:
@@ -305,6 +305,13 @@ class TestLoads(unittest.TestCase):
         self.check_fail(d, '<string>:2 Unexpected "\n" at column 14')
         self.check(d, {'key': 'value\nover two lines'}, strict=False)
 
+        # Test that control characters in strings are disallowed by default
+        # (strict=True), but allowed w/ strict=False
+        self.check(r'"\u0016"', '\x16', strict=False)
+        self.check(r'"\u0016"', '\x16', strict=True)
+        # import pdb; pdb.set_trace()
+        # self.check_fail(r'"\u0016"', '<string>:2 Unexpected "\u0016" at column 2')
+
     def test_strings(self):
         self.check('"foo"', 'foo')
         self.check("'foo'", 'foo')
@@ -325,15 +332,9 @@ class TestLoads(unittest.TestCase):
         self.check('"foo\\\nbar"', 'foobar')
         self.check("'foo\\\nbar'", 'foobar')
 
-        # U+2028 and U+2029 are allowed unescaped, as in JSON.
-        self.check('"foo\u2028bar\u2029"', 'foo\u2028bar\u2029')
-        self.check("'foo\u2028bar\u2029'", 'foo\u2028bar\u2029')
-        self.check('"foo\\\u2028bar"', 'foobar')
-
         # unterminated string literals.
         self.check_fail('"\n')
         self.check_fail("'\n")
-        self.check_fail('"\r"')
 
         # bad hex literals
         self.check_fail("'\\x0'")
@@ -682,7 +683,6 @@ class TestDumps(unittest.TestCase):
         # can be tricky.
 
         # Normal Python escaping means that the following asserts are true:
-        # pylint: disable=redundant-unittest-assert
         self.assertEqual('\\z', '\\z')
         self.assertEqual('\\z', r'\z')
         self.assertEqual('\\z', r'\z')

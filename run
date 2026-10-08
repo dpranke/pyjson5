@@ -55,8 +55,7 @@ class Runner:
         if self.args.no_execute:
             return None
         capture_output = kwargs.get('capture_output', self.args.quiet)
-        if 'capture_output' in kwargs:
-            del kwargs['capture_output']
+        kwargs.pop('capture_output', None)
 
         proc = subprocess.run(
             args, capture_output=capture_output, check=False, **kwargs
@@ -294,10 +293,13 @@ class Runner:
             print('pyproject.toml needs formatting')
         elif proc.returncode and not proc.stdout:
             sys.exit(proc.returncode)
-        if not self.args.check and not self.args.no_execute:
-            if proc.stdout != 'no change for pyproject.toml\n'.encode('utf8'):
-                with open('pyproject.toml', 'wb') as fp:
-                    fp.write(proc.stdout)
+        if (
+            not self.args.check
+            and not self.args.no_execute
+            and proc.stdout != b'no change for pyproject.toml\n'
+        ):
+            with open('pyproject.toml', 'wb') as fp:
+                fp.write(proc.stdout)
         cmd = self.run_cmd + ['-m', 'ruff', 'format']
         if self.args.check:
             cmd.append('--check')

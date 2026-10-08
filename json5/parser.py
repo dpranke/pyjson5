@@ -4,6 +4,7 @@
 
 # pylint: disable=line-too-long,too-many-lines
 # pylint: disable=unnecessary-lambda,unnecessary-direct-lambda-call
+# ruff: disable[PLC3002] (equivalent of unnecessary-direct-lambda-call)
 
 import unicodedata
 

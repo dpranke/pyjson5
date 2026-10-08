@@ -18,6 +18,5 @@ import sys
 
 from json5.tool import main
 
-
 if __name__ == '__main__':
     sys.exit(main())

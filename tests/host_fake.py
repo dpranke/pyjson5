@@ -24,7 +24,7 @@ class FakeHost:
         self.stderr = io.StringIO()
         self.platform = 'linux2'
         self.sep = '/'
-        self.dirs = set([])
+        self.dirs = set()
         self.files = {}
         self.written_files = {}
         self.last_tmpdir = None

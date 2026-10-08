@@ -326,9 +326,9 @@ class TestLoads(unittest.TestCase):
         self.check("'foo\\\nbar'", 'foobar')
 
         # U+2028 and U+2029 are allowed unescaped, as in JSON.
-        self.check('"foo\u2028bar\u2029"', 'foo\u2028bar\u2029')
-        self.check("'foo\u2028bar\u2029'", 'foo\u2028bar\u2029')
-        self.check('"foo\\\u2028bar"', 'foobar')
+        self.check('"foo bar "', 'foo bar ')
+        self.check("'foo bar '", 'foo bar ')
+        self.check('"foo\\ bar"', 'foobar')
 
         # unterminated string literals.
         self.check_fail('"\n')
@@ -682,7 +682,6 @@ class TestDumps(unittest.TestCase):
         # can be tricky.
 
         # Normal Python escaping means that the following asserts are true:
-        # pylint: disable=redundant-unittest-assert
         self.assertEqual('\\z', '\\z')
         self.assertEqual('\\z', r'\z')
         self.assertEqual('\\z', r'\z')

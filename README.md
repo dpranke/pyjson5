@@ -39,9 +39,17 @@ be legal object keys in JavaScript, but they aren't in JSON5.
 
 * Did I mention that it is **SLOW**?
 
+* The implementation is based on recursive descent parsing and relies on the
+  runtime stack for recursion; this means that really deeply nested data
+  might trigger a `RecursionError`, but this doesn't seem to be a problem in
+  normal practice. If it is, please report it and I can raise the priority
+  of fixing this properly :).
+
 * The implementation follows Python3's `json` implementation where
   possible. This means that the `encoding` method to `dump()` is
-  ignored, and unicode strings are always returned.
+  ignored, and unicode strings are always returned. There is a slight
+  difference to the `strict` argument to `load()`/`loads()` in order
+  to be JSON5-compliant.
 
 * The `cls` keyword argument that `json.load()`/`json.loads()` accepts
   to specify a custom subclass of ``JSONDecoder`` is not and will not be
@@ -56,7 +64,7 @@ be legal object keys in JavaScript, but they aren't in JSON5.
 
 ## Contributing
 
-`json5` have no runtime dependencies and it is supported on Python version 3.8
+`json5` has no runtime dependencies and it is supported on Python version 3.8
 or later. However, in order to develop and build the package you need a
 bunch of extra tools and the latest versions of those tools may require 3.9
 or later. You can install the extra environment on 3.8 (and get older versions
@@ -113,6 +121,32 @@ $ git push --tags origin
 (Assuming you have upload privileges to PyPI and the GitHub repo, of course.)
 
 ## Version History / Release Notes
+
+* v0.16.0 (2026-10-07)
+    * Document the `RecursionError` issue.
+    * Fix an issue w/ spec compliance where \u2028 and \u2029 were not
+      being allowed in string literals.
+    * "Fix" an issue w/ spec compliance in how control characters
+      (\x00 - 0x1f) were being handled in string literals; in JSON,
+      they are not allowed, and the Python library has the `strict=False`
+      option to allow them. In JSON5, they *are* allowed (except for \r
+      and \n). json5 also has the `strict` option, and was initially
+      supposed to match json here (I think), but due to a bug only \r and
+      \n were being disallowed. However, this behavior is actually correct
+      (they should always be allowed), and now `strict=False` will just
+      control whether \r and \n will be allowed. This isn't a behavior
+      change, but it might change what you expected the behavior to be.
+      I've updated the docs.
+    * Fix an issue where `start` wasn't being handled properly in the
+      `load`() call.
+    * Fix an issue where the error message was misformatted for illegal
+      NaN values.
+    * [Fix #92](https://github.com/dpranke/pyjson5/issues/92) and
+      [#115](https://github.com/dpranke/pyjson5/pull/115), and update
+      the type declarations for `load()` and `loads() to reflect that either
+      bytes or strings might be passed in.
+    * Updated all the dev dependencies and fixed all of the issues raised
+      by newer versions of `ruff lint` and `pylint`.
 
 * v0.15.0 (2026-06-19)
     * [Fix #113](https://github.com/dpranke/pyjson5/issues/113), where parsing

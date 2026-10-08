@@ -25,4 +25,7 @@ jobs:
       with:
         version: 0.9.18
     - name: Run tests
-      run: python run tests
+      run: uv run ./run tests
+      if: matrix.python-version == '3.8' || matrix.python-version == '3.9'
+    - name: Run presubmit
+      run: uv run --extra dev ./run presubmit

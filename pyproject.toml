@@ -7,15 +7,15 @@ name = "json5"
 description = "A Python implementation of the JSON5 data format."
 readme = "README.md"
 keywords = [ "json5" ]
-license = { file = "LICENSE" }
+license = "Apache-2.0"
+license-files = [ "LICENSE" ]
 authors = [
-    { name = "Dirk Pranke", email = "dpranke@chromium.org" },
+    { name = "Dirk Pranke", email = "dpranke@gmail.com" },
 ]
 requires-python = ">=3.8.0"
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: Apache Software License",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -32,24 +32,18 @@ urls.Repository = "https://github.com/dpranke/pyjson5"
 scripts.pyjson5 = "json5.tool:main"
 
 [dependency-groups]
-# Note that not everything is guaranteed to work on 3.8.
+# You are expected to develop using Python 3.11 or newer; you can
+# install a dev environment using an older version of Python, but the
+# only thing you can do is run the tests.
 dev = [
-    "build>=1.2.2.post1; python_version<'3.9'",
-    "build>=1.4.4; python_version>='3.9'",
-    "coverage==7.5.4; python_version<'3.9'",
-    "coverage==7.8; python_version>='3.9' and python_version<'3.10'",
-    "coverage>=7.16; python_version>='3.10'",
-    "mypy==1.14.1; python_version<'3.9'",
-    "mypy>=2.3; python_version>='3.10'",
-    "pip>=25.3; python_version>='3.9' and python_version<'3.10'",
-    "pip>=26.2; python_version>='3.10'",
-    "pylint==3.2.7; python_version<'3.9'",
-    "pylint==3.3.6; python_version>='3.9' and python_version<'3.10'",
-    "pylint>=4.0.8; python_version>='3.10'",
-    "pyproject-fmt>=2.2.4",
-    "ruff>=0.16.6",
-    "twine==6.1; python_version<'3.10'",
-    "twine>=7.0; python_version>='3.10'",
+    "build>=1.4.4; python_version>='3.11'",
+    "coverage>=7.16; python_version>='3.11'",
+    "mypy>=2.3; python_version>='3.11'",
+    "pip>=26.2; python_version>='3.11'",
+    "pylint>=4.0.8; python_version>='3.11'",
+    "pyproject-fmt>=2.2.4; python_version>='3.11'",
+    "ruff>=0.16.6; python_version>='3.11'",
+    "twine>=7.0; python_version>='3.11'",
 ]
 
 [tool.setuptools]

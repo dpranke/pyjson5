@@ -20,7 +20,7 @@ jobs:
       with:
         version: 0.12.24
     - name: Build sdist and wheel
-      run: uv build --python 3.13
+      run: uv run --python 3.14 ./run build
     - name: Upload packages
       uses: actions/upload-artifact@v4
       with:

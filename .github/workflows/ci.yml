@@ -2,9 +2,14 @@ name: Python package
 
 on:
   push:
+    branches: [**]
   pull_request:
-    branches:
+    branches: [main]
       - main
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -17,34 +22,33 @@ jobs:
         version: 0.12.24
     - name: Build sdist and wheel
       run: uv build --python 3.13
-    - uses: actions/upload-artifact@v4
-      name: Upload packages
-      with: name dist
-      path: dist/
-      run: uv run ./run tests
+    - name: Upload packages
+      uses: actions/upload-artifact@v4
+      - with:
+        - name: dist
+        - path: dist/
 
   test:
     needs: build
     runs-on: ubuntu-latest
-    matrix: python-version: ["3.8", "3.9", "3.10"]
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+        fail-fast: false
     steps:
       - uses: actions/checkout@v6
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
       - uses: actions/download-artifact@v4
         with:
           name: dist
           path: dist/
       - uses: astral-sh/setup-uv@v7
         with:
-          uv: 0.12.24
+          version: 0.12.24
       - name: Install wheel and run tests
         run: |
-          uv venv --python ${{ matrix.python-vesion }}
+          uv venv --python ${{ matrix.python-version }} .venv
           uv pip install --python ./venv/bin/python dist/*.whl
-          ./venv/bin/python ./run tests
+          uv run --python ${{ matrix.python-version }} ./run tests
 
 
   presubmit:
@@ -52,15 +56,12 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
+        fail-fast: false
     steps:
     - uses: actions/checkout@v6
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
     - name: Install uv
       uses: astral-sh/setup-uv@v7
       with:
         version: 0.12.24
     - name: Run presubmit
-      run: uv run ./run presubmit
+      run: uv run --python ${{ matrix.python-version }} ./run presubmit

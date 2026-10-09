@@ -50,11 +50,15 @@ class Runner:
             sys.exit(2)
 
         if 'VIRTUAL_ENV' in os.environ:
-            self.run_cmd = []
+            self.run_cmd = ['python', '-m']
         else:
-            self.run_cmd = [self.uv_path, 'run']
+            self.run_cmd = [self.uv_path, 'run', 'python', '-m']
 
     def main(self, argv):
+        # Change stdout to be unbuffered so that output shows up in
+        # the right interleaving between this process and any child
+        # processes.
+        sys.stdout.reconfigure(line_buffering=True)
         self.parse_args(argv)
         self.failfast = getattr(self.args, 'failfast', False)
         if not self.args.quiet and (
@@ -276,9 +280,7 @@ class Runner:
 
         if not self.args.quiet:
             print('\n### pylint')
-        proc = self._call(
-            self.run_cmd[:-1] + ['pylint', 'run'] + self._files()
-        )
+        proc = self._call(self.run_cmd + ['pylint', 'run'] + self._files())
         if proc.returncode == 0 and not self.args.quiet:
             print('Success: pylint found no issues')
 
@@ -316,7 +318,6 @@ class Runner:
             cmd.append('--branch')
         cmd.extend(
             [
-                'python',
                 '-m',
                 'unittest',
                 'discover',
@@ -341,7 +342,7 @@ class Runner:
             print('You need to have `uv` installed to set up a dev env.')
             return 1
 
-        cmd = [self.uv_path, 'sync', '--extra', 'dev']
+        cmd = [self.uv_path, 'sync']
         if self.args.quiet:
             cmd.append('--quiet')
 
@@ -353,9 +354,7 @@ class Runner:
 
     def run_format(self):
         self._check_python_version()
-        cmd = [
-            self.uv_path,
-            'run',
+        cmd = self.run_cmd[:-2] + [
             'pyproject-fmt',
             '--column-width',
             '80',
@@ -416,7 +415,8 @@ class Runner:
         self.args.unit = False
 
         steps = (
-            ('regen --check', self.run_regen),
+            # TODO: Enable this once glop is properly packaged and available.
+            # ('regen --check', self.run_regen),
             ('format --check', self.run_format),
             ('checks', self.run_checks),
             ('tests', self.run_tests),
@@ -431,7 +431,7 @@ class Runner:
 
         if not self.args.quiet and not self.returncode:
             print('\n## Presubmit passed.')
-        else:
+        elif self.returncode:
             print('\n## Presubmit failed.')
         return self.returncode
 
@@ -443,7 +443,6 @@ class Runner:
             return 2
 
         self._check_version()
-        import pdb; pdb.set_trace()
 
         sep = os.path.sep
         tgz = f'dist{sep}{self.package}-{self.version}.tar.gz'
@@ -535,13 +534,9 @@ class Runner:
         return proc.returncode
 
     def run_tests(self):
-        _ = self._call(
-            self.run_cmd + ['python', '-m', 'doctest', 'json5/lib.py']
-        )
+        _ = self._call(self.run_cmd + ['doctest', 'json5/lib.py'])
 
         cmd = self.run_cmd + [
-            'python',
-            '-m',
             'unittest',
             'discover',
             '-p',

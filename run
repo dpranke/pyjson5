@@ -416,7 +416,8 @@ class Runner:
         self.args.unit = False
 
         steps = (
-            ('regen --check', self.run_regen),
+            # TODO: Enable this once glop is properly packaged and available.
+            # ('regen --check', self.run_regen),
             ('format --check', self.run_format),
             ('checks', self.run_checks),
             ('tests', self.run_tests),

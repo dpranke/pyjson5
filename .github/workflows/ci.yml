@@ -7,23 +7,45 @@ on:
       - main
 
 jobs:
-  tests:
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ["3.8", "3.9", "3.10"]
     steps:
     - uses: actions/checkout@v6
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v6
-      with:
-        python-version: ${{ matrix.python-version }}
     - name: Install uv
       uses: astral-sh/setup-uv@v7
       with:
         version: 0.12.24
-    - name: Run tests
+    - name: Build sdist and wheel
+      run: uv build --python 3.13
+    - uses: actions/upload-artifact@v4
+      name: Upload packages
+      with: name dist
+      path: dist/
       run: uv run ./run tests
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    matrix: python-version: ["3.8", "3.9", "3.10"]
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v6
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: astral-sh/setup-uv@v7
+        with:
+          uv: 0.12.24
+      - name: Install wheel and run tests
+        run: |
+          uv venv --python ${{ matrix.python-vesion }}
+          uv pip install --python ./venv/bin/python dist/*.whl
+          ./venv/bin/python ./run tests
+
 
   presubmit:
     runs-on: ubuntu-latest

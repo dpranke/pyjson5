@@ -55,6 +55,10 @@ class Runner:
             self.run_cmd = [self.uv_path, 'run', 'python', '-m']
 
     def main(self, argv):
+        # Change stdout to be unbuffered so that output shows up in
+        # the right interleaving between this process and any child
+        # processes.
+        sys.stdout.reconfigure(line_buffering=True)
         self.parse_args(argv)
         self.failfast = getattr(self.args, 'failfast', False)
         if not self.args.quiet and (

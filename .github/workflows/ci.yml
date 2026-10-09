@@ -48,7 +48,7 @@ jobs:
           uv venv --python ${{ matrix.python-version }} .venv
           source .venv/bin/activate
           uv pip install dist/*.whl
-          ./run tests
+          ./run tests --verbose
 
 
   presubmit:
@@ -64,4 +64,4 @@ jobs:
       with:
         version: 0.12.24
     - name: Run presubmit
-      run: uv run --python ${{ matrix.python-version }} ./run presubmit
+      run: uv run --python ${{ matrix.python-version }} ./run presubmit --verbose

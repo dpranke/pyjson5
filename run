@@ -50,9 +50,9 @@ class Runner:
             sys.exit(2)
 
         if 'VIRTUAL_ENV' in os.environ:
-            self.run_cmd = []
+            self.run_cmd = ['python', '-m']
         else:
-            self.run_cmd = [self.uv_path, 'run']
+            self.run_cmd = [self.uv_path, 'run', 'python', '-m']
 
     def main(self, argv):
         self.parse_args(argv)
@@ -276,9 +276,7 @@ class Runner:
 
         if not self.args.quiet:
             print('\n### pylint')
-        proc = self._call(
-            self.run_cmd[:-1] + ['pylint', 'run'] + self._files()
-        )
+        proc = self._call(self.run_cmd + ['pylint', 'run'] + self._files())
         if proc.returncode == 0 and not self.args.quiet:
             print('Success: pylint found no issues')
 
@@ -316,7 +314,6 @@ class Runner:
             cmd.append('--branch')
         cmd.extend(
             [
-                'python',
                 '-m',
                 'unittest',
                 'discover',
@@ -353,9 +350,7 @@ class Runner:
 
     def run_format(self):
         self._check_python_version()
-        cmd = [
-            self.uv_path,
-            'run',
+        cmd = self.run_cmd[:-2] + [
             'pyproject-fmt',
             '--column-width',
             '80',
@@ -432,7 +427,7 @@ class Runner:
 
         if not self.args.quiet and not self.returncode:
             print('\n## Presubmit passed.')
-        else:
+        elif self.returncode:
             print('\n## Presubmit failed.')
         return self.returncode
 
@@ -535,13 +530,9 @@ class Runner:
         return proc.returncode
 
     def run_tests(self):
-        _ = self._call(
-            self.run_cmd + ['python', '-m', 'doctest', 'json5/lib.py']
-        )
+        _ = self._call(self.run_cmd + ['doctest', 'json5/lib.py'])
 
         cmd = self.run_cmd + [
-            'python',
-            '-m',
             'unittest',
             'discover',
             '-p',

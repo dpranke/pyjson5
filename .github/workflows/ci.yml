@@ -20,7 +20,7 @@ jobs:
       with:
         version: 0.12.24
     - name: Build sdist and wheel
-      run: uv run --python 3.14 ./run build
+      run: uv run --python 3.14 ./run build --verbose
     - name: Upload packages
       uses: actions/upload-artifact@v4
       with:
@@ -45,9 +45,16 @@ jobs:
           version: 0.12.24
       - name: Install wheel and run tests
         run: |
+          echo "# uv venv --python ${{ matrix.python-version }} .venv"
           uv venv --python ${{ matrix.python-version }} .venv
+          echo ""
+          echo "source .venv/bin/activate"
           source .venv/bin/activate
+          echo ""
+          echo "uv pip install dist/*.whl"
           uv pip install dist/*.whl
+          echo ""
+          echo "./run tests --verbose"
           ./run tests --verbose
 
 

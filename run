@@ -280,7 +280,7 @@ class Runner:
 
         if not self.args.quiet:
             print('\n### pylint')
-        proc = self._call(self.run_cmd + ['pylint', 'run'] + self._files())
+        proc = self._call(self.run_cmd + ['pylint'] + self._files())
         if proc.returncode == 0 and not self.args.quiet:
             print('Success: pylint found no issues')
 
@@ -472,55 +472,63 @@ class Runner:
         with open(self.parser_file, encoding='utf-8') as fp:
             old = fp.read()
         old_fname = self.parser_file + '.old'
-        self._rename(self.parser_file, old_fname)
-        self._gen_parser()
 
-        with open(self.parser_file, encoding='utf-8') as fp:
-            new = fp.read()
+        try:
+            # We wrap this in a try block to ensure that if something
+            # goes wrong we restore the old version.
+            self._rename(self.parser_file, old_fname)
+            self._gen_parser()
 
-        if old != new:
-            if self.args.check:
-                if self.args.verbose:
-                    print('Need to regenerate the parser with `run regen`:.')
-                    self._call(
-                        ['diff', old_fname, self.parser_file],
-                        indent='  ',
-                        capture_output=True,
-                        ignore_error=True,
-                    )
+            with open(self.parser_file, encoding='utf-8') as fp:
+                new = fp.read()
+
+            if old != new:
+                if self.args.check:
+                    if self.args.verbose:
+                        print(
+                            'Need to regenerate the parser with `run regen`:.'
+                        )
+                        self._call(
+                            ['diff', old_fname, self.parser_file],
+                            indent='  ',
+                            capture_output=True,
+                            ignore_error=True,
+                        )
+                    else:
+                        print(
+                            'Need to regenerate the parser with `run regen`.'
+                        )
                 else:
-                    print('Need to regenerate the parser with `run regen`.')
-            else:
-                print(f'{self.parser_file} regenerated.')
-        elif not self.args.quiet:
-            print(f'{self.parser_file} is up-to-date.')
+                    print(f'{self.parser_file} regenerated.')
+            elif not self.args.quiet:
+                print(f'{self.parser_file} is up-to-date.')
 
-        if old != new:
-            if self.args.check:
+            if old != new:
+                if self.args.check:
+                    self._rename(old_fname, self.parser_file)
+                    return 1
+            else:
+                self._remove(old_fname, quiet=True)
+            return self.returncode
+        except Exception:
+            if not os.path.exists(self.parser_file) and os.path.exists(
+                old_fname
+            ):
                 self._rename(old_fname, self.parser_file)
-                return 1
-        else:
-            self._remove(old_fname, quiet=True)
-        return self.returncode
+            raise
 
     def _gen_parser(self):
-        tool = '../glop/glop/tool.py'
-        if not os.path.exists(tool):
-            print('Need `glop` repo to be at ../glop.')
-            sys.exit(1)
-
-        proc = self._call(
-            [
-                sys.executable,
-                tool,
-                '-o',
-                self.parser_file,
-                '--no-main',
-                '--no-memoize',
-                '-c',
-                self.grammar,
-            ]
-        )
+        cmd = self.run_cmd + [
+            '-m',
+            'glop',
+            '-o',
+            self.parser_file,
+            '--no-main',
+            '--no-memoize',
+            '-c',
+            self.grammar,
+        ]
+        proc = self._call(cmd)
         if proc.returncode:
             return proc.returncode
 
@@ -647,7 +655,7 @@ class Runner:
 
     def _files(self):
         return (
-            ['run']
+            ['./run']
             + glob.glob(f'{self.package}/*.py')
             + glob.glob('tests/*.py')
         )

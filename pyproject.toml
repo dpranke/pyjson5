@@ -38,6 +38,7 @@ scripts.pyjson5 = "json5.tool:main"
 dev = [
     "build>=1.4.4; python_version>='3.11'",
     "coverage>=7.16; python_version>='3.11'",
+    "glop==0.9.0; python_version>='3.11'",
     "mypy>=2.3; python_version>='3.11'",
     "pip>=26.2; python_version>='3.11'",
     "pylint>=4.0.8; python_version>='3.11'",
@@ -57,6 +58,9 @@ required-version = ">=0.9.0"
 # the past 30 days; this gives us some protection against automatically
 # upgrading to a package that might have been newly compromised.
 exclude-newer = "30 days"
+# Pick up the pinned version of glop; don't worry about the 30 day
+# cooling off period.
+exclude-newer-package.glop = false
 
 [tool.ruff]
 line-length = 79

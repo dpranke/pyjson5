@@ -35,6 +35,14 @@ and is 200x slower (or more) than the pure Python JSON module.
 allow you to read arbitrary JavaScript. For example, bare integers can
 be legal object keys in JavaScript, but they aren't in JSON5.
 
+***One more note:*** It's long past time to declare this a 1.0 stable
+product and move on, so I am preparing to do so. If the latest version
+proves to be stable (e.g., no bug reports for a month or so), I plan to
+switch the directory layout to move `json5` under a `src` directory
+(i.e., use a src-layout to avoid accidentally importing an unpackaged
+version of the code), bake that for a month or so as well, and then
+release this as 1.0.
+
 ## Known issues
 
 * Did I mention that it is **SLOW**?
@@ -81,13 +89,10 @@ PEP-8 and the normal `ruff format` coding style.
 
 The easiest thing to do is to install [`uv`](https://docs.astral.sh/uv) and
 use `uv` and the `//run` script to develop things. See `./run --help` for
-the various commands that are supported. `glop` is the parser generator
-tool used to generate a parser from the grammar in `json5/json5.g`.
-
+the various commands that are supported.
 ```
 $ brew install uv
 $ git clone https://github.com/dpranke/pyjson5
-$ git clone https://github.com/dpranke/glop
 $ cd pyjson5
 $ source $(./run devenv)  # To activate a venv w/ all the needed dev tools.
 ```
@@ -192,7 +197,11 @@ to activate it.
 
 ## Version History / Release Notes:
 
-* v0.17.0dev0 (2026-10-08)
+* v0.17.0 (2026-10-09)
+    * Use a packaged version of `glop`, rather than relying on it
+      being checked out alongside this repo. This should make the
+      package properly self-contained, and now we can enforce that
+      the grammar is up-to-date in presubmit.
     * Rework the project dependencies. As before, the module still has
       no runtime dependencies. However, we will now only support doing
       most development on Python 3.11 or newer; older versions will only
@@ -204,6 +213,8 @@ to activate it.
       the `checks` command, which will now run all of the static
       analyzers, not just `ruff check`. The script also now consistently
       supports `-f/--failfast` across the commands, not just during `tests`.
+    * There are no code changes in this release other than bumping the
+      version numbers.
 
 * v0.16.0 (2026-10-07)
     * Document the `RecursionError` issue.

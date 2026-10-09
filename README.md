@@ -62,7 +62,7 @@ be legal object keys in JavaScript, but they aren't in JSON5.
   keyword *is* supported, though, and might be able to serve as a
   workaround.
 
-## Contributing
+## Contributing:
 
 `json5` has no runtime dependencies and it is supported on Python version
 **3.8** or later.
@@ -77,7 +77,7 @@ versions, and do not rely on `from __future__ import annotations`.
 Use a 79-character line and prefer single quotes to double; otherwise follow
 PEP-8 and the normal `ruff format` coding style.
 
-#### On Mac
+### On Mac
 
 The easiest thing to do is to install [`uv`](https://docs.astral.sh/uv) and
 use `uv` and the `//run` script to develop things. See `./run --help` for
@@ -92,17 +92,20 @@ $ cd pyjson5
 $ source $(./run devenv)  # To activate a venv w/ all the needed dev tools.
 ```
 
-#### On other platforms
+### On other platforms
 
 Install `uv` via whatever mechanism is appropriate.
 
-### Create the venv
+### Creating a venv
+
+You do not have to create a venv to do anything, if you use the `run`
+script, but if you want to invoke tools like `ruff` directly, you 
+can do so as follows:
 
 ```
-$ ./run devenv
+$ ./run devenv  # which really just calls `uv sync`.
+$ source .venv/bin/activate
 ```
-
-(This calls `uv sync --extra dev`.)
 
 ### Run tests and other checks
 
@@ -160,7 +163,7 @@ to activate it.
 
 * `help` prints usage.
 
-### Updating the packages
+## Releasing a new version:
 
 1. Update the version in `json5/version.py` to $VERSION, which should be
    of the form X.Y.Z, where X, Y, and Z are numbers. Use
@@ -187,7 +190,7 @@ to activate it.
 
 (Assuming you have upload privileges to PyPI and the GitHub repo, of course.)
 
-## Version History / Release Notes
+## Version History / Release Notes:
 
 * v0.17.0dev0 (2026-10-08)
     * Rework the project dependencies. As before, the module still has

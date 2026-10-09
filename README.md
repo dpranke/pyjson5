@@ -187,15 +187,18 @@ to activate it.
 
 4. `git tag "v$VERSION"`
 
-5. `./run publish --prod` (which will build the package if need be first)
+5. `git push origin`
 
-6. `git push origin`
+6. `git push --tags origin`
 
-7. `git push --tags origin`
+7. `./run publish --prod` (which will build the package if need be first)
 
 (Assuming you have upload privileges to PyPI and the GitHub repo, of course.)
 
 ## Version History / Release Notes:
+
+* v0.17.2 (2026-10-09)
+    * Commit, then release :(.
 
 * v0.17.1 (2026-10-09)
     * I screwed up the release and published a package from my dev

@@ -45,6 +45,9 @@ dev = [
     "pyproject-fmt>=2.2.4; python_version>='3.11'",
     "ruff>=0.16.6; python_version>='3.11'",
     "twine>=7.0; python_version>='3.11'",
+    
+    # Not a direct dependency, but this picks up a security fix.
+    "urllib3>=2.8.0; python_version>='3.11'",
 ]
 
 [tool.setuptools]
@@ -61,6 +64,9 @@ exclude-newer = "30 days"
 # Pick up the pinned version of glop; don't worry about the 30 day
 # cooling off period.
 exclude-newer-package.glop = false
+
+# Pick up a security fix in 2.8.0; drop this once it's been another week.
+exclude-newer-package.urllib3 = "2026-09-16T00:00:00Z"
 
 [tool.ruff]
 line-length = 79

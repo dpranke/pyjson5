@@ -444,7 +444,6 @@ class Runner:
             return 2
 
         self._check_version()
-        import pdb; pdb.set_trace()
 
         sep = os.path.sep
         tgz = f'dist{sep}{self.package}-{self.version}.tar.gz'

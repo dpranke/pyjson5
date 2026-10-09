@@ -46,8 +46,9 @@ jobs:
       - name: Install wheel and run tests
         run: |
           uv venv --python ${{ matrix.python-version }} .venv
-          uv pip install --python .venv/bin/python dist/*.whl
-          .venv/bin/python ./run tests
+          source .venv/bin/activate
+          uv pip install dist/*.whl
+          ./run tests
 
 
   presubmit:

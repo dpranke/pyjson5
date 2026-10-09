@@ -24,7 +24,6 @@ jobs:
         version: 0.12.24
     - name: Run tests
       run: uv run ./run tests
-
   presubmit:
     runs-on: ubuntu-latest
     strategy:

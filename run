@@ -342,7 +342,7 @@ class Runner:
             print('You need to have `uv` installed to set up a dev env.')
             return 1
 
-        cmd = [self.uv_path, 'sync', '--extra', 'dev']
+        cmd = [self.uv_path, 'sync']
         if self.args.quiet:
             cmd.append('--quiet')
 

@@ -122,6 +122,19 @@ $ git push --tags origin
 
 ## Version History / Release Notes
 
+* v0.17.0dev0 (2026-10-08)
+    * Rework the project dependencies. As before, the module still has
+      no runtime dependencies. However, we will now only support doing
+      most development on Python 3.11 or newer; older versions will only
+      support running the tests. This means the `dev` venv config will
+      only install the dev packages in that newer environment; this
+      should make Dependabot happier.
+    * Rework how the `//run` script works;
+      the previous `pylint` and `mypy` checks have been moved into
+      the `checks` command, which will now run all of the static
+      analyzers, not just `ruff check`. The script also now consistently
+      supports `-f/--failfast` across the commands, not just during `tests`.
+
 * v0.16.0 (2026-10-07)
     * Document the `RecursionError` issue.
     * Fix an issue w/ spec compliance where \u2028 and \u2029 were not

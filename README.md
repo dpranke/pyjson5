@@ -35,6 +35,14 @@ and is 200x slower (or more) than the pure Python JSON module.
 allow you to read arbitrary JavaScript. For example, bare integers can
 be legal object keys in JavaScript, but they aren't in JSON5.
 
+***One more note:*** It's long past time to declare this a 1.0 stable
+product and move on, so I am preparing to do so. If the latest version
+proves to be stable (e.g., no bug reports for a month or so), I plan to
+switch the directory layout to move `json5` under a `src` directory
+(i.e., use a src-layout to avoid accidentally importing an unpackaged
+version of the code), bake that for a month or so as well, and then
+release this as 1.0.
+
 ## Known issues
 
 * Did I mention that it is **SLOW**?
@@ -62,67 +70,138 @@ be legal object keys in JavaScript, but they aren't in JSON5.
   keyword *is* supported, though, and might be able to serve as a
   workaround.
 
-## Contributing
+## Contributing:
 
-`json5` has no runtime dependencies and it is supported on Python version 3.8
-or later. However, in order to develop and build the package you need a
-bunch of extra tools and the latest versions of those tools may require 3.9
-or later. You can install the extra environment on 3.8 (and get older versions
-of the tools), but they may not run completely cleanly.
+`json5` has no runtime dependencies and it is supported on Python version
+**3.8** or later.
 
-#### On Mac
+However, in order to develop, test, build and publish the package you need a
+bunch of extra tools that are only supported on **3.11** or newer; on older
+versions, you can run the test, but not do anything else.
+
+When changing the code, do not add anything that only runs on 3.9 or later
+versions, and do not rely on `from __future__ import annotations`.
+
+Use a 79-character line and prefer single quotes to double; otherwise follow
+PEP-8 and the normal `ruff format` coding style.
+
+### On Mac
 
 The easiest thing to do is to install [`uv`](https://docs.astral.sh/uv) and
 use `uv` and the `//run` script to develop things. See `./run --help` for
-the various commands that are supported. `glop` is the parser generator
-tool used to generate a parser from the grammar in `json5/json5.g`.
-
+the various commands that are supported.
 ```
 $ brew install uv
 $ git clone https://github.com/dpranke/pyjson5
-$ git clone https://github.com/dpranke/glop
 $ cd pyjson5
 $ source $(./run devenv)  # To activate a venv w/ all the needed dev tools.
 ```
 
-#### On other platforms
+### On other platforms
 
 Install `uv` via whatever mechanism is appropriate.
 
-### Create the venv
+### Creating a venv
+
+You do not have to create a venv to do anything, if you use the `run`
+script, but if you want to invoke tools like `ruff` directly, you 
+can do so as follows:
 
 ```
-$ ./run devenv
+$ ./run devenv  # which really just calls `uv sync`.
+$ source .venv/bin/activate
 ```
 
-(This calls `uv sync --extra dev`.)
-
-### Running the tests
+### Run tests and other checks
 
 ```
-$ ./run tests
-```
-
-### Updating the packages
-
-```
-# Update the version in json5/version.py to $VERSION, which should be of
-# the form X.Y.Z where X, Y, and Z are numbers.
-$ ./run regen
 $ ./run presubmit
-$ git commit -a -m "Bump the version to $VERSION"
-$ git tag "v$VERSION"
-$ ./run build
-$ ./run publish --prod
-$ git push origin
-$ git push --tags origin
 ```
+
+`//run` supports a number of other commands:
+
+* `regen` will regenerate the parser when the grammar is updated; in order
+  to run this you need `glop` to be available as described above.
+
+* `format` will format all the code using `ruff format` for the Python code
+  and `pyproject-fmt` for the `pyproject.toml` file; `format --check` will
+  report whether the code is formatted properly without actually changing
+  anything. It checks for the coding style described above.
+
+* `checks` checks the code for problems without actually executing the code.
+  It runs:
+  * `ruff check`
+  * `pylint`
+  * `mypy`
+
+* `tests` runs all of the tests. Write tests using either `doctest` or
+  `unittest`. Aim for 100% line coverage in tests (see next bullet).
+
+* `coverage` runs all of the tests using the `coverage` tool in order to
+  collect code coverage. You can pass `-b/--branch` to collect branch
+  coverage. You should target 100% line coverage on any changes, as there
+  shouldn't be a reason you can't do this, and actually ensuring that you
+  execute every line can catch problems in Python that might otherwise be
+  caught earlier in statically-typed languages (though the `checks` go
+  a long way to accomplishing the same thing).
+
+* `build` builds the package to get it ready to publish
+
+* `publish` tries to publish the package. You must specify `--dev` or `--prod`
+  to indicate which PyPI repository you want to publish to; explicitly having
+  to mention one or the other helps ensure that you don't try to publish
+  something by accident. You can run `publish --check` in order to ensure
+  that the package is built correctly without actually trying to publish it.
+  You can only actually publish the package if you have permission to do so,
+  of course.
+
+`presubmit` just runs all of the above commands at once (though not `regen`
+at the moment, because you might not have `glop` installed; this'll change
+when `glop` is properly packaged and installed in the venv.
+
+Other `run` commands:
+
+* `devenv` creates a virtual environ using `uv` and echoes the command needed
+to activate it.
+
+* `clean` will remove any unversioned files from the repo.
+
+* `help` prints usage.
+
+## Releasing a new version:
+
+1. Update the version in `json5/version.py` to $VERSION, which should be
+   of the form X.Y.Z, where X, Y, and Z are numbers. Use
+   [semantic versioning](https://semver.org/) when increasing the numbers:
+   * X increases only when making backwards-incompatible or other very
+     significant changes. Try very hard to avoid this.
+   * Y increases when adding functionality in a backwards-compatible way.
+   * Z increases when you are fixing bugs in a backwards-compatible way.
+
+   In between releases, the version *may* be set to `X.Y.Z.dev0' to indicate
+   that this is not an officially released version.
+
+2. `./run presubmit` once more and make sure everything passes.
+
+3. `git commit -a -m "Bump the version to $VERSION"`
+
+4. `git tag "v$VERSION"`
+
+5. `./run publish --prod` (which will build the package if need be first)
+
+6. `git push origin`
+
+7. `git push --tags origin`
 
 (Assuming you have upload privileges to PyPI and the GitHub repo, of course.)
 
-## Version History / Release Notes
+## Version History / Release Notes:
 
-* v0.17.0dev0 (2026-10-08)
+* v0.17.0 (2026-10-09)
+    * Use a packaged version of `glop`, rather than relying on it
+      being checked out alongside this repo. This should make the
+      package properly self-contained, and now we can enforce that
+      the grammar is up-to-date in presubmit.
     * Rework the project dependencies. As before, the module still has
       no runtime dependencies. However, we will now only support doing
       most development on Python 3.11 or newer; older versions will only
@@ -134,6 +213,8 @@ $ git push --tags origin
       the `checks` command, which will now run all of the static
       analyzers, not just `ruff check`. The script also now consistently
       supports `-f/--failfast` across the commands, not just during `tests`.
+    * There are no code changes in this release other than bumping the
+      version numbers.
 
 * v0.16.0 (2026-10-07)
     * Document the `RecursionError` issue.

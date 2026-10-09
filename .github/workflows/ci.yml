@@ -12,7 +12,7 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - name: Checkout
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -30,7 +30,7 @@ jobs:
 
   test:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.8", "3.9", "3.10"]
@@ -47,6 +47,7 @@ jobs:
       uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
       with:
         version: 0.12.24
+        cache-suffix: ${{ matrix.python-version }}
     - name: Install package and run tests
       run: |
         echo "$ uv venv --python ${{ matrix.python-version }} .venv"
@@ -62,7 +63,7 @@ jobs:
         ./run tests --verbose
 
   presubmit:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
@@ -74,6 +75,7 @@ jobs:
       uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
       with:
         version: 0.12.24
+        cache-suffix: ${{ matrix.python-version }}
     - name: Run presubmit
       run: |
         uv run --python ${{ matrix.python-version }} ./run presubmit --verbose

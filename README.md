@@ -197,6 +197,12 @@ to activate it.
 
 ## Version History / Release Notes:
 
+* v0.17.1 (2026-10-09)
+    * I screwed up the release and published a package from my dev
+      fork rather than the main repo as v0.17.0; the package should be
+      fine, but for reproducibility purposes I needed to redo it and
+      get the tags right.
+
 * v0.17.0 (2026-10-09)
     * Use a packaged version of `glop`, rather than relying on it
       being checked out alongside this repo. This should make the

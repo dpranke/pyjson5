@@ -19,7 +19,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install uv
-      uses: astral-sh/setup-uv@v10
+      uses: astral-sh/setup-uv@v7
       with:
         version: 0.12.24
     - name: Run tests
@@ -37,7 +37,7 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install uv
-      uses: astral-sh/setup-uv@v10
+      uses: astral-sh/setup-uv@v7
       with:
         version: 0.12.24
     - name: Run presubmit

@@ -14,15 +14,16 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
     - name: Install uv
-      uses: astral-sh/setup-uv@v7
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
       with:
         version: 0.12.24
     - name: Build sdist and wheel
       run: uv run --python 3.14 ./run build --verbose
     - name: Upload packages
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
       with:
         name: dist
         path: dist/
@@ -35,28 +36,30 @@ jobs:
         python-version: ["3.8", "3.9", "3.10"]
       fail-fast: false
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: dist/
-      - uses: astral-sh/setup-uv@v7
-        with:
-          version: 0.12.24
-      - name: Install wheel and run tests
-        run: |
-          echo "# uv venv --python ${{ matrix.python-version }} .venv"
-          uv venv --python ${{ matrix.python-version }} .venv
-          echo ""
-          echo "source .venv/bin/activate"
-          source .venv/bin/activate
-          echo ""
-          echo "uv pip install dist/*.whl"
-          uv pip install dist/*.whl
-          echo ""
-          echo "./run tests --verbose"
-          ./run tests --verbose
-
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+    - name: Download packages
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
+      with:
+        name: dist
+        path: dist/
+    - name: Install uv
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
+      with:
+        version: 0.12.24
+    - name: Install package and run tests
+      run: |
+        echo "$ uv venv --python ${{ matrix.python-version }} .venv"
+        uv venv --python ${{ matrix.python-version }} .venv
+        echo ""
+        echo "$ source .venv/bin/activate"
+        source .venv/bin/activate
+        echo ""
+        echo "$ uv pip install dist/*.whl"
+        uv pip install dist/*.whl
+        echo ""
+        echo "$ ./run tests --verbose"
+        ./run tests --verbose
 
   presubmit:
     runs-on: ubuntu-latest
@@ -65,10 +68,12 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
       fail-fast: false
     steps:
-    - uses: actions/checkout@v6
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
     - name: Install uv
-      uses: astral-sh/setup-uv@v7
+      uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
       with:
         version: 0.12.24
     - name: Run presubmit
-      run: uv run --python ${{ matrix.python-version }} ./run presubmit --verbose
+      run: |
+        uv run --python ${{ matrix.python-version }} ./run presubmit --verbose

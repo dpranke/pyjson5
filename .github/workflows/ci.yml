@@ -24,11 +24,13 @@ jobs:
         version: 0.12.24
     - name: Run tests
       run: uv run ./run tests
+
   presubmit:
     runs-on: ubuntu-latest
     strategy:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
     - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v6

@@ -760,6 +760,23 @@ class TestDumps(unittest.TestCase):
             r'"\u2028\u2029\b\t\f\n\r\v\\\0"',
         )
 
+    def test_null_escape_before_digits(self):
+        for digit in '0123456789':
+            for quote_style in json5.QuoteStyle:
+                for ensure_ascii in (False, True):
+                    with self.subTest(
+                        digit=digit,
+                        quote_style=quote_style,
+                        ensure_ascii=ensure_ascii,
+                    ):
+                        value = '\0' + digit
+                        encoded = json5.dumps(
+                            value,
+                            quote_style=quote_style,
+                            ensure_ascii=ensure_ascii,
+                        )
+                        self.assertEqual(json5.loads(encoded), value)
+
     def test_string_quote_styles(self):
         def checkp(**kwargs):
             return lambda obj, s: self.assertEqual(

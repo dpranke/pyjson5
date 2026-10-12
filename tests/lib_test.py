@@ -320,6 +320,14 @@ class TestLoads(unittest.TestCase):
         # unicode literals
         self.check('"\\u0066oo"', 'foo')
 
+        # surrogate pairs decode to the astral code point they represent,
+        # matching the json module.
+        self.check('"\\ud800\\udc00"', chr(0x10000))
+        self.check('"\\ud83d\\ude00"', '\U0001f600')
+        self.check('{"\\ud83d\\ude00": 1}', {'\U0001f600': 1})
+        # a lone surrogate is left as-is.
+        self.check('"\\ud800"', '\ud800')
+
         # string literals w/ continuation markers at the end of the line.
         # These should not have spaces is the result.
         self.check('"foo\\\nbar"', 'foobar')

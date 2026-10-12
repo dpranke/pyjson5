@@ -444,6 +444,23 @@ class TestDumps(unittest.TestCase):
     def check(self, obj, s, **kwargs):
         self.assertEqual(s, json5.dumps(obj, **kwargs))
 
+    def test_skipkeys_with_indent_and_no_valid_keys(self):
+        obj = {(): 1}
+        for indent in (0, 2, '\t'):
+            for trailing_commas in (True, False):
+                with self.subTest(
+                    indent=indent, trailing_commas=trailing_commas
+                ):
+                    kwargs = {
+                        'skipkeys': True,
+                        'indent': indent,
+                        'trailing_commas': trailing_commas,
+                    }
+                    self.assertEqual(json5.dumps(obj, **kwargs), '{}')
+                    self.assertEqual(
+                        json5.loads(json5.dumps([obj], **kwargs)), [{}]
+                    )
+
     def test_allow_duplicate_keys(self):
         self.assertIn(
             json5.dumps({1: 'foo', '1': 'bar'}),

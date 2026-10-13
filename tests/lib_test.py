@@ -607,6 +607,18 @@ class TestDumps(unittest.TestCase):
         self.check('\u00fc', '"\\u00fc"')
         self.assertEqual(json5.dumps('\u00fc', ensure_ascii=False), '"\u00fc"')
 
+    def test_ensure_ascii_unquoted_keys(self):
+        # Identifier keys are emitted unquoted, but must still honour
+        # ensure_ascii; the non-ascii characters are \\u-escaped in place
+        # (which the parser accepts in identifiers, so this round-trips).
+        self.check({'\u00e5': 1}, '{\\u00e5: 1}')
+        self.assertEqual(
+            json5.dumps({'\u00e5': 1}, ensure_ascii=False), '{\u00e5: 1}'
+        )
+        self.assertEqual(
+            json5.loads(json5.dumps({'\u00e5': 1})), {'\u00e5': 1}
+        )
+
     def test_indent(self):
         self.assertEqual(json5.dumps([1, 2, 3], indent=None), '[1, 2, 3]')
         self.assertEqual(json5.dumps([1, 2, 3], indent=-1), '[\n1,\n2,\n3,\n]')

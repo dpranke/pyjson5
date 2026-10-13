@@ -692,6 +692,10 @@ class JSON5Encoder:
             and not self.quote_keys
             and not self.is_reserved_word(obj)
         ):
+            if self.ensure_ascii:
+                return ''.join(
+                    self._escape_ch(ch) if ord(ch) > 127 else ch for ch in obj
+                )
             return obj
 
         return self._encode_quoted_str(obj, self.quote_style)

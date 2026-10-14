@@ -372,9 +372,12 @@ class Runner:
         proc = self._call(cmd, capture_output=True, ignore_error=True)
         if self.args.check:
             if proc.returncode:
+                self.returncode = proc.returncode
                 print('pyproject.toml needs formatting')
                 cmd.remove('--no-print-diff')
                 self._call(cmd, ignore_error=True)
+                if self.failfast:
+                    return proc.returncode
             elif not self.args.quiet:
                 print('pyproject.toml already formatted')
         elif proc.returncode and not proc.stdout:
@@ -396,7 +399,11 @@ class Runner:
         out = out.replace('left unchanged', 'already formatted')
         if not self.args.quiet or not out.endswith('already formatted\n'):
             print(out, end='')
-        return proc.returncode
+        if proc.returncode:
+            return proc.returncode
+        if self.returncode:
+            return self.returncode
+        return 0
 
     def run_help(self):
         if self.args.subcommand:
@@ -428,6 +435,8 @@ class Runner:
             if not self.args.quiet:
                 print(f'\n## Running `{desc}`')
             func()
+            if self.returncode and self.failfast:
+                break
 
         if not self.args.quiet and not self.returncode:
             print('\n## Presubmit passed.')

@@ -34,6 +34,26 @@ from json5.parser import Parser
 # Used when encoding keys, below.
 _reserved_word_re: Optional[re.Pattern] = None
 
+# A high surrogate (U+D800..U+DBFF) immediately followed by a low surrogate
+# (U+DC00..U+DFFF). `\u` escapes decode one UTF-16 code unit each, so an
+# astral character written as a surrogate pair arrives here as two separate
+# code points that have to be recombined.
+_surrogate_pair_re = re.compile('[\ud800-\udbff][\udc00-\udfff]')
+
+
+def _join_surrogate_pairs(s: str) -> str:
+    """Combine any UTF-16 surrogate pairs in a decoded string into the single
+    code point they represent, matching the `json` module and ECMAScript
+    string semantics. Lone surrogates are left untouched."""
+    if _surrogate_pair_re.search(s) is None:
+        return s
+
+    def combine(m: re.Match) -> str:
+        hi, lo = ord(m.group()[0]), ord(m.group()[1])
+        return chr(0x10000 + ((hi - 0xD800) << 10) + (lo - 0xDC00))
+
+    return _surrogate_pair_re.sub(combine, s)
+
 
 class QuoteStyle(enum.Enum):
     """Controls how strings will be quoted during encoding.
@@ -370,14 +390,14 @@ def _walk_ast(
             return parse_constant(v)
         return parse_int(v)
     if ty == 'string':
-        return v
+        return _join_surrogate_pairs(v)
     if ty == 'object':
         pairs = []
         for key, val_expr in v:
             val = _walk_ast(
                 val_expr, dictify, parse_float, parse_int, parse_constant
             )
-            pairs.append((key, val))
+            pairs.append((_join_surrogate_pairs(key), val))
         return dictify(pairs)
     if ty == 'array':
         return [

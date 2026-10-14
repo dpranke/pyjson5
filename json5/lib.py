@@ -881,6 +881,8 @@ class JSON5Encoder:
             val_str = self.encode(obj[key], seen, level, as_key=False)
             s += key_str + kv_sep + val_str
 
+        if first_key:
+            return '{}'
         s += end_str + '}'
         return s
 

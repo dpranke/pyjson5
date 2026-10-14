@@ -687,15 +687,21 @@ class Runner:
             raise FailFastException(1)
 
     def _check_python_version(self):
-        if self.args.command not in ('tests', 'help', 'clean') and (
-            sys.version_info < (3, 11)
-        ):
-            print(
-                f'Only `tests`, `help`, and `clean` are supported '
-                f"on Python versions older than 3.10. You're running "
-                f'{self._python_version()}.'
-            )
-            raise FailFastException(1)
+        if self.args.command not in ('tests', 'help', 'clean'):
+            if sys.version_info >= (3, 15):
+                print(
+                    f'Only `tests`, `help`, and `clean` work on '
+                    f"Python versions newer that 3.14. You're running "
+                    f'{self._python_version()}.'
+                )
+                raise FailFastException(1)
+            if sys.version_info < (3, 11):
+                print(
+                    f'Only `tests`, `help`, and `clean` are supported '
+                    f"on Python versions older than 3.10. You're running "
+                    f'{self._python_version()}.'
+                )
+                raise FailFastException(1)
 
     def _python_version(self):
         return sys.version.split()[0]

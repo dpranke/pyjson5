@@ -173,6 +173,27 @@ class TestLoads(unittest.TestCase):
         # Undertie (category Pc, connector punctuation)
         self.check('{a\u203fb: 1}', {'a\u203fb': 1})
 
+    def test_identifiers_escapes(self):
+        self.check('{\\u0061: 1}', {'a': 1})
+        self.check('{\\u0024\\u005f: 1}', {'$_': 1})
+        self.check(
+            '{\\u00c3\\u02b0\\u01bb\\u01c8\\u2160: 1}',
+            {'\xc3\u02b0\u01bb\u01c8\u2160': 1},
+        )
+        self.check(
+            '{a\\u0030\\u0308\\ua953\\u203f: 1}', {'a0\u0308\ua953\u203f': 1}
+        )
+        self.check('{a\\u200c\\u200D: 1}', {'a\u200c\u200d': 1})
+        self.check('{\\ud835\\udc00: 1}', {'\U0001d400': 1})
+
+        # An escape can't be used to put a character into an identifier
+        # that wouldn't otherwise be legal there.
+        self.check_fail('{\\u0031: 1}')
+        self.check_fail('{\\u0022: 1}')
+        self.check_fail('{a\\u0020b: 1}')
+        self.check_fail('{a\\u003a: 1}')
+        self.check_fail('{a\\u0000: 1}')
+
     def test_null(self):
         self.check('null', None)
 

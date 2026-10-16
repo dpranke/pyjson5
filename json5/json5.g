@@ -76,7 +76,16 @@ ident          = id_start:hd id_continue*:tl         -> join('', [hd] + tl)
 
 id_start       = ascii_id_start
                | other_id_start
-               | bslash unicode_esc
+               | bslash id_esc_start
+
+id_esc_start   = ~~('u' ('0024' | '005F' | '005f')) unicode_esc
+               | unicode_esc:x ?(is_unicat(x, 'Ll')) -> x
+               | unicode_esc:x ?(is_unicat(x, 'Lm')) -> x
+               | unicode_esc:x ?(is_unicat(x, 'Lo')) -> x
+               | unicode_esc:x ?(is_unicat(x, 'Lt')) -> x
+               | unicode_esc:x ?(is_unicat(x, 'Lu')) -> x
+               | unicode_esc:x ?(is_unicat(x, 'Nl')) -> x
+               | unicode_esc:x ?(is_unicat(x, 'Cs')) -> x
 
 ascii_id_start = 'a'..'z'
                | 'A'..'Z'
@@ -97,9 +106,16 @@ id_continue    = ascii_id_start
                | anything:x ?(is_unicat(x, 'Mc'))    -> x
                | anything:x ?(is_unicat(x, 'Nd'))    -> x
                | anything:x ?(is_unicat(x, 'Pc'))    -> x
-               | bslash unicode_esc
+               | bslash id_esc_continue
                | '\u200C'
                | '\u200D'
+
+id_esc_continue = id_esc_start
+                | unicode_esc:x ?(is_unicat(x, 'Mn')) -> x
+                | unicode_esc:x ?(is_unicat(x, 'Mc')) -> x
+                | unicode_esc:x ?(is_unicat(x, 'Nd')) -> x
+                | unicode_esc:x ?(is_unicat(x, 'Pc')) -> x
+                | ~~('u' ('200C' | '200c' | '200D' | '200d')) unicode_esc
 
 num_literal    = '-' unsigned_lit:n                  -> '-' + n
                | '+' unsigned_lit:n                  -> n

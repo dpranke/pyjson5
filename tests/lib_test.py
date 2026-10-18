@@ -13,12 +13,92 @@
 # limitations under the License.
 
 import io
+import json
 import math
 import os
 import unittest
 from collections import OrderedDict
 
 import json5
+
+
+class RecordingHook(list):
+    def __init__(self, transform=None):
+        super().__init__()
+        self.transform = transform
+
+    def __call__(self, value):
+        self.append(value)
+        return self.transform(value) if self.transform is not None else value
+
+
+class NoTruthHook(RecordingHook):
+    def __bool__(self):
+        raise AssertionError(
+            'Callbacks must not be truth-tested'
+        )  # pragma: no cover
+
+
+class TestOptionalHooks(unittest.TestCase):
+    def test_decoding_hooks(self):
+        cases = (
+            ('object_hook', '{"a": 1}'),
+            ('object_pairs_hook', '{"a": 1}'),
+            ('parse_int', '42'),
+            ('parse_float', '1.5'),
+            ('parse_constant', 'NaN'),
+        )
+        for name, text in cases:
+            for hook_type in (RecordingHook, NoTruthHook):
+                for method in ('load', 'loads', 'parse'):
+                    with self.subTest(
+                        name=name, hook=hook_type, method=method
+                    ):
+                        hook = hook_type()
+                        expected = json.loads(
+                            text, **{name: lambda value: value}
+                        )
+                        if method == 'load':
+                            actual = json5.load(
+                                io.StringIO(text), **{name: hook}
+                            )
+                        elif method == 'loads':
+                            actual = json5.loads(text, **{name: hook})
+                        else:
+                            actual, error, position = json5.parse(
+                                text, **{name: hook}
+                            )
+                            self.assertIsNone(error)
+                            self.assertEqual(position, len(text))
+                        self.assertEqual(actual, expected)
+                        self.assertEqual(len(hook), 1)
+
+    def test_object_pairs_hook_precedence(self):
+        pairs = RecordingHook()
+        objects = RecordingHook()
+        self.assertEqual(
+            json5.loads(
+                '{a: 1}', object_pairs_hook=pairs, object_hook=objects
+            ),
+            [('a', 1)],
+        )
+        self.assertEqual(pairs, [[('a', 1)]])
+        self.assertEqual(objects, [])
+
+    def test_default_hook(self):
+        for hook_type in (RecordingHook, NoTruthHook):
+            for method in ('dump', 'dumps'):
+                with self.subTest(hook=hook_type, method=method):
+                    hook = hook_type(lambda _obj: 'custom')
+                    value = object()
+                    if method == 'dump':
+                        output = io.StringIO()
+                        json5.dump(value, output, default=hook)
+                        actual = output.getvalue()
+                    else:
+                        actual = json5.dumps(value, default=hook)
+                    self.assertEqual(actual, '"custom"')
+                    self.assertEqual(hook, [value])
 
 
 class TestLoads(unittest.TestCase):

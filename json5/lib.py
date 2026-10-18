@@ -711,6 +711,7 @@ class JSON5Encoder:
             and self.is_identifier(obj)
             and not self.quote_keys
             and not self.is_reserved_word(obj)
+            and not (self.ensure_ascii and any(ord(ch) > 0xFFFF for ch in obj))
         ):
             if self.ensure_ascii:
                 return ''.join(

@@ -16,6 +16,23 @@ import shutil
 import subprocess
 import sys
 
+THIS_DIR = os.path.abspath(os.path.dirname(__file__))
+
+THIS_FULL_VER = sys.version.split()[0]
+THIS_VER = '.'.join(str(x) for x in sys.version_info[:2])
+
+# This'll need to change if there's ever a Python 4 to support.
+MIN_PARTIAL_MINOR_VER = 8
+MIN_FULL_MINOR_VER = 11
+MAX_FULL_MINOR_VER = 14
+MAX_PARTIAL_MINOR_VER = 15
+
+PARTIAL_COMMANDS = ['clean', 'devenv', 'help', 'tests']
+PARTIAL_COMMANDS_STR = (
+    ', '.join('`{x}`' for x in PARTIAL_COMMANDS[:-1])
+    + '`{PARTIAL_COMMANDS[-1]}`'
+)
+
 
 class FailFastException(Exception):
     def __init__(self, returncode):
@@ -49,10 +66,10 @@ class Runner:
             print('You need to have `uv` installed to run this script')
             sys.exit(2)
 
+        self.venv = None
         if 'VIRTUAL_ENV' in os.environ:
-            self.run_cmd = ['python', '-m']
-        else:
-            self.run_cmd = [self.uv_path, 'run', 'python', '-m']
+            self.venv = os.environ['VIRTUAL_ENV'].replace(THIS_DIR, '/')
+        self.run_cmd = ['python', '-m']
 
     def main(self, argv):
         # Change stdout to be unbuffered so that output shows up in
@@ -60,14 +77,37 @@ class Runner:
         # processes.
         sys.stdout.reconfigure(line_buffering=True)
         self.parse_args(argv)
+
+        if not self.is_supported_python_version():
+            return 1
+
+        if not self.venv and self.args.command != 'devenv':
+            is_uv = 'UV' in os.environ
+            if not is_uv:
+                run_cmd = ['uv', 'run', '--isolated']
+                if not self.args.verbose:
+                    run_cmd += ['--quiet']
+                run_cmd += ['--python', self.args.python, 'python']
+                run_cmd += sys.argv
+                return self._call(run_cmd).returncode
+            print('This command must be run in a virtualenv')
+            return 1
+
         self.failfast = getattr(self.args, 'failfast', False)
-        if not self.args.quiet and (
-            (self.args.verbose and self.args.command != 'help')
-            or self.args.command == 'presubmit'
+        if (
+            not self.args.quiet
+            and self.args.command != 'devenv'
+            and (
+                (self.args.verbose and self.args.command != 'help')
+                or self.args.command == 'presubmit'
+            )
         ):
+            venv_path = self.venv.replace(THIS_DIR, '/')
+            if 'cache/uv/builds' in venv_path:
+                venv_path = 'an isolated .venv'
             print(
                 f'# Running `{self.args.command}` using Python '
-                f'{self._python_version()}'
+                f'{THIS_VER} and {venv_path}'
             )
 
         try:
@@ -211,6 +251,8 @@ class Runner:
         )
 
         self.args = self.arg_parser.parse_args(self._shuffle_argv(argv))
+        if '.' not in self.args.python:
+            self.args.python = '3.' + self.args.python
 
     def _add_parser(self, cmd, help):  # pylint: disable=redefined-builtin
         method = getattr(self, 'run_' + cmd.replace('-', '_'))
@@ -233,6 +275,16 @@ class Runner:
             action='store_true',
             help='Echo commands as they are run.',
         )
+        subp.add_argument(
+            '-p',
+            '--python',
+            help=(
+                f'Use the specified Python version (3.{MIN_PARTIAL_MINOR_VER} '
+                f'to 3.{MAX_PARTIAL_MINOR_VER} are supported; default is to '
+                f'use the current version (%(default)s))'
+            ),
+            default=f'{THIS_VER}',
+        )
         subp.set_defaults(func=lambda _: method())
         return subp
 
@@ -241,7 +293,6 @@ class Runner:
     #
 
     def run_build(self):
-        self._check_python_version()
         self._check_version()
         cmd = [self.uv_path, 'build']
         if self.args.quiet:
@@ -269,7 +320,6 @@ class Runner:
         return self.returncode
 
     def run_checks(self):
-        self._check_python_version()
 
         if self.args.command == 'presubmit':
             print()
@@ -308,7 +358,6 @@ class Runner:
         return self.returncode
 
     def run_coverage(self):
-        self._check_python_version()
         env = os.environ.copy()
         if self.args.unit:
             env['SKIP'] = 'integration'
@@ -337,12 +386,11 @@ class Runner:
         return self.returncode
 
     def run_devenv(self):
-        self._check_python_version()
         if self.uv_path is None:
             print('You need to have `uv` installed to set up a dev env.')
             return 1
 
-        cmd = [self.uv_path, 'sync']
+        cmd = [self.uv_path, 'sync', '--python', self.args.python]
         if self.args.quiet:
             cmd.append('--quiet')
 
@@ -353,7 +401,6 @@ class Runner:
         return self.returncode
 
     def run_format(self):
-        self._check_python_version()
         cmd = self.run_cmd[:-2] + [
             'pyproject-fmt',
             '--column-width',
@@ -411,8 +458,6 @@ class Runner:
         return self.main(['--help'])
 
     def run_presubmit(self):
-        self._check_python_version()
-
         self.args.check = True
 
         # Stub out args to `run tests`
@@ -445,8 +490,6 @@ class Runner:
         return self.returncode
 
     def run_publish(self):
-        self._check_python_version()
-
         if not self.args.check and not self.args.test and not self.args.prod:
             print('You must specify either --test or --prod to upload.')
             return 2
@@ -476,8 +519,6 @@ class Runner:
         return self.returncode
 
     def run_regen(self):
-        self._check_python_version()
-
         with open(self.parser_file, encoding='utf-8') as fp:
             old = fp.read()
         old_fname = self.parser_file + '.old'
@@ -658,7 +699,11 @@ class Runner:
             if argv[i][0] != '-':
                 break
             leading_args.append(argv[i])
-            i += 1
+            if argv[i] in ('-p', '--python'):
+                leading_args.append(argv[i + 1])
+                i += 2
+            else:
+                i += 1
 
         return argv[i : i + 1] + leading_args + argv[i + 1 :]
 
@@ -686,25 +731,56 @@ class Runner:
             print(f'Unexpected version format: "{self.version}"')
             raise FailFastException(1)
 
-    def _check_python_version(self):
-        if self.args.command not in ('tests', 'help', 'clean'):
-            if sys.version_info >= (3, 15):
-                print(
-                    f'Only `tests`, `help`, and `clean` work on '
-                    f"Python versions newer that 3.14. You're running "
-                    f'{self._python_version()}.'
-                )
-                raise FailFastException(1)
-            if sys.version_info < (3, 11):
-                print(
-                    f'Only `tests`, `help`, and `clean` are supported '
-                    f"on Python versions older than 3.10. You're running "
-                    f'{self._python_version()}.'
-                )
-                raise FailFastException(1)
+    def is_supported_python_version(self):
+        def _to_str(l):
+            return ', '.join(l[:-1]) + ' and ' + l[-1]
 
-    def _python_version(self):
-        return sys.version.split()[0]
+        partial = [
+            '3.' + str(x)
+            for x in range(MIN_PARTIAL_MINOR_VER, MAX_PARTIAL_MINOR_VER + 1)
+        ]
+        full = [
+            '3.' + str(x)
+            for x in range(MIN_FULL_MINOR_VER, MAX_FULL_MINOR_VER + 1)
+        ]
+        partial_only = [x for x in partial if x not in full]
+
+        full_str = f'{full[0]} to {full[-1]}'
+        partial_str = f'{partial[0]} to {partial[-1]}'
+        partial_only_str = _to_str(partial_only)
+        partial_commands_str = _to_str([f'`{x}`' for x in PARTIAL_COMMANDS])
+
+        is_uv = 'UV' in os.environ
+
+        ver = self.args.python
+
+        if self.venv and not is_uv:
+            if ver not in partial:
+                print(
+                    f'Warning, this version of Python ({THIS_VER}) '
+                    f'may not be supported. '
+                )
+                sys.stdout.flush()
+        else:
+            # Note: we explicitly want to prevent a hypothetical Python 4
+            # here, so we disable the ruff warning YTT201.
+            if sys.version_info[0] != 3 or ver not in partial:  # noqa: YTT201
+                print(
+                    f'This version of Python ({THIS_VER}) is not supported, '
+                    f'only {partial_str} are.'
+                )
+                print(f'{full_str} are fully supported.')
+                print(
+                    f'{partial_only_str} can only run {partial_commands_str}.'
+                )
+                return False
+            if ver not in full and self.args.command not in PARTIAL_COMMANDS:
+                print(
+                    f'This version of Python ({THIS_VER}) is not fully '
+                    f'supported and can only run {partial_commands_str}.'
+                )
+                return False
+        return True
 
 
 if __name__ == '__main__':

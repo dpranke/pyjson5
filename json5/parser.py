@@ -858,7 +858,182 @@ class Parser:
         )
 
     def _id_start__c2_(self):
-        self._seq([self._bslash_, self._unicode_esc_])
+        self._seq([self._bslash_, self._id_esc_start_])
+
+    def _id_esc_start_(self):
+        self._choose(
+            [
+                self._id_esc_start__c0_,
+                self._id_esc_start__c1_,
+                self._id_esc_start__c2_,
+                self._id_esc_start__c3_,
+                self._id_esc_start__c4_,
+                self._id_esc_start__c5_,
+                self._id_esc_start__c6_,
+                self._id_esc_start__c7_,
+            ]
+        )
+
+    def _id_esc_start__c0_(self):
+        self._seq([self._id_esc_start__c0__s0_, self._unicode_esc_])
+
+    def _id_esc_start__c0__s0_(self):
+        self._not(lambda: self._not(self._id_esc_start__c0__s0_n_n_))
+
+    def _id_esc_start__c0__s0_n_n_(self):
+        (lambda: self._choose([self._id_esc_start__c0__s0_n_n_g__c0_]))()
+
+    def _id_esc_start__c0__s0_n_n_g__c0_(self):
+        self._seq(
+            [
+                lambda: self._ch('u'),
+                lambda: (self._id_esc_start__c0__s0_n_n_g__c0__s1_g_)(),
+            ]
+        )
+
+    def _id_esc_start__c0__s0_n_n_g__c0__s1_g_(self):
+        self._choose(
+            [
+                self._id_esc_start__c0__s0_n_n_g__c0__s1_g__c0_,
+                self._id_esc_start__c0__s0_n_n_g__c0__s1_g__c1_,
+                self._id_esc_start__c0__s0_n_n_g__c0__s1_g__c2_,
+            ]
+        )
+
+    def _id_esc_start__c0__s0_n_n_g__c0__s1_g__c0_(self):
+        self._seq([lambda: self._str('0024')])
+
+    def _id_esc_start__c0__s0_n_n_g__c0__s1_g__c1_(self):
+        self._seq([lambda: self._str('005F')])
+
+    def _id_esc_start__c0__s0_n_n_g__c0__s1_g__c2_(self):
+        self._seq([lambda: self._str('005f')])
+
+    def _id_esc_start__c1_(self):
+        self._push('id_esc_start__c1')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_start__c1__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_start__c1')
+
+    def _id_esc_start__c1__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Ll')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_start__c2_(self):
+        self._push('id_esc_start__c2')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_start__c2__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_start__c2')
+
+    def _id_esc_start__c2__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Lm')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_start__c3_(self):
+        self._push('id_esc_start__c3')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_start__c3__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_start__c3')
+
+    def _id_esc_start__c3__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Lo')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_start__c4_(self):
+        self._push('id_esc_start__c4')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_start__c4__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_start__c4')
+
+    def _id_esc_start__c4__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Lt')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_start__c5_(self):
+        self._push('id_esc_start__c5')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_start__c5__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_start__c5')
+
+    def _id_esc_start__c5__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Lu')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_start__c6_(self):
+        self._push('id_esc_start__c6')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_start__c6__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_start__c6')
+
+    def _id_esc_start__c6__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Nl')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_start__c7_(self):
+        self._push('id_esc_start__c7')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_start__c7__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_start__c7')
+
+    def _id_esc_start__c7__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Cs')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
 
     def _ascii_id_start_(self):
         self._choose(
@@ -1091,13 +1266,136 @@ class Parser:
             self._fail()
 
     def _id_continue__c7_(self):
-        self._seq([self._bslash_, self._unicode_esc_])
+        self._seq([self._bslash_, self._id_esc_continue_])
 
     def _id_continue__c8_(self):
         self._ch('\u200c')
 
     def _id_continue__c9_(self):
         self._ch('\u200d')
+
+    def _id_esc_continue_(self):
+        self._choose(
+            [
+                self._id_esc_start_,
+                self._id_esc_continue__c1_,
+                self._id_esc_continue__c2_,
+                self._id_esc_continue__c3_,
+                self._id_esc_continue__c4_,
+                self._id_esc_continue__c5_,
+            ]
+        )
+
+    def _id_esc_continue__c1_(self):
+        self._push('id_esc_continue__c1')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_continue__c1__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_continue__c1')
+
+    def _id_esc_continue__c1__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Mn')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_continue__c2_(self):
+        self._push('id_esc_continue__c2')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_continue__c2__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_continue__c2')
+
+    def _id_esc_continue__c2__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Mc')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_continue__c3_(self):
+        self._push('id_esc_continue__c3')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_continue__c3__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_continue__c3')
+
+    def _id_esc_continue__c3__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Nd')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_continue__c4_(self):
+        self._push('id_esc_continue__c4')
+        self._seq(
+            [
+                lambda: self._bind(self._unicode_esc_, 'x'),
+                self._id_esc_continue__c4__s1_,
+                lambda: self._succeed(self._get('x')),
+            ]
+        )
+        self._pop('id_esc_continue__c4')
+
+    def _id_esc_continue__c4__s1_(self):
+        v = self._is_unicat(self._get('x'), 'Pc')
+        if v:
+            self._succeed(v)
+        else:
+            self._fail()
+
+    def _id_esc_continue__c5_(self):
+        self._seq([self._id_esc_continue__c5__s0_, self._unicode_esc_])
+
+    def _id_esc_continue__c5__s0_(self):
+        self._not(lambda: self._not(self._id_esc_continue__c5__s0_n_n_))
+
+    def _id_esc_continue__c5__s0_n_n_(self):
+        (lambda: self._choose([self._id_esc_continue__c5__s0_n_n_g__c0_]))()
+
+    def _id_esc_continue__c5__s0_n_n_g__c0_(self):
+        self._seq(
+            [
+                lambda: self._ch('u'),
+                lambda: (self._id_esc_continue__c5__s0_n_n_g__c0__s1_g_)(),
+            ]
+        )
+
+    def _id_esc_continue__c5__s0_n_n_g__c0__s1_g_(self):
+        self._choose(
+            [
+                self._id_esc_continue__c5__s0_n_n_g__c0__s1_g__c0_,
+                self._id_esc_continue__c5__s0_n_n_g__c0__s1_g__c1_,
+                self._id_esc_continue__c5__s0_n_n_g__c0__s1_g__c2_,
+                self._id_esc_continue__c5__s0_n_n_g__c0__s1_g__c3_,
+            ]
+        )
+
+    def _id_esc_continue__c5__s0_n_n_g__c0__s1_g__c0_(self):
+        self._seq([lambda: self._str('200C')])
+
+    def _id_esc_continue__c5__s0_n_n_g__c0__s1_g__c1_(self):
+        self._seq([lambda: self._str('200c')])
+
+    def _id_esc_continue__c5__s0_n_n_g__c0__s1_g__c2_(self):
+        self._seq([lambda: self._str('200D')])
+
+    def _id_esc_continue__c5__s0_n_n_g__c0__s1_g__c3_(self):
+        self._seq([lambda: self._str('200d')])
 
     def _num_literal_(self):
         self._choose(

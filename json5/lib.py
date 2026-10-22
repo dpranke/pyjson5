@@ -353,15 +353,17 @@ def _convert(
                     raise ValueError(f'Duplicate key "{key}" found in object')
                 keys.add(key)
 
-        if object_pairs_hook:
+        if object_pairs_hook is not None:
             return object_pairs_hook(pairs)
-        if object_hook:
+        if object_hook is not None:
             return object_hook(dict(pairs))
         return dict(pairs)
 
-    parse_float = parse_float or float
-    parse_int = parse_int or int
-    parse_constant = parse_constant or _fp_constant_parser
+    parse_float = float if parse_float is None else parse_float
+    parse_int = int if parse_int is None else parse_int
+    parse_constant = (
+        _fp_constant_parser if parse_constant is None else parse_constant
+    )
 
     return _walk_ast(ast, _dictify, parse_float, parse_int, parse_constant)
 
@@ -602,7 +604,7 @@ class JSON5Encoder:
         if separators is None:
             separators = (', ', ': ') if indent is None else (',', ': ')
         self.item_separator, self.kv_separator = separators
-        self.default_fn = default or _raise_type_error
+        self.default_fn = _raise_type_error if default is None else default
         self.sort_keys = sort_keys
         self.quote_keys = quote_keys
         self.trailing_commas = trailing_commas

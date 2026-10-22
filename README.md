@@ -197,6 +197,10 @@ to activate it.
 
 ## Version History / Release Notes:
 
+* Unreleased
+    * Honor explicit false-valued callable parsing hooks and default encoders
+      without testing their truth value.
+
 * v0.17.3 (2026-10-09)
     * Bump the indirect dependency on `urllib3` to 2.8.0 to pick up a
       security fix.

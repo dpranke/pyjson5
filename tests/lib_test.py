@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import decimal
 import io
 import json
 import math
@@ -126,6 +127,19 @@ class TestLoads(unittest.TestCase):
 
         # syntax errors
         self.check_fail('14d', '<string>:1 Unexpected "d" at column 3')
+        self.check_fail('.', '<string>:1 Unexpected end of input at column 2')
+        self.check_fail('.e5', '<string>:1 Unexpected "e" at column 2')
+        self.check_fail('1e', '<string>:1 Unexpected end of input at column 3')
+        self.check_fail(
+            '1e+', '<string>:1 Unexpected end of input at column 4'
+        )
+        self.check_fail('[1e]', '<string>:1 Unexpected "]" at column 4')
+
+        # malformed numbers are rejected by the parser, not by parse_float
+        self.assertEqual(
+            json5.parse('1e', parse_float=decimal.Decimal),
+            (None, '<string>:1 Unexpected end of input at column 3', 2),
+        )
 
     def test_identifiers(self):
         self.check('{a: 1}', {'a': 1})

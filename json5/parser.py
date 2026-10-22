@@ -1527,7 +1527,7 @@ class Parser:
         self._push('dec_literal__c4')
         self._seq(
             [
-                lambda: self._bind(self._frac_, 'f'),
+                lambda: self._bind(self._lead_frac_, 'f'),
                 lambda: self._bind(self._exp_, 'e'),
                 lambda: self._succeed(self._get('f') + self._get('e')),
             ]
@@ -1538,7 +1538,7 @@ class Parser:
         self._push('dec_literal__c5')
         self._seq(
             [
-                lambda: self._bind(self._frac_, 'f'),
+                lambda: self._bind(self._lead_frac_, 'f'),
                 lambda: self._succeed(self._get('f')),
             ]
         )
@@ -1618,6 +1618,20 @@ class Parser:
     def _frac__s1_(self):
         self._bind(lambda: self._star(self._digit_), 'ds')
 
+    def _lead_frac_(self):
+        self._push('lead_frac')
+        self._seq(
+            [
+                lambda: self._ch('.'),
+                self._lead_frac__s1_,
+                lambda: self._succeed('.' + self._join('', self._get('ds'))),
+            ]
+        )
+        self._pop('lead_frac')
+
+    def _lead_frac__s1_(self):
+        self._bind(lambda: self._plus(self._digit_), 'ds')
+
     def _exp_(self):
         self._choose([self._exp__c0_, self._exp__c1_])
 
@@ -1642,7 +1656,7 @@ class Parser:
         self._choose([lambda: self._ch('+'), lambda: self._ch('-')])
 
     def _exp__c0__s2_(self):
-        self._bind(lambda: self._star(self._digit_), 'ds')
+        self._bind(lambda: self._plus(self._digit_), 'ds')
 
     def _exp__c1_(self):
         self._push('exp__c1')
@@ -1659,7 +1673,7 @@ class Parser:
         self._choose([lambda: self._ch('e'), lambda: self._ch('E')])
 
     def _exp__c1__s1_(self):
-        self._bind(lambda: self._star(self._digit_), 'ds')
+        self._bind(lambda: self._plus(self._digit_), 'ds')
 
     def _anything_(self):
         if self.pos < self.end:

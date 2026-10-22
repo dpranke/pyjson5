@@ -130,8 +130,8 @@ dec_literal    = dec_int_lit:d frac:f exp:e          -> d + f + e
                | dec_int_lit:d frac:f                -> d + f
                | dec_int_lit:d exp:e                 -> d + e
                | dec_int_lit:d                       -> d
-               | frac:f exp:e                        -> f + e
-               | frac:f                              -> f
+               | lead_frac:f exp:e                   -> f + e
+               | lead_frac:f                         -> f
 
 dec_int_lit    = '0' ~digit                          -> '0'
                | nonzerodigit:d digit*:ds            -> d + join('', ds)
@@ -146,5 +146,7 @@ hex            = 'a'..'f' | 'A'..'F' | digit
 
 frac           = '.' digit*:ds                       -> '.' + join('', ds)
 
-exp            = ('e' | 'E') ('+' | '-'):s digit*:ds -> 'e' + s + join('', ds)
-               | ('e' | 'E') digit*:ds               -> 'e' + join('', ds)
+lead_frac      = '.' digit+:ds                       -> '.' + join('', ds)
+
+exp            = ('e' | 'E') ('+' | '-'):s digit+:ds -> 'e' + s + join('', ds)
+               | ('e' | 'E') digit+:ds               -> 'e' + join('', ds)

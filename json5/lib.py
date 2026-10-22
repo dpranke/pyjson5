@@ -861,9 +861,16 @@ class JSON5Encoder:
                 raise
 
             if not self.allow_duplicate_keys:
-                if key_str in new_keys:
+                # Compare the keys as they will be decoded, not as encoded:
+                # e.g. 1 and '1' are written as "1" and '1' with single
+                # quotes, and float('inf') and 'Infinity' are written as
+                # "Infinity" and Infinity, but each pair reads back as the
+                # same key. Non-string keys are always encoded as a plain
+                # double-quoted string.
+                key_name = key if isinstance(key, str) else key_str[1:-1]
+                if key_name in new_keys:
                     raise ValueError(f'duplicate key {key!r}')
-                new_keys.add(key_str)
+                new_keys.add(key_name)
 
             if first_key:
                 first_key = False

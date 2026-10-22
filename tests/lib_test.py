@@ -759,6 +759,19 @@ class TestDumps(unittest.TestCase):
             json5.loads(json5.dumps({'\u00e5': 1})), {'\u00e5': 1}
         )
 
+    def test_ensure_ascii_astral_keys(self):
+        # JSON5 uses ES5.1 IdentifierName: surrogate escapes are not allowed.
+        self.check({'\U0001d49c': 1}, '{"\\ud835\\udc9c": 1}')
+        self.check({'a\U0001d49cb': 1}, '{"a\\ud835\\udc9cb": 1}')
+        self.check({'\U00010000': 1}, '{"\\ud800\\udc00": 1}')
+        self.assertEqual(
+            json5.dumps({'\U0001d49c': 1}, ensure_ascii=False),
+            '{\U0001d49c: 1}',
+        )
+        self.assertEqual(
+            json5.loads(json5.dumps({'\U0001d49c': 1})), {'\U0001d49c': 1}
+        )
+
     def test_indent(self):
         self.assertEqual(json5.dumps([1, 2, 3], indent=None), '[1, 2, 3]')
         self.assertEqual(json5.dumps([1, 2, 3], indent=-1), '[\n1,\n2,\n3,\n]')

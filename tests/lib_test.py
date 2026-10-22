@@ -597,6 +597,33 @@ class TestDumps(unittest.TestCase):
             allow_duplicate_keys=False,
         )
 
+    def test_allow_duplicate_keys_differently_encoded(self):
+        # These keys encode differently but decode to the same string.
+        for obj, kwargs in (
+            ({float('inf'): 'foo', 'Infinity': 'bar'}, {}),
+            ({float('nan'): 'foo', 'NaN': 'bar'}, {}),
+            (
+                {1: 'foo', '1': 'bar'},
+                {'quote_style': json5.QuoteStyle.ALWAYS_SINGLE},
+            ),
+            (
+                {True: 'foo', 'true': 'bar'},
+                {'quote_style': json5.QuoteStyle.PREFER_SINGLE},
+            ),
+            (
+                {None: 'foo', 'null': 'bar'},
+                {'quote_style': json5.QuoteStyle.ALWAYS_SINGLE},
+            ),
+        ):
+            with self.subTest(obj=obj, kwargs=kwargs):
+                self.assertRaises(
+                    ValueError,
+                    json5.dumps,
+                    obj,
+                    allow_duplicate_keys=False,
+                    **kwargs,
+                )
+
     def test_arrays(self):
         self.check([], '[]')
         self.check([1, 2, 3], '[1, 2, 3]')

@@ -727,7 +727,7 @@ class JSON5Encoder:
         single_quotes_seen = 0
         sq = "'"
         dq = '"'
-        for index, ch in enumerate(obj):
+        for ch in obj:
             if ch == dq:
                 # At first we will guess at which quotes to escape. If
                 # we guess wrong, we reencode the string below.
@@ -753,14 +753,7 @@ class JSON5Encoder:
             else:
                 o = ord(ch)
                 if o < 32:
-                    if (
-                        ch == '\0'
-                        and index + 1 < len(obj)
-                        and obj[index + 1] in '0123456789'
-                    ):
-                        encoded_ch = r'\u0000'
-                    else:
-                        encoded_ch = self._escape_ch(ch)
+                    encoded_ch = self._escape_ch(ch)
                 elif o < 128 or (
                     not self.ensure_ascii and ch not in ('\u2028', '\u2029')
                 ):
@@ -803,10 +796,6 @@ class JSON5Encoder:
             return r'\b'
         if ch == '\f':
             return r'\f'
-        if ch == '\v':
-            return r'\v'
-        if ch == '\0':
-            return r'\0'
 
         o = ord(ch)
         if o < 65536:

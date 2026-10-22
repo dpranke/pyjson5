@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import io
+import json
 import math
 import os
 import unittest
@@ -815,8 +816,22 @@ class TestDumps(unittest.TestCase):
         self.check("'\\'", '"\'\\\\\'"')
         self.check(
             '\u2028\u2029\b\t\f\n\r\v\\\0',
-            r'"\u2028\u2029\b\t\f\n\r\v\\\0"',
+            r'"\u2028\u2029\b\t\f\n\r\u000b\\\u0000"',
         )
+
+    def test_control_char_escapes_are_valid_json(self):
+        # JSON has no `\0` or `\v` escape sequences (they are JSON5-only),
+        # so NUL and VT have to be written as `\u0000` and `\u000b` for
+        # the json-compatible settings to produce output that the json
+        # module can read back.
+        for ch in ('\0', '\v'):
+            for s in (ch, ch + '1', 'a' + ch + 'b'):
+                with self.subTest(s=s):
+                    encoded = json5.dumps(
+                        s, quote_keys=True, trailing_commas=False
+                    )
+                    self.assertEqual(encoded, json.dumps(s))
+                    self.assertEqual(json.loads(encoded), s)
 
     def test_null_escape_before_digits(self):
         for digit in '0123456789':

@@ -645,9 +645,7 @@ class TestDumps(unittest.TestCase):
         )
 
     def test_ensure_ascii_astral_keys(self):
-        # Other readers reject a surrogate pair written as \u escapes in an
-        # identifier, so an identifier key with a character above U+FFFF has
-        # to be quoted when ensure_ascii is true.
+        # JSON5 uses ES5.1 IdentifierName: surrogate escapes are not allowed.
         self.check({'\U0001d49c': 1}, '{"\\ud835\\udc9c": 1}')
         self.check({'a\U0001d49cb': 1}, '{"a\\ud835\\udc9cb": 1}')
         self.check({'\U00010000': 1}, '{"\\ud800\\udc00": 1}')

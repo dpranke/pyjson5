@@ -774,6 +774,21 @@ class TestDumps(unittest.TestCase):
         self.check('\u00fc', '"\\u00fc"')
         self.assertEqual(json5.dumps('\u00fc', ensure_ascii=False), '"\u00fc"')
 
+    def test_ensure_ascii_del(self):
+        for obj in ('\x7f', {'\x7f': 1}):
+            for ensure_ascii in (False, True):
+                with self.subTest(obj=obj, ensure_ascii=ensure_ascii):
+                    encoded = json5.dumps(
+                        obj,
+                        quote_keys=True,
+                        trailing_commas=False,
+                        ensure_ascii=ensure_ascii,
+                    )
+                    self.assertEqual(
+                        encoded, json.dumps(obj, ensure_ascii=ensure_ascii)
+                    )
+                    self.assertEqual(json5.loads(encoded), obj)
+
     def test_ensure_ascii_unquoted_keys(self):
         # Identifier keys are emitted unquoted, but must still honour
         # ensure_ascii; the non-ascii characters are \\u-escaped in place

@@ -757,7 +757,7 @@ class JSON5Encoder:
                 o = ord(ch)
                 if o < 32:
                     encoded_ch = self._escape_ch(ch)
-                elif o < 128 or (
+                elif o < 127 or (
                     not self.ensure_ascii and ch not in ('\u2028', '\u2029')
                 ):
                     encoded_ch = ch

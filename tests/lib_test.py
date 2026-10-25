@@ -770,6 +770,18 @@ class TestDumps(unittest.TestCase):
             json5.dumps(set(), default=_custom_serializer), '"something"'
         )
 
+        # Bytes-like objects are binary data, not arrays of numbers, even
+        # though they can be indexed and iterated over.
+        for value in (b'hi', bytearray(b'hi'), memoryview(b'hi')):
+            with self.subTest(value=value):
+                self.assertRaises(TypeError, json5.dumps, value)
+                self.assertEqual(
+                    json5.dumps(
+                        {'a': value}, default=lambda o: bytes(o).hex()
+                    ),
+                    '{a: "6869"}',
+                )
+
     def test_ensure_ascii(self):
         self.check('\u00fc', '"\\u00fc"')
         self.assertEqual(json5.dumps('\u00fc', ensure_ascii=False), '"\u00fc"')

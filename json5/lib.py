@@ -823,7 +823,10 @@ class JSON5Encoder:
         # Ideally we'd use collections.abc.Mapping and collections.abc.Sequence
         # here, but for backwards-compatibility with potential old callers,
         # we only check for the two attributes we need in each case.
-        if hasattr(obj, 'keys') and hasattr(obj, '__getitem__'):
+        # Bytes-like objects pass the array check, but they hold binary data.
+        if isinstance(obj, (bytes, bytearray, memoryview)):
+            s = self.encode(self.default(obj), seen, level, as_key=False)
+        elif hasattr(obj, 'keys') and hasattr(obj, '__getitem__'):
             s = self._encode_dict(obj, seen, level + 1)
         elif hasattr(obj, '__getitem__') and hasattr(obj, '__iter__'):
             s = self._encode_array(obj, seen, level + 1)

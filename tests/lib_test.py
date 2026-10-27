@@ -1220,17 +1220,17 @@ class TestDumps(unittest.TestCase):
             with self.subTest(obj=obj):
                 self.check(obj, expected)
 
-        def test_line_and_paragraph_separators_are_always_escaped(self):
-            # The encoder special-cases U+2028/U+2029 (json5/lib.py,
-            # _encode_quoted_str): they stay escaped even when
-            # ensure_ascii=False, unlike other non-ASCII characters.
-            for ch in ('\u2028', '\u2029'):
-                with self.subTest(ch=ch):
-                    self.assertEqual(
-                        json5.dumps(ch, ensure_ascii=False),
-                        '"\\u%04x"' % ord(ch),
-                    )
+    def test_line_and_paragraph_separators_are_always_escaped(self):
+        # The encoder special-cases U+2028/U+2029 (json5/lib.py,
+        # _encode_quoted_str): they stay escaped even when
+        # ensure_ascii=False, unlike other non-ASCII characters.
+        for ch in ('\u2028', '\u2029'):
+            with self.subTest(ch=ch):
+                self.assertEqual(
+                    json5.dumps(ch, ensure_ascii=False),
+                    '"\\u%04x"' % ord(ch),                    
 
+                )
                 
                 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

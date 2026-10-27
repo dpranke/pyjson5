@@ -536,8 +536,51 @@ class TestOptionalHooks(unittest.TestCase):
         self.check_fail('0 1', '<string>:1 Unexpected "1" at column 3')
         self.check_fail('0 a', '<string>:1 Unexpected "a" at column 3')
 
+    def test_comments(self):
+        # Comments are a headline JSON5 feature (README), but
+        # tests/lib_test.py never asserts them directly; the sample
+        # file only checks the parsed object.
+        for text, expected in (
+            ('// hi\n42', 42),
+            ('[1, /* y */ 2]', [1, 2]),
+            ('{"a": "//not a comment"}', {'a': '//not a comment'}),
+        ):
+            with self.subTest(text=text):
+                self.check(text, expected)
 
-class TestParse(unittest.TestCase):
+    def test_trailing_commas_on_loads(self):
+        # The README allows trailing commas in objects and arrays.
+        # tests/lib_test.py asserts trailing commas on the dumps side
+        # only; the sample file exercises them only incidentally.
+        for text, expected in (
+            ('{a: 1,}', {'a': 1}),
+            ('[1, 2,]', [1, 2]),
+        ):
+            with self.subTest(text=text):
+                self.check(text, expected)
+            for text in ('[1,,]', '{,}'):
+                with self.subTest(text=text):
+                    with self.assertRaises(ValueError):
+                        json5.loads(text)
+    
+    def test_number_spellings(self):
+        # tests/lib_test.py covers plain, hex and signed numbers, but
+        # not leading/trailing-dot spellings, and not the rejected
+        # spellings below.
+        for text, expected in (
+            ('.5', 0.5),
+            ('5.', 5.0),
+            ('1.e3', 1000.0),
+        ):
+            with self.subTest(text=text):
+                self.check(text, expected)
+        for text in ('01', '0b101', '1_000'):
+            with self.subTest(text=text):
+                with self.assertRaises(ValueError):
+                    json5.loads(text)
+
+
+class TestParse(unittest.TestCase):                        
     maxDiff = None
 
     def check(self, s, obj, err, pos, consume_trailing=True, start=0):

@@ -112,4 +112,4 @@ basic.variable-rgx = "[a-z_][a-z0-9_]{0,30}$"
 [tool.pyproject-fmt]
 indent = 4
 keep_full_version = true
-max_supported_python = "3.14"
+max_supported_python = "3.15"

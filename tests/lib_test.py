@@ -41,12 +41,12 @@ class NoTruthHook(RecordingHook):
 
 
 class _ParseIntRecorder:
-        def __init__(self):
-                    self.seen = []
+    def __init__(self):
+            self.seen = []
             
-        def __call__(self, value, base=10):
-                    self.seen.append((value, base))
-                    return int(value, base)
+    def __call__(self, value, base=10):
+        self.seen.append((value, base))
+        return int(value, base)
             
     
 class TestOptionalHooks(unittest.TestCase):
@@ -111,16 +111,16 @@ class TestOptionalHooks(unittest.TestCase):
                     self.assertEqual(hook, [value])
 
     def test_parse_int_hook_receives_base_16_for_hex(self):
-                # tests/lib_test.py exercises parse_int only with a decimal
-                # literal. The walker in json5/lib.py (_walk_ast) calls
-                # parse_int(v, base=16) for hex literals; a hook written for
-                # the one-argument json signature would fail there.
-                hook = _ParseIntRecorder()
-                self.assertEqual(json5.loads('0x10', parse_int=hook), 16)
-                self.assertEqual(hook.seen, [('0x10', 16)])
-                hook = _ParseIntRecorder()
-                self.assertEqual(json5.loads('42', parse_int=hook), 42)
-                self.assertEqual(hook.seen, [('42', 10)])
+        # tests/lib_test.py exercises parse_int only with a decimal
+        # literal. The walker in json5/lib.py (_walk_ast) calls
+        # parse_int(v, base=16) for hex literals; a hook written for
+        # the one-argument json signature would fail there.
+        hook = _ParseIntRecorder()
+        self.assertEqual(json5.loads('0x10', parse_int=hook), 16)
+        self.assertEqual(hook.seen, [('0x10', 16)])
+        hook = _ParseIntRecorder()
+        self.assertEqual(json5.loads('42', parse_int=hook), 42)
+        self.assertEqual(hook.seen, [('42', 10)])
         
     
     class TestLoads(unittest.TestCase):

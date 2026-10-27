@@ -40,6 +40,15 @@ class NoTruthHook(RecordingHook):
         )  # pragma: no cover
 
 
+class _ParseIntRecorder:
+        def __init__(self):
+                    self.seen = []
+            
+        def __call__(self, value, base=10):
+                    self.seen.append((value, base))
+                    return int(value, base)
+            
+    
 class TestOptionalHooks(unittest.TestCase):
     def test_decoding_hooks(self):
         cases = (

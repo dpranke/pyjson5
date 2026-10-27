@@ -110,8 +110,20 @@ class TestOptionalHooks(unittest.TestCase):
                     self.assertEqual(actual, '"custom"')
                     self.assertEqual(hook, [value])
 
-
-class TestLoads(unittest.TestCase):
+    def test_parse_int_hook_receives_base_16_for_hex(self):
+                # tests/lib_test.py exercises parse_int only with a decimal
+                # literal. The walker in json5/lib.py (_walk_ast) calls
+                # parse_int(v, base=16) for hex literals; a hook written for
+                # the one-argument json signature would fail there.
+                hook = _ParseIntRecorder()
+                self.assertEqual(json5.loads('0x10', parse_int=hook), 16)
+                self.assertEqual(hook.seen, [('0x10', 16)])
+                hook = _ParseIntRecorder()
+                self.assertEqual(json5.loads('42', parse_int=hook), 42)
+                self.assertEqual(hook.seen, [('42', 10)])
+        
+    
+    class TestLoads(unittest.TestCase):
     maxDiff = None
 
     def check(self, s, obj, strict=True):

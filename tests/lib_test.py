@@ -561,7 +561,7 @@ class TestOptionalHooks(unittest.TestCase):
             for text in ('[1,,]', '{,}'):
                 with self.subTest(text=text):
                     with self.assertRaises(ValueError):
-                        json5.loads(text)
+                    json5.loads(text)
     
     def test_number_spellings(self):
         # tests/lib_test.py covers plain, hex and signed numbers, but

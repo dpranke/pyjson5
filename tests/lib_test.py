@@ -558,9 +558,9 @@ class TestOptionalHooks(unittest.TestCase):
         ):
             with self.subTest(text=text):
                 self.check(text, expected)
-            for text in ('[1,,]', '{,}'):
-                with self.subTest(text=text):
-                    with self.assertRaises(ValueError):
+        for text in ('[1,,]', '{,}'):
+            with self.subTest(text=text):
+                with self.assertRaises(ValueError):
                     json5.loads(text)
     
     def test_number_spellings(self):

@@ -1639,17 +1639,19 @@ class Parser:
         self._push('exp__c0')
         self._seq(
             [
-                self._exp__c0__s0_,
+                lambda: self._bind(self._exp__c0__s0_l_, 'm'),
                 lambda: self._bind(self._exp__c0__s1_l_, 's'),
                 self._exp__c0__s2_,
                 lambda: self._succeed(
-                    'e' + self._get('s') + self._join('', self._get('ds'))
+                    self._get('m')
+                    + self._get('s')
+                    + self._join('', self._get('ds'))
                 ),
             ]
         )
         self._pop('exp__c0')
 
-    def _exp__c0__s0_(self):
+    def _exp__c0__s0_l_(self):
         self._choose([lambda: self._ch('e'), lambda: self._ch('E')])
 
     def _exp__c0__s1_l_(self):
@@ -1662,14 +1664,16 @@ class Parser:
         self._push('exp__c1')
         self._seq(
             [
-                self._exp__c1__s0_,
+                lambda: self._bind(self._exp__c1__s0_l_, 'm'),
                 self._exp__c1__s1_,
-                lambda: self._succeed('e' + self._join('', self._get('ds'))),
+                lambda: self._succeed(
+                    self._get('m') + self._join('', self._get('ds'))
+                ),
             ]
         )
         self._pop('exp__c1')
 
-    def _exp__c1__s0_(self):
+    def _exp__c1__s0_l_(self):
         self._choose([lambda: self._ch('e'), lambda: self._ch('E')])
 
     def _exp__c1__s1_(self):

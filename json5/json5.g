@@ -148,5 +148,5 @@ frac           = '.' digit*:ds                       -> '.' + join('', ds)
 
 lead_frac      = '.' digit+:ds                       -> '.' + join('', ds)
 
-exp            = ('e' | 'E') ('+' | '-'):s digit+:ds -> 'e' + s + join('', ds)
-               | ('e' | 'E') digit+:ds               -> 'e' + join('', ds)
+exp            = ('e' | 'E'):m ('+' | '-'):s digit+:ds -> m + s + join('', ds)
+               | ('e' | 'E'):m digit+:ds               -> m + join('', ds)

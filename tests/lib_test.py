@@ -1209,6 +1209,28 @@ class TestDumps(unittest.TestCase):
     def test_empty_key(self):
         self.assertEqual(json5.dumps({'': 'value'}), '{"": "value"}')
 
+    def test_sequence_values_dump_as_arrays(self):
+        # json5 mirrors json here; tests/lib_test.py covers a custom
+        # sequence-like object, but not builtin tuple/range values.
+        for obj, expected in (
+            ((1, 2), '[1, 2]'),
+            (range(3), '[0, 1, 2]'),
+            ((), '[]'),
+        ):
+            with self.subTest(obj=obj):
+                self.check(obj, expected)
 
-if __name__ == '__main__':  # pragma: no cover
+        def test_line_and_paragraph_separators_are_always_escaped(self):
+            # The encoder special-cases U+2028/U+2029 (json5/lib.py,
+            # _encode_quoted_str): they stay escaped even when
+            # ensure_ascii=False, unlike other non-ASCII characters.
+            for ch in ('\u2028', '\u2029'):
+                with self.subTest(ch=ch):
+                    self.assertEqual(
+                        json5.dumps(ch, ensure_ascii=False),
+                        '"\\u%04x"' % ord(ch),
+                    )
+
+                
+                if __name__ == '__main__':  # pragma: no cover
     unittest.main()

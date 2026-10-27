@@ -123,7 +123,7 @@ class TestOptionalHooks(unittest.TestCase):
         self.assertEqual(hook.seen, [('42', 10)])
         
     
-    class TestLoads(unittest.TestCase):
+class TestLoads(unittest.TestCase):
     maxDiff = None
 
     def check(self, s, obj, strict=True):

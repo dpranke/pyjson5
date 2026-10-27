@@ -24,7 +24,7 @@ THIS_VER = '.'.join(str(x) for x in sys.version_info[:2])
 # This'll need to change if there's ever a Python 4 to support.
 MIN_PARTIAL_MINOR_VER = 8
 MIN_FULL_MINOR_VER = 11
-MAX_FULL_MINOR_VER = 14
+MAX_FULL_MINOR_VER = 15
 MAX_PARTIAL_MINOR_VER = 15
 
 PARTIAL_COMMANDS = ['clean', 'devenv', 'help', 'tests']
@@ -755,12 +755,19 @@ class Runner:
         ver = self.args.python
 
         if self.venv and not is_uv:
-            if ver not in partial:
-                print(
-                    f'Warning, this version of Python ({THIS_VER}) '
-                    f'may not be supported. '
-                )
-                sys.stdout.flush()
+            if ver not in full:
+                if ver in partial:
+                    print(
+                        f'Warning, this version of Python ({THIS_VER}) '
+                        f'may only be partially supported. '
+                    )
+                else:
+                    print(
+                        f'Warning, this version Python ({THIS_VER}) '
+                        f'may not be supported. '
+                    )
+                    sys.stdout.flush()
+
         else:
             # Note: we explicitly want to prevent a hypothetical Python 4
             # here, so we disable the ruff warning YTT201.

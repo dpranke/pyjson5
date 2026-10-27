@@ -1229,8 +1229,8 @@ class TestDumps(unittest.TestCase):
                 self.assertEqual(
                     json5.dumps(ch, ensure_ascii=False),
                     '"\\u%04x"' % ord(ch),                    
-
                 )
+
                 
                 if __name__ == '__main__':  # pragma: no cover
     unittest.main()

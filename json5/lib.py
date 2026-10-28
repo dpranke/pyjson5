@@ -426,6 +426,7 @@ def dump(
     trailing_commas: bool = True,
     allow_duplicate_keys: bool = True,
     quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
+    use_duck_typing: bool = False,
     **kw,
 ):
     """Serialize ``obj`` to a JSON5-formatted stream to ``fp``,
@@ -454,6 +455,7 @@ def dump(
             trailing_commas=trailing_commas,
             allow_duplicate_keys=allow_duplicate_keys,
             quote_style=quote_style,
+            use_duck_typing=use_duck_typing,
             **kw,
         )
     )
@@ -475,6 +477,7 @@ def dumps(
     trailing_commas: bool = True,
     allow_duplicate_keys: bool = True,
     quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
+    use_duck_typing: bool = False,
     **kw: Any,
 ):
     """Serialize ``obj`` to a JSON5-formatted string.
@@ -506,6 +509,12 @@ def dumps(
       written.
     - `quote_style` controls how strings are encoded. See the documentation
       for the `QuoteStyle` class, above, for how this is used.
+
+    - If `use_duck_typing` is true, objects with `keys` and `__getitem__`
+      methods are encoded as objects, and objects with `__getitem__` and
+      `__iter__` methods are encoded as arrays. Otherwise, only `dict`
+      instances are encoded as objects and `list` or `tuple` instances are
+      encoded as arrays, matching the standard `json` module.
 
       *Note*: Strings that are being used as unquoted keys are not affected
       by this parameter and remain unquoted.
@@ -565,6 +574,7 @@ def dumps(
         trailing_commas=trailing_commas,
         allow_duplicate_keys=allow_duplicate_keys,
         quote_style=quote_style,
+        use_duck_typing=use_duck_typing,
         **kw,
     )
     return enc.encode(obj, seen=set(), level=0, as_key=False)
@@ -586,6 +596,7 @@ class JSON5Encoder:
         trailing_commas: bool = True,
         allow_duplicate_keys: bool = True,
         quote_style: QuoteStyle = QuoteStyle.ALWAYS_DOUBLE,
+        use_duck_typing: bool = False,
         **kw,
     ):
         """Provides a class that may be overridden to customize the behavior
@@ -610,6 +621,7 @@ class JSON5Encoder:
         self.trailing_commas = trailing_commas
         self.allow_duplicate_keys = allow_duplicate_keys
         self.quote_style = quote_style
+        self.use_duck_typing = use_duck_typing
 
     def default(self, obj: Any) -> Any:
         """Provides a last-ditch option to encode a value that the encoder
@@ -820,15 +832,19 @@ class JSON5Encoder:
                 raise ValueError('Circular reference detected.')
             seen.add(i)
 
-        # Ideally we'd use collections.abc.Mapping and collections.abc.Sequence
-        # here, but for backwards-compatibility with potential old callers,
-        # we only check for the two attributes we need in each case.
-        # Bytes-like objects pass the array check, but they hold binary data.
-        if isinstance(obj, (bytes, bytearray, memoryview)):
-            s = self.encode(self.default(obj), seen, level, as_key=False)
-        elif hasattr(obj, 'keys') and hasattr(obj, '__getitem__'):
+        is_mapping = isinstance(obj, dict) or (
+            self.use_duck_typing
+            and hasattr(obj, 'keys')
+            and hasattr(obj, '__getitem__')
+        )
+        is_array = isinstance(obj, (list, tuple)) or (
+            self.use_duck_typing
+            and hasattr(obj, '__getitem__')
+            and hasattr(obj, '__iter__')
+        )
+        if is_mapping:
             s = self._encode_dict(obj, seen, level + 1)
-        elif hasattr(obj, '__getitem__') and hasattr(obj, '__iter__'):
+        elif is_array:
             s = self._encode_array(obj, seen, level + 1)
         else:
             s = self.encode(self.default(obj), seen, level, as_key=False)

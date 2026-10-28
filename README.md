@@ -200,6 +200,9 @@ to activate it.
 * Unreleased
     * Honor explicit false-valued callable parsing hooks and default encoders
       without testing their truth value.
+    * Match the standard library's concrete collection encoding by default;
+      add `use_duck_typing=True` to retain structural mapping and sequence
+      detection.
 
 * v0.17.3 (2026-10-09)
     * Bump the indirect dependency on `urllib3` to 2.8.0 to pick up a

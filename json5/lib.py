@@ -609,6 +609,23 @@ class JSON5Encoder:
         self.quote_keys = quote_keys
         self.trailing_commas = trailing_commas
         self.allow_duplicate_keys = allow_duplicate_keys
+
+        # `QuoteStyle` members have plain string values (e.g. "always_double"),
+        # so it is easy to pass the value when the member was meant; without
+        # this coercion, a raw string would never match any of the `in` checks
+        # against the members, silently producing output using the wrong
+        # quote style - or even output with unescaped quotes that cannot be
+        # parsed back in. Coerce the string, and reject values that do not
+        # correspond to a valid member.
+        if isinstance(quote_style, str):
+            try:
+                quote_style = QuoteStyle(quote_style)
+            except ValueError:
+                valid = ', '.join(repr(q.value) for q in QuoteStyle)
+                raise ValueError(
+                    f'{quote_style!r} is not a valid QuoteStyle;'
+                    f' expected one of: {valid}'
+                ) from None
         self.quote_style = quote_style
 
     def default(self, obj: Any) -> Any:

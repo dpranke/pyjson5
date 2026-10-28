@@ -1139,6 +1139,28 @@ class TestDumps(unittest.TestCase):
             json5.dumps([1], indent=2, trailing_commas=False), '[\n  1\n]'
         )
 
+    def test_quote_style_string_is_coerced(self):
+        # A QuoteStyle member's value is a plain string, so it is easy to
+        # pass the value where the member itself is meant; the raw string
+        # must behave exactly like the member, not silently produce
+        # wrongly-quoted output.
+        for member in json5.QuoteStyle:
+            self.assertEqual(
+                json5.dumps("a 'b' \"c\" d", quote_style=member),
+                json5.dumps("a 'b' \"c\" d", quote_style=member.value),
+            )
+
+        out = json5.dumps("it's", quote_style='always_double')
+        self.assertEqual(out, '"it\'s"')
+        self.assertEqual(json5.loads(out), "it's")
+
+        out = json5.dumps("it's", quote_style='always_single')
+        self.assertEqual(out, "'it\\'s'")
+        self.assertEqual(json5.loads(out), "it's")
+
+        with self.assertRaises(ValueError):
+            json5.dumps('foo', quote_style='always-quote')
+
     def test_supplemental_unicode(self):
         self.check(chr(0x10000), '"\\ud800\\udc00"')
 

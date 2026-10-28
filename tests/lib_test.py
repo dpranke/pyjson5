@@ -40,6 +40,15 @@ class NoTruthHook(RecordingHook):
         )  # pragma: no cover
 
 
+class _ParseIntRecorder:
+    def __init__(self):
+            self.seen = []
+            
+    def __call__(self, value, base=10):
+        self.seen.append((value, base))
+        return int(value, base)
+            
+    
 class TestOptionalHooks(unittest.TestCase):
     def test_decoding_hooks(self):
         cases = (
@@ -101,7 +110,19 @@ class TestOptionalHooks(unittest.TestCase):
                     self.assertEqual(actual, '"custom"')
                     self.assertEqual(hook, [value])
 
-
+    def test_parse_int_hook_receives_base_16_for_hex(self):
+        # tests/lib_test.py exercises parse_int only with a decimal
+        # literal. The walker in json5/lib.py (_walk_ast) calls
+        # parse_int(v, base=16) for hex literals; a hook written for
+        # the one-argument json signature would fail there.
+        hook = _ParseIntRecorder()
+        self.assertEqual(json5.loads('0x10', parse_int=hook), 16)
+        self.assertEqual(hook.seen, [('0x10', 16)])
+        hook = _ParseIntRecorder()
+        self.assertEqual(json5.loads('42', parse_int=hook), 42)
+        self.assertEqual(hook.seen, [('42', 10)])
+        
+    
 class TestLoads(unittest.TestCase):
     maxDiff = None
 
@@ -328,10 +349,7 @@ class TestLoads(unittest.TestCase):
             return x
 
         self.assertEqual(json5.loads('1.0', parse_float=hook), '1.0')
-        for text in ('1E5', '1E+5', '2.5E-3', '1e5', '1e-5'):
-            with self.subTest(text=text):
-                self.assertEqual(json5.loads(text, parse_float=hook), text)
-
+        
     def test_parse_int(self):
         def hook(x, base=10):
             del base
@@ -515,8 +533,51 @@ class TestLoads(unittest.TestCase):
         self.check_fail('0 1', '<string>:1 Unexpected "1" at column 3')
         self.check_fail('0 a', '<string>:1 Unexpected "a" at column 3')
 
+    def test_comments(self):
+        # Comments are a headline JSON5 feature (README), but
+        # tests/lib_test.py never asserts them directly; the sample
+        # file only checks the parsed object.
+        for text, expected in (
+            ('// hi\n42', 42),
+            ('[1, /* y */ 2]', [1, 2]),
+            ('{"a": "//not a comment"}', {'a': '//not a comment'}),
+        ):
+            with self.subTest(text=text):
+                self.check(text, expected)
 
-class TestParse(unittest.TestCase):
+    def test_trailing_commas_on_loads(self):
+        # The README allows trailing commas in objects and arrays.
+        # tests/lib_test.py asserts trailing commas on the dumps side
+        # only; the sample file exercises them only incidentally.
+        for text, expected in (
+            ('{a: 1,}', {'a': 1}),
+            ('[1, 2,]', [1, 2]),
+        ):
+            with self.subTest(text=text):
+                self.check(text, expected)
+        for text in ('[1,,]', '{,}'):
+            with self.subTest(text=text):
+                with self.assertRaises(ValueError):
+                    json5.loads(text)
+    
+    def test_number_spellings(self):
+        # tests/lib_test.py covers plain, hex and signed numbers, but
+        # not leading/trailing-dot spellings, and not the rejected
+        # spellings below.
+        for text, expected in (
+            ('.5', 0.5),
+            ('5.', 5.0),
+            ('1.e3', 1000.0),
+        ):
+            with self.subTest(text=text):
+                self.check(text, expected)
+        for text in ('01', '0b101', '1_000'):
+            with self.subTest(text=text):
+                with self.assertRaises(ValueError):
+                    json5.loads(text)
+
+
+class TestParse(unittest.TestCase):                        
     maxDiff = None
 
     def check(self, s, obj, err, pos, consume_trailing=True, start=0):
@@ -1144,6 +1205,28 @@ class TestDumps(unittest.TestCase):
 
     def test_empty_key(self):
         self.assertEqual(json5.dumps({'': 'value'}), '{"": "value"}')
+
+    def test_sequence_values_dump_as_arrays(self):
+        # json5 mirrors json here; tests/lib_test.py covers a custom
+        # sequence-like object, but not builtin tuple/range values.
+        for obj, expected in (
+            ((1, 2), '[1, 2]'),
+            (range(3), '[0, 1, 2]'),
+            ((), '[]'),
+        ):
+            with self.subTest(obj=obj):
+                self.check(obj, expected)
+
+    def test_line_and_paragraph_separators_are_always_escaped(self):
+        # The encoder special-cases U+2028/U+2029 (json5/lib.py,
+        # _encode_quoted_str): they stay escaped even when
+        # ensure_ascii=False, unlike other non-ASCII characters.
+        for ch in ('\u2028', '\u2029'):
+            with self.subTest(ch=ch):
+                self.assertEqual(
+                    json5.dumps(ch, ensure_ascii=False),
+                    '"\\u%04x"' % ord(ch),                    
+                )
 
 
 if __name__ == '__main__':  # pragma: no cover

@@ -562,7 +562,7 @@ class TestDump(unittest.TestCase):
 
     def test_use_duck_typing(self):
         output = io.StringIO()
-        json5.dump(memoryview(b'hi'), output, use_duck_typing=True)
+        json5.dump(bytearray(b'hi'), output, use_duck_typing=True)
         self.assertEqual('[104, 105]', output.getvalue())
 
 
@@ -701,6 +701,17 @@ class TestDumps(unittest.TestCase):
         self.assertEqual(json5.dumps(value, default=list), '[0, 1, 1]')
         self.assertEqual(json5.dumps(value, use_duck_typing=True), '[0, 1, 1]')
 
+        class GetItemOnly:
+            def __getitem__(self, index):
+                return (0, 1)[index]  # pragma: no cover
+
+        self.assertRaises(
+            TypeError,
+            json5.dumps,
+            GetItemOnly(),
+            use_duck_typing=True,
+        )
+
     def test_invalid_collection(self):
         # Check that something that isn't actually an array or a dict doesn't
         # work.
@@ -825,9 +836,17 @@ class TestDumps(unittest.TestCase):
                     ),
                     '{a: "6869"}',
                 )
-                self.assertEqual(
-                    json5.dumps(value, use_duck_typing=True), '[104, 105]'
+                was_duck_array = hasattr(value, '__getitem__') and hasattr(
+                    value, '__iter__'
                 )
+                if was_duck_array:
+                    self.assertEqual(
+                        json5.dumps(value, use_duck_typing=True), '[104, 105]'
+                    )
+                else:  # pragma: no cover - memoryview varies by Python
+                    self.assertRaises(
+                        TypeError, json5.dumps, value, use_duck_typing=True
+                    )
 
     def test_ensure_ascii(self):
         self.check('\u00fc', '"\\u00fc"')

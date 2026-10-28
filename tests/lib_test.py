@@ -328,6 +328,9 @@ class TestLoads(unittest.TestCase):
             return x
 
         self.assertEqual(json5.loads('1.0', parse_float=hook), '1.0')
+        for text in ('1E5', '1E+5', '2.5E-3', '1e5', '1e-5'):
+            with self.subTest(text=text):
+                self.assertEqual(json5.loads(text, parse_float=hook), text)
 
     def test_parse_int(self):
         def hook(x, base=10):

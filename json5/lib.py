@@ -130,10 +130,16 @@ def load(
           appropriate number of characters before beginning parsing;
           the file must be seekable for this to work correctly.
 
-    You can use `load(..., consume_trailing=False)` to repeatedly read
-    values from a file. However, in the current implementation `load` does
-    this by reading the entire file into memory before doing anything, so
-    it is not very efficient.
+    `load()` reads the entire remaining stream into memory, even when
+    `consume_trailing=False`. That option controls whether the parser
+    validates trailing characters; it does not leave the stream positioned
+    after the parsed value. Repeated calls cannot read successive values
+    from a stream this way.
+
+    To read multiple values, read the input into a string once and call
+    `parse(..., consume_trailing=False)` repeatedly, passing each returned
+    position as the next `start`. See the example in `parse()`. These are
+    decoded-character positions, not byte offsets or file seek positions.
 
     Raises
         - `ValueError` if given an invalid document. This is different
@@ -284,12 +290,12 @@ def parse(
     `s` as follows:
 
     >>> import json5
-    >>> s = '1 2 3 4'
+    >>> s = '0 false null 4'
     >>> values = []
     >>> start = 0
     >>> while True:
     ...     v, err, pos = json5.parse(s, start=start, consume_trailing=False)
-    ...     if v:
+    ...     if err is None:
     ...         values.append(v)
     ...         start = pos
     ...         if start == len(s) or s[start:].isspace():
@@ -299,7 +305,7 @@ def parse(
     ...         continue
     ...     raise ValueError(err)
     >>> values
-    [1, 2, 3, 4]
+    [0, False, None, 4]
 
     """
     assert cls is None, 'Custom decoders are not supported'

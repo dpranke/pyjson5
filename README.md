@@ -47,6 +47,14 @@ release this as 1.0.
 
 * Did I mention that it is **SLOW**?
 
+* `load()` reads the entire remaining stream into memory, including when
+  `consume_trailing=False`. That option ignores trailing content during
+  parsing; it does not preserve unread stream data for a later `load()`.
+  To read successive values, read the input into a string once and use
+  `parse(..., consume_trailing=False)`, passing its returned position as
+  the next `start`. Positions refer to decoded characters, not byte offsets
+  or file seek positions. The `parse()` docstring includes an example.
+
 * The implementation is based on recursive descent parsing and relies on the
   runtime stack for recursion; this means that really deeply nested data
   might trigger a `RecursionError`, but this doesn't seem to be a problem in

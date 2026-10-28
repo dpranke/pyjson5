@@ -345,6 +345,15 @@ def _convert(
     def _fp_constant_parser(s):
         return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
 
+    def _parse_int(s):
+        # Default integer parser: JSON5 hex literals (e.g. 0x1F, -0xff)
+        # need base 16, everything else is ordinary decimal. Custom
+        # ``parse_int`` callbacks are documented to take just the string
+        # (as written), so only this default understands the hex prefix.
+        if s.lstrip('-').startswith(('0x', '0X')):
+            return int(s, 16)
+        return int(s)
+
     def _dictify(pairs):
         if not allow_duplicate_keys:
             keys = set()
@@ -360,7 +369,7 @@ def _convert(
         return dict(pairs)
 
     parse_float = float if parse_float is None else parse_float
-    parse_int = int if parse_int is None else parse_int
+    parse_int = _parse_int if parse_int is None else parse_int
     parse_constant = (
         _fp_constant_parser if parse_constant is None else parse_constant
     )
@@ -385,7 +394,7 @@ def _walk_ast(
     if ty == 'number':
         unsigned = v[1:] if v.startswith('-') else v
         if unsigned.startswith(('0x', '0X')):
-            return parse_int(v, base=16)
+            return parse_int(v)
         if '.' in v or 'e' in v or 'E' in v:
             return parse_float(v)
         if 'Infinity' in v or 'NaN' in v:

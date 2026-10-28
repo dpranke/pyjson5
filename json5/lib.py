@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import builtins
 import enum
 import math
 import re
@@ -33,6 +34,14 @@ from json5.parser import Parser
 
 # Used when encoding keys, below.
 _reserved_word_re: Optional[re.Pattern] = None
+
+
+def _get_mapping_types():
+    frozendict_type = getattr(builtins, 'frozendict', None)
+    return (dict,) if frozendict_type is None else (dict, frozendict_type)
+
+
+_mapping_types = _get_mapping_types()
 
 # A high surrogate (U+D800..U+DBFF) immediately followed by a low surrogate
 # (U+DC00..U+DFFF). `\u` escapes decode one UTF-16 code unit each, so an
@@ -514,7 +523,8 @@ def dumps(
       methods are encoded as objects, and objects with `__getitem__` and
       `__iter__` methods are encoded as arrays. Otherwise, only `dict`
       instances are encoded as objects and `list` or `tuple` instances are
-      encoded as arrays, matching the standard `json` module.
+      encoded as arrays, matching the standard `json` module. On Python 3.15
+      and later, the built-in `frozendict` is also encoded as an object.
 
       *Note*: Strings that are being used as unquoted keys are not affected
       by this parameter and remain unquoted.
@@ -832,7 +842,7 @@ class JSON5Encoder:
                 raise ValueError('Circular reference detected.')
             seen.add(i)
 
-        is_mapping = isinstance(obj, dict) or (
+        is_mapping = isinstance(obj, _mapping_types) or (
             self.use_duck_typing
             and hasattr(obj, 'keys')
             and hasattr(obj, '__getitem__')

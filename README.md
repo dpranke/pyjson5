@@ -200,8 +200,9 @@ to activate it.
 * Unreleased
     * Honor explicit false-valued callable parsing hooks and default encoders
       without testing their truth value.
-    * Match the standard library's concrete collection encoding by default;
-      add `use_duck_typing=True` to retain structural mapping and sequence
+    * Match the standard library's concrete collection encoding by default,
+      including Python 3.15's built-in `frozendict`; add
+      `use_duck_typing=True` to retain structural mapping and sequence
       detection.
 
 * v0.17.3 (2026-10-09)

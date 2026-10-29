@@ -69,7 +69,7 @@ class Runner:
         self.venv = None
         if 'VIRTUAL_ENV' in os.environ:
             self.venv = os.environ['VIRTUAL_ENV'].replace(THIS_DIR, '/')
-        self.run_cmd = ['python', '-m']
+        self.run_cmd = [sys.executable, '-m']
 
     def main(self, argv):
         # Change stdout to be unbuffered so that output shows up in
@@ -732,8 +732,8 @@ class Runner:
             raise FailFastException(1)
 
     def is_supported_python_version(self):
-        def _to_str(l):
-            return ', '.join(l[:-1]) + ' and ' + l[-1]
+        def _to_str(versions):
+            return ', '.join(versions[:-1]) + ' and ' + versions[-1]
 
         partial = [
             '3.' + str(x)

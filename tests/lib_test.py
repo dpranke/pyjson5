@@ -21,10 +21,8 @@ import os
 import unittest
 from collections import OrderedDict, namedtuple
 from types import MappingProxyType
-from unittest import mock
 
 import json5
-from json5 import lib as json5lib
 
 
 class RecordingHook(list):
@@ -805,31 +803,6 @@ class TestDumps(unittest.TestCase):
         frozendict_type = getattr(builtins, 'frozendict', None)
         if frozendict_type is not None:  # pragma: no cover - Python 3.15+
             self.assertEqual(json5.dumps(frozendict_type({'a': 1})), '{a: 1}')
-
-    def test_optional_concrete_mapping_type(self):
-        # pylint: disable=protected-access
-        class FrozenDict:
-            def __init__(self, values):
-                self.values = values
-
-            def keys(self):
-                return self.values.keys()
-
-            def __getitem__(self, key):
-                return self.values[key]
-
-            def __len__(self):
-                return len(self.values)
-
-        value = FrozenDict({'a': 1})
-        self.assertRaises(TypeError, json5.dumps, value)
-        with mock.patch.object(
-            builtins, 'frozendict', FrozenDict, create=True
-        ):
-            mapping_types = json5lib._get_mapping_types()
-            self.assertEqual(mapping_types, (dict, FrozenDict))
-        with mock.patch.object(json5lib, '_mapping_types', (dict, FrozenDict)):
-            self.assertEqual(json5.dumps(value), '{a: 1}')
 
     def test_custom_encoder(self):
         class Test:

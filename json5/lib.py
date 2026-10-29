@@ -858,6 +858,7 @@ class JSON5Encoder:
 
         first_key = True
         new_keys = set()
+        encoded_keys = set()
         for key in keys:
             try:
                 key_str = self.encode(key, seen, level, as_key=True)
@@ -874,9 +875,17 @@ class JSON5Encoder:
                 # same key. Non-string keys are always encoded as a plain
                 # double-quoted string.
                 key_name = key if isinstance(key, str) else key_str[1:-1]
-                if key_name in new_keys:
+                # A surrogate pair and its astral character can also produce
+                # the same key. Compare their emitted forms so custom encoders
+                # that escape surrogates as literal text remain supported.
+                encoded_key = key_str
+                if key_str[:1] in ('"', "'") and key_str[-1:] == key_str[:1]:
+                    encoded_key = key_str[1:-1]
+                encoded_key = _join_surrogate_pairs(encoded_key)
+                if key_name in new_keys or encoded_key in encoded_keys:
                     raise ValueError(f'duplicate key {key!r}')
                 new_keys.add(key_name)
+                encoded_keys.add(encoded_key)
 
             if first_key:
                 first_key = False

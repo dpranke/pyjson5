@@ -921,20 +921,13 @@ class JSON5Encoder:
         return s
 
     def _encode_array(self, obj: Any, seen: Set, level: int) -> str:
-        if not obj:
+        items = [self.encode(el, seen, level, as_key=False) for el in obj]
+        if not items:
             return '[]'
 
         indent_str, end_str = self._spacers(level)
         item_sep = self.item_separator + indent_str
-        return (
-            '['
-            + indent_str
-            + item_sep.join(
-                self.encode(el, seen, level, as_key=False) for el in obj
-            )
-            + end_str
-            + ']'
-        )
+        return '[' + indent_str + item_sep.join(items) + end_str + ']'
 
     def _spacers(self, level: int) -> Tuple[str, str]:
         if self.indent is not None:

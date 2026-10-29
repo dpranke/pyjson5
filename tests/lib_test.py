@@ -12,13 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import builtins
 import decimal
 import io
 import json
 import math
 import os
 import unittest
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
+from types import MappingProxyType
 
 import json5
 
@@ -563,6 +565,11 @@ class TestDump(unittest.TestCase):
         json5.dump(True, sio)
         self.assertEqual('true', sio.getvalue())
 
+    def test_use_duck_typing(self):
+        output = io.StringIO()
+        json5.dump(bytearray(b'hi'), output, use_duck_typing=True)
+        self.assertEqual('[104, 105]', output.getvalue())
+
 
 class TestDumps(unittest.TestCase):
     maxDiff = None
@@ -676,7 +683,7 @@ class TestDumps(unittest.TestCase):
         self.assertRaises(ValueError, json5.dumps, z)
 
     def test_custom_arrays(self):
-        # A sequence-like object could be dumped by either
+        # With duck typing, a sequence-like object can be dumped by either
         # iterating over it using __iter__, or manually iterating
         # over it using __len__ and __getitem__. As long as one or
         # the other is implemented, this test will pass. The implementation
@@ -694,7 +701,21 @@ class TestDumps(unittest.TestCase):
             def __len__(self):
                 return 3  # pragma: no cover
 
-        self.assertEqual(json5.dumps(MyArray()), '[0, 1, 1]')
+        value = MyArray()
+        self.assertRaises(TypeError, json5.dumps, value)
+        self.assertEqual(json5.dumps(value, default=list), '[0, 1, 1]')
+        self.assertEqual(json5.dumps(value, use_duck_typing=True), '[0, 1, 1]')
+
+        class GetItemOnly:
+            def __getitem__(self, index):
+                return (0, 1)[index]  # pragma: no cover
+
+        self.assertRaises(
+            TypeError,
+            json5.dumps,
+            GetItemOnly(),
+            use_duck_typing=True,
+        )
 
     def test_invalid_collection(self):
         # Check that something that isn't actually an array or a dict doesn't
@@ -737,7 +758,51 @@ class TestDumps(unittest.TestCase):
             def __len__(self):
                 return 2
 
-        self.assertEqual(json5.dumps(MyDict()), '{a: 1, b: 2}')
+        value = MyDict()
+        self.assertRaises(TypeError, json5.dumps, value)
+        self.assertEqual(
+            json5.dumps(
+                value,
+                default=lambda obj: {'a': obj['a'], 'b': obj['b']},
+            ),
+            '{a: 1, b: 2}',
+        )
+        self.assertEqual(
+            json5.dumps(value, use_duck_typing=True), '{a: 1, b: 2}'
+        )
+
+    def test_concrete_collections(self):
+        point_type = namedtuple('Point', ('x', 'y'))
+        cases = (
+            ([], '[]'),
+            ([1], '[1]'),
+            ((), '[]'),
+            ((1,), '[1]'),
+            (point_type(1, 2), '[1, 2]'),
+            ({}, '{}'),
+            ({'a': 1}, '{a: 1}'),
+            (OrderedDict([('a', 1)]), '{a: 1}'),
+        )
+        for value, expected in cases:
+            with self.subTest(value=value, expected=expected):
+                self.assertEqual(json5.dumps(value), expected)
+                self.assertEqual(
+                    json5.dumps(value, use_duck_typing=True), expected
+                )
+
+        encoder = json5.JSON5Encoder(use_duck_typing=True)
+        self.assertEqual(
+            encoder.encode(point_type(1, 2), set(), 0, as_key=False),
+            '[1, 2]',
+        )
+
+        proxy = MappingProxyType({'a': 1})
+        self.assertRaises(TypeError, json5.dumps, proxy)
+        self.assertEqual(json5.dumps(proxy, use_duck_typing=True), '{a: 1}')
+
+        frozendict_type = getattr(builtins, 'frozendict', None)
+        if frozendict_type is not None:  # pragma: no cover - Python 3.15+
+            self.assertEqual(json5.dumps(frozendict_type({'a': 1})), '{a: 1}')
 
     def test_custom_encoder(self):
         class Test:
@@ -772,6 +837,29 @@ class TestDumps(unittest.TestCase):
         self.assertEqual(
             json5.dumps(set(), default=_custom_serializer), '"something"'
         )
+
+        # Bytes-like objects are binary data, not arrays of numbers, even
+        # though they can be indexed and iterated over.
+        for value in (b'hi', bytearray(b'hi'), memoryview(b'hi')):
+            with self.subTest(value=value):
+                self.assertRaises(TypeError, json5.dumps, value)
+                self.assertEqual(
+                    json5.dumps(
+                        {'a': value}, default=lambda o: bytes(o).hex()
+                    ),
+                    '{a: "6869"}',
+                )
+                was_duck_array = hasattr(value, '__getitem__') and hasattr(
+                    value, '__iter__'
+                )
+                if was_duck_array:
+                    self.assertEqual(
+                        json5.dumps(value, use_duck_typing=True), '[104, 105]'
+                    )
+                else:  # pragma: no cover - memoryview varies by Python
+                    self.assertRaises(
+                        TypeError, json5.dumps, value, use_duck_typing=True
+                    )
 
     def test_ensure_ascii(self):
         self.check('\u00fc', '"\\u00fc"')

@@ -1139,27 +1139,33 @@ class TestDumps(unittest.TestCase):
             json5.dumps([1], indent=2, trailing_commas=False), '[\n  1\n]'
         )
 
-    def test_quote_style_string_is_coerced(self):
+    def test_quote_style_string_is_rejected(self):
         # A QuoteStyle member's value is a plain string, so it is easy to
-        # pass the value where the member itself is meant; the raw string
-        # must behave exactly like the member, not silently produce
+        # pass the value where the member itself is meant; that is a bug
+        # and must fail loudly rather than silently produce
         # wrongly-quoted output.
-        for member in json5.QuoteStyle:
-            self.assertEqual(
-                json5.dumps("a 'b' \"c\" d", quote_style=member),
-                json5.dumps("a 'b' \"c\" d", quote_style=member.value),
-            )
+        with self.assertRaises(ValueError):
+            json5.dumps("it's", quote_style='always_double')
 
-        out = json5.dumps("it's", quote_style='always_double')
+        # A member's value string is rejected even when it names a member.
+        for member in json5.QuoteStyle:
+            with self.assertRaises(ValueError):
+                json5.dumps("a 'b' \"c\" d", quote_style=member.value)
+
+        # So are invalid strings and non-string values.
+        with self.assertRaises(ValueError):
+            json5.dumps('foo', quote_style='always-quote')
+        with self.assertRaises(ValueError):
+            json5.dumps('foo', quote_style=5)
+
+        # Passing the members themselves still works as before.
+        out = json5.dumps("it's", quote_style=json5.QuoteStyle.ALWAYS_DOUBLE)
         self.assertEqual(out, '"it\'s"')
         self.assertEqual(json5.loads(out), "it's")
 
-        out = json5.dumps("it's", quote_style='always_single')
+        out = json5.dumps("it's", quote_style=json5.QuoteStyle.ALWAYS_SINGLE)
         self.assertEqual(out, "'it\\'s'")
         self.assertEqual(json5.loads(out), "it's")
-
-        with self.assertRaises(ValueError):
-            json5.dumps('foo', quote_style='always-quote')
 
     def test_supplemental_unicode(self):
         self.check(chr(0x10000), '"\\ud800\\udc00"')

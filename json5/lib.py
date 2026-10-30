@@ -138,6 +138,11 @@ def load(
           `load` will seek to zero and then read (and discard) the
           appropriate number of characters before beginning parsing;
           the file must be seekable for this to work correctly.
+        - the `parse_int` parameter does not have the same semantics as
+          in the `json` module: a custom callback is passed the integer
+          string as written, and must be able to handle both decimal and
+          hexadecimal literals (e.g. `0x1F`); only the default parser
+          decodes hexadecimal literals automatically.
 
     `load()` reads the entire remaining stream into memory, even when
     `consume_trailing=False`. That option controls whether the parser
@@ -214,6 +219,11 @@ def loads(
           trailing characters in the string will be ignored.
         - an extra `start` parameter specifies the zero-based offset into the
           string to start parsing at.
+        - the `parse_int` parameter does not have the same semantics as
+          in the `json` module: a custom callback is passed the integer
+          string as written, and must be able to handle both decimal and
+          hexadecimal literals (e.g. `0x1F`); only the default parser
+          decodes hexadecimal literals automatically.
 
     Raises
         - `ValueError` if given an invalid document. This is different
@@ -269,8 +279,9 @@ def parse(
     (the default), any trailing characters must be whitespace. If False,
     parsing stops when a valid value has been reached, (c) it takes an
     optional `start` parameter that specifies a zero-based offset to start
-    parsing from in the string, and (d) the return value is different, as
-    described below.
+    parsing from in the string, (d) the `parse_int` parameter does not have
+    the same semantics as in the `json` module (see `loads()` for details),
+    and (e) the return value is different, as described below.
 
     `parse()` is useful if you have a string that might contain multiple
     values and you need to extract all of them; you can do so by repeatedly
@@ -360,6 +371,11 @@ def _convert(
     def _fp_constant_parser(s):
         return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
 
+    def _parse_int(s):
+        if s.lstrip('-').startswith(('0x', '0X')):
+            return int(s, 16)
+        return int(s)
+
     def _dictify(pairs):
         if not allow_duplicate_keys:
             keys = set()
@@ -375,7 +391,7 @@ def _convert(
         return dict(pairs)
 
     parse_float = float if parse_float is None else parse_float
-    parse_int = int if parse_int is None else parse_int
+    parse_int = _parse_int if parse_int is None else parse_int
     parse_constant = (
         _fp_constant_parser if parse_constant is None else parse_constant
     )
@@ -400,7 +416,7 @@ def _walk_ast(
     if ty == 'number':
         unsigned = v[1:] if v.startswith('-') else v
         if unsigned.startswith(('0x', '0X')):
-            return parse_int(v, base=16)
+            return parse_int(v)
         if '.' in v or 'e' in v or 'E' in v:
             return parse_float(v)
         if 'Infinity' in v or 'NaN' in v:

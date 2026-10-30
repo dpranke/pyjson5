@@ -717,6 +717,36 @@ class TestDumps(unittest.TestCase):
             use_duck_typing=True,
         )
 
+    def test_custom_arrays_without_truth_value(self):
+        class Array:
+            def __init__(self, values):
+                self.values = values
+
+            def __iter__(self):
+                return iter(self.values)
+
+            def __getitem__(self, index):
+                return self.values[index]  # pragma: no cover
+
+            def __bool__(self):  # pragma: no cover
+                raise ValueError('The truth value of an array is ambiguous')
+
+        for values in ([], [0.0], [1.0, 2.0]):
+            for indent in (None, 0, 2, ''):
+                for trailing_commas in (True, False):
+                    with self.subTest(
+                        values=values,
+                        indent=indent,
+                        trailing_commas=trailing_commas,
+                    ):
+                        result = json5.dumps(
+                            Array(values),
+                            use_duck_typing=True,
+                            indent=indent,
+                            trailing_commas=trailing_commas,
+                        )
+                        self.assertEqual(json5.loads(result), values)
+
     def test_invalid_collection(self):
         # Check that something that isn't actually an array or a dict doesn't
         # work.

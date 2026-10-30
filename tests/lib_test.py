@@ -337,12 +337,8 @@ class TestLoads(unittest.TestCase):
             return x
 
         self.assertEqual(json5.loads('1', parse_int=hook), '1')
-        # hex literals are passed to custom parse_int callbacks with the
-        # documented single-string signature, as written (just like the
-        # parse_float exponent-marker behavior)
         self.assertEqual(json5.loads('0x10', parse_int=hook), '0x10')
         self.assertEqual(json5.loads('-0xff', parse_int=hook), '-0xff')
-        # the default parser still decodes hex literals
         self.assertEqual(json5.loads('0x10'), 16)
         self.assertEqual(json5.loads('-0xff'), -255)
         self.assertEqual(json5.loads('0X2a'), 42)

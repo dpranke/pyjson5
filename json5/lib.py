@@ -636,6 +636,19 @@ class JSON5Encoder:
         self.quote_keys = quote_keys
         self.trailing_commas = trailing_commas
         self.allow_duplicate_keys = allow_duplicate_keys
+
+        # `quote_style` must be a `QuoteStyle` member. A plain string
+        # (e.g. "always_double") is the *value* of a member, not the member
+        # itself; it would match none of the member comparisons made while
+        # encoding, silently producing output with the wrong quote style -
+        # or even output with unescaped quotes that cannot be parsed back
+        # in. Fail fast instead of accepting the silent misbehavior.
+        if not isinstance(quote_style, QuoteStyle):
+            valid = ', '.join(str(q) for q in QuoteStyle)
+            raise ValueError(
+                f'{quote_style!r} is not a QuoteStyle member;'
+                f' expected one of: {valid}'
+            )
         self.quote_style = quote_style
         self.use_duck_typing = use_duck_typing
 

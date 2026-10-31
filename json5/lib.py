@@ -871,9 +871,6 @@ class JSON5Encoder:
         return s
 
     def _encode_dict(self, obj: Any, seen: set, level: int) -> str:
-        if not obj:
-            return '{}'
-
         indent_str, end_str = self._spacers(level)
         item_sep = self.item_separator + indent_str
         kv_sep = self.kv_separator

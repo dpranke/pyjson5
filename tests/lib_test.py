@@ -747,6 +747,61 @@ class TestDumps(unittest.TestCase):
                         )
                         self.assertEqual(json5.loads(result), values)
 
+    def test_duck_mapping_without_truth_value(self):
+        class Mapping:
+            def __init__(self, values):
+                self.values = values
+
+            def keys(self):
+                return iter(self.values)
+
+            def __getitem__(self, key):
+                return self.values[key]
+
+            def __bool__(self):
+                raise ValueError(
+                    'The truth value is undefined'
+                )  # pragma: no cover
+
+        for values in ({}, {'b': 0, 'a': [1, 2]}):
+            for indent in (None, 0, 2, '\t'):
+                for trailing_commas in (False, True):
+                    for sort_keys in (False, True):
+                        with self.subTest(
+                            values=values,
+                            indent=indent,
+                            trailing_commas=trailing_commas,
+                            sort_keys=sort_keys,
+                        ):
+                            options = {
+                                'indent': indent,
+                                'trailing_commas': trailing_commas,
+                                'sort_keys': sort_keys,
+                            }
+                            self.assertEqual(
+                                json5.dumps(
+                                    Mapping(values),
+                                    use_duck_typing=True,
+                                    **options,
+                                ),
+                                json5.dumps(values, **options),
+                            )
+
+    def test_false_valued_duck_mapping(self):
+        class Mapping:
+            def keys(self):
+                return ['answer']
+
+            def __getitem__(self, key):
+                return {'answer': 42}[key]
+
+            def __bool__(self):
+                return False  # pragma: no cover
+
+        self.assertEqual(
+            json5.dumps(Mapping(), use_duck_typing=True), '{answer: 42}'
+        )
+
     def test_invalid_collection(self):
         # Check that something that isn't actually an array or a dict doesn't
         # work.
@@ -784,9 +839,6 @@ class TestDumps(unittest.TestCase):
 
             def __getitem__(self, k):
                 return {'a': 1, 'b': 2}[k]
-
-            def __len__(self):
-                return 2
 
         value = MyDict()
         self.assertRaises(TypeError, json5.dumps, value)

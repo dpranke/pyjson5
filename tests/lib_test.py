@@ -634,6 +634,81 @@ class TestDumps(unittest.TestCase):
                     **kwargs,
                 )
 
+    def test_allow_duplicate_keys_surrogate_pairs(self):
+        # Each pair is distinct in Python but has the same decoded key.
+        for key, surrogate_key in (
+            ('\U0001f600', '\ud83d\ude00'),
+            ('\U0001d49c', '\ud835\udc9c'),
+            ('a\U0001d49cb', 'a\ud835\udc9cb'),
+        ):
+            for keys in ((key, surrogate_key), (surrogate_key, key)):
+                obj = dict(zip(keys, ('first', 'second')))
+                for ensure_ascii in (False, True):
+                    for quote_style in json5.QuoteStyle:
+                        with self.subTest(
+                            keys=keys,
+                            ensure_ascii=ensure_ascii,
+                            quote_style=quote_style,
+                        ):
+                            self.assertRaises(
+                                ValueError,
+                                json5.dumps,
+                                obj,
+                                allow_duplicate_keys=False,
+                                ensure_ascii=ensure_ascii,
+                                quote_style=quote_style,
+                            )
+
+    def test_surrogate_duplicate_keys_allowed(self):
+        obj = {'\U0001f600': 'first', '\ud83d\ude00': 'second'}
+        expected = '{"\\ud83d\\ude00": "first", "\\ud83d\\ude00": "second"}'
+        self.assertEqual(json5.dumps(obj), expected)
+        self.assertEqual(json5.dumps(obj, allow_duplicate_keys=True), expected)
+
+    def test_distinct_surrogate_keys(self):
+        obj = {
+            key: index
+            for index, key in enumerate(
+                (
+                    '\ud83d',
+                    '\ude00',
+                    '\ude00\ud83d',
+                    '\ud83dx\ude00',
+                    '\\ud83d\\ude00',
+                    '\U0001f600',
+                )
+            )
+        }
+        for ensure_ascii in (False, True):
+            with self.subTest(ensure_ascii=ensure_ascii):
+                encoded = json5.dumps(
+                    obj,
+                    allow_duplicate_keys=False,
+                    ensure_ascii=ensure_ascii,
+                )
+                self.assertEqual(json5.loads(encoded), obj)
+
+    def test_custom_surrogate_keys(self):
+        class BackslashSurrogateKeys(json5.JSON5Encoder):
+            def encode(self, obj, seen, level, *, as_key):
+                if as_key and isinstance(obj, str):
+                    text = obj.encode('utf-8', 'backslashreplace').decode(
+                        'utf-8'
+                    )
+                    return json.dumps(text, ensure_ascii=self.ensure_ascii)
+                return super().encode(obj, seen, level, as_key=as_key)
+
+        obj = {'\U0001f600': 'first', '\ud83d\ude00': 'second'}
+        expected = {'\U0001f600': 'first', '\\ud83d\\ude00': 'second'}
+        for ensure_ascii in (False, True):
+            encoded = json5.dumps(
+                obj,
+                allow_duplicate_keys=False,
+                ensure_ascii=ensure_ascii,
+                cls=BackslashSurrogateKeys,
+            )
+            self.assertEqual(json5.loads(encoded), expected)
+
     def test_arrays(self):
         self.check([], '[]')
         self.check([1, 2, 3], '[1, 2, 3]')

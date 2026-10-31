@@ -732,8 +732,8 @@ class Runner:
             raise FailFastException(1)
 
     def is_supported_python_version(self):
-        def _to_str(versions):
-            return ', '.join(versions[:-1]) + ' and ' + versions[-1]
+        def _to_str(l):
+            return ', '.join(l[:-1]) + ' and ' + l[-1]
 
         partial = [
             '3.' + str(x)

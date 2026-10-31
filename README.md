@@ -120,9 +120,6 @@ $ ./run devenv  # which really just calls `uv sync`.
 $ source .venv/bin/activate
 ```
 
-The tools launched by `run` use the same Python interpreter as the runner,
-including its virtual environment.
-
 ### Run tests and other checks
 
 ```

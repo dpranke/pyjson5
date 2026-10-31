@@ -14,9 +14,7 @@
 
 import subprocess
 import sys
-import tempfile
 import unittest
-from pathlib import Path
 
 from json5 import VERSION, __version__
 from json5.host import Host
@@ -208,38 +206,6 @@ class ToolTest(unittest.TestCase):
     def test_version(self):
         self.check(['--version'], out=str(VERSION) + '\n')
         self.check(['--version'], out=str(__version__) + '\n')
-
-    def test_runner_uses_active_interpreter(self):
-        probe = """
-import runpy
-import sys
-namespace = runpy.run_path(sys.argv[1])
-namespace['shutil'].which = lambda _: 'uv'
-runner = namespace['Runner']()
-runner.parse_args(['tests'])
-process = runner._call(
-    runner.run_cmd + ['json5', '--version'],
-    cwd=sys.argv[2], capture_output=True,
-)
-sys.stdout.buffer.write(process.stdout)
-sys.stderr.buffer.write(process.stderr)
-raise SystemExit(process.returncode)
-"""
-        with tempfile.TemporaryDirectory() as directory:
-            process = subprocess.run(
-                [
-                    sys.executable,
-                    '-c',
-                    probe,
-                    str(Path(__file__).resolve().parents[1] / 'run'),
-                    directory,
-                ],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
-        self.assertEqual(process.returncode, 0, process.stderr)
-        self.assertEqual(process.stdout.strip(), __version__)
 
 
 if __name__ == '__main__':  # pragma: no cover

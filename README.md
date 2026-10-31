@@ -206,6 +206,7 @@ to activate it.
 ## Version History / Release Notes:
 
 * Unreleased
+    * Preserve duck-typed mapping contents without testing their truth value.
     * Preserve duck-typed array contents without testing their truth value.
     * Honor explicit false-valued callable parsing hooks and default encoders
       without testing their truth value.

@@ -638,8 +638,9 @@ class JSON5Encoder:
         self.allow_duplicate_keys = allow_duplicate_keys
 
         if not isinstance(quote_style, QuoteStyle):
-            raise ValueError(
-                'quote_style argument must be a json5.QuoteStyle value')
+            raise TypeError(
+                'quote_style argument must be a json5.QuoteStyle value'
+            )
         self.quote_style = quote_style
         self.use_duck_typing = use_duck_typing
 

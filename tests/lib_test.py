@@ -335,11 +335,15 @@ class TestLoads(unittest.TestCase):
                 self.assertEqual(json5.loads(text, parse_float=hook), text)
 
     def test_parse_int(self):
-        def hook(x, base=10):
-            del base
+        def hook(x):
             return x
 
         self.assertEqual(json5.loads('1', parse_int=hook), '1')
+        self.assertEqual(json5.loads('0x10', parse_int=hook), '0x10')
+        self.assertEqual(json5.loads('-0xff', parse_int=hook), '-0xff')
+        self.assertEqual(json5.loads('0x10'), 16)
+        self.assertEqual(json5.loads('-0xff'), -255)
+        self.assertEqual(json5.loads('0X2a'), 42)
 
     def test_sample_file(self):
         path = os.path.join(os.path.dirname(__file__), '..', 'sample.json5')

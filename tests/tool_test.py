@@ -149,6 +149,15 @@ class ToolTest(unittest.TestCase):
             out='"\\u0000\\u000b"\n',
         )
 
+    def test_as_json_nonfinite(self):
+        self.check(
+            ['--as-json', '-c', '{value: NaN}'],
+            returncode=1,
+            out='',
+            err='Illegal JSON5 value: nan\n',
+        )
+        self.check(['-c', 'NaN'], out='NaN\n')
+
     def test_quote_keys(self):
         self.check(
             ['--quote-keys', '-c', '{foo: 1}'],

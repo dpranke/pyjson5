@@ -66,13 +66,18 @@ def main(argv=None, host=None):
         args.quote_style = json5.QuoteStyle.ALWAYS_DOUBLE.value
 
     obj = json5.loads(inp, strict=args.strict)
-    s = json5.dumps(
-        obj,
-        indent=args.indent,
-        quote_keys=args.quote_keys,
-        trailing_commas=args.trailing_commas,
-        quote_style=QUOTE_STYLES[args.quote_style],
-    )
+    try:
+        s = json5.dumps(
+            obj,
+            indent=args.indent,
+            quote_keys=args.quote_keys,
+            trailing_commas=args.trailing_commas,
+            quote_style=QUOTE_STYLES[args.quote_style],
+            allow_nan=not args.as_json,
+        )
+    except ValueError as error:
+        host.print(str(error), file=host.stderr)
+        return 1
     host.print(s)
     return 0
 
@@ -126,7 +131,7 @@ def _parse_args(host, argv):
         action='store_const',
         const=True,
         default=False,
-        help='output as JSON (same as --quote-keys --no-trailing-commas)',
+        help='output as JSON (reject non-finite numbers)',
     )
     parser.add_argument(
         '--indent',

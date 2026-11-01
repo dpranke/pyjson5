@@ -91,7 +91,68 @@ When changing the code, do not add anything that only runs on 3.9 or later
 versions, and do not rely on `from __future__ import annotations`.
 
 Use a 79-character line and prefer single quotes to double; otherwise follow
-PEP-8 and the normal `ruff format` coding style.
+PEP-8 and the normal `ruff format` coding style. Write tests using
+`doctest` or `unittest`; for more on this see below.
+
+See [below](#ai-contribution-policy) for the policy on using AI to help
+make changes (in short, it's allowed but be careful).
+
+### Testing
+
+Write tests using either the `unittest` or `doctest` modules from the
+standard library. Do not use `pytest` or any other package that needs
+to be installed; the tests and code are expected to be able to run in
+an environment with only the standard library (and this package) installed.
+
+Aim for 100% line coverage when writing tests. There's really no reason
+you can't get it for this package given how straightforward it is, and
+given Python's dynamic nature it is too easy for an uncovered line of
+code to actually be buggy (though type checkers and other tools have made
+this problem better over the years). If possible, feel free to shoot for
+100% branch coverage.
+
+There aren't great guidelines in Python tests for how many tests to include
+in a given test case, and when to split things out. Don't necessarily put
+all of your tests into a single test case, but don't necessarily put each
+combination of things into a separate case either.
+
+Do not go overboard when writing tests. Try to cover the interesting
+cases of each type or parameter, and if you think the interaction between two
+parameters definitely matters or have a good argument for why it might matter,
+do test it. However, do not just exhaustively try to cover every
+possible combination of every parameter "just in case". That slows down
+the tests unnecessarily and can make it harder to understand the logic
+of what each test is doing (i.e., which things are important and which aren't).
+
+Definitely try to see if a given code path is already covered by the
+test suite before you write a new test for it. There's not *that* many tests
+in the suite, so this shouldn't be too hard to do.
+
+### AI contribution policy
+
+Patches made with the help of AI are welcome, but contributors are expected
+to do their own work to review the changes and be willing and able to
+support and justify them. Do not have agents upload changes that you have not
+reviewed and vetted yourself.
+
+Changes are expected to match the style and philosophy of the project as much
+as possible. In particular, pay close attention to any tests that an AI tool
+may generate, and make sure you are not testing things that are already covered
+by other tests.
+
+You may disclose that the patch was made "with the help of AI" but don't
+have to. However, please don't mention which models or tools you used. It's
+not necessary, and at this time I think it's an inappropriate form of
+advertising (this stance may change in the future if it turns out that
+knowing which tool was used is actually important).
+
+If you used some sort of non-AI based tool to help with your change
+like a typechecker, a model checker, or a mutation tester, feel free to
+mention which one as it can help with validating and reproducing the changes.
+
+Do not include agents as "co-authors". You are expected to be the author
+of your change. If you had help from some other person, disclosing that
+is fine, however.
 
 ### On Mac
 
@@ -112,13 +173,18 @@ Install `uv` via whatever mechanism is appropriate.
 ### Creating a venv
 
 You do not have to create a venv to do anything, if you use the `run`
-script, but if you want to invoke tools like `ruff` directly, you 
+script, but if you want to invoke tools like `ruff` directly, you
 can do so as follows:
 
 ```
 $ ./run devenv  # which really just calls `uv sync`.
 $ source .venv/bin/activate
 ```
+
+The code is currently written to expect to be executed in an environment
+where the package is actually installed, and not just a bunch of source
+files in a directory. The latter probably works with enough care taken,
+but that configuration is not tested nor guaranteed to work.
 
 ### Run tests and other checks
 
@@ -142,16 +208,12 @@ $ ./run presubmit
   * `pylint`
   * `mypy`
 
-* `tests` runs all of the tests. Write tests using either `doctest` or
-  `unittest`. Aim for 100% line coverage in tests (see next bullet).
+* `tests` runs all of the tests. See [Testing](#testing) above for how
+  to write tests for this package.
 
 * `coverage` runs all of the tests using the `coverage` tool in order to
   collect code coverage. You can pass `-b/--branch` to collect branch
-  coverage. You should target 100% line coverage on any changes, as there
-  shouldn't be a reason you can't do this, and actually ensuring that you
-  execute every line can catch problems in Python that might otherwise be
-  caught earlier in statically-typed languages (though the `checks` go
-  a long way to accomplishing the same thing).
+  coverage.
 
 * `build` builds the package to get it ready to publish
 
@@ -202,6 +264,7 @@ to activate it.
 7. `./run publish --prod` (which will build the package if need be first)
 
 (Assuming you have upload privileges to PyPI and the GitHub repo, of course.)
+
 
 ## Version History / Release Notes:
 

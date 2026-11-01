@@ -335,7 +335,7 @@ def parse(
         s = s.decode(encoding)
 
     if not s:
-        raise ValueError('Empty strings are not legal JSON5')
+        return None, 'Empty strings are not legal JSON5', 0
     start = start or 0
     parser = Parser(s, '<string>', pos=start)
     ast, err, pos = parser.parse(

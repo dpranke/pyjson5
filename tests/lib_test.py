@@ -533,6 +533,14 @@ class TestParse(unittest.TestCase):
         self.assertEqual(err, actual_err)
         self.assertEqual(pos, actual_pos)
 
+    def test_parse_empty_input(self):
+        for source in ('', b''):
+            with self.subTest(source=source):
+                self.assertEqual(
+                    json5.parse(source),
+                    (None, 'Empty strings are not legal JSON5', 0),
+                )
+
     def test_parse(self):
         self.check('4', 4, err=None, pos=1)
         self.check('4 ', 4, err=None, pos=2)

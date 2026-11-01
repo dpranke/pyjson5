@@ -1272,6 +1272,12 @@ class TestDumps(unittest.TestCase):
         c(more_single_double_first, double_more_single_double_first)
         c(more_double_single_first, single_more_double_single_first)
 
+    def test_invalid_quote_styles(self):
+        with self.assertRaises(ValueError):
+            json5.dumps("it's", quote_style='always_double')
+        with self.assertRaises(ValueError):
+            json5.dumps('foo', quote_style=1)
+
     def test_skip_keys(self):
         od = OrderedDict()
         od[(1, 2)] = 2

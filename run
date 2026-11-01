@@ -62,9 +62,6 @@ class Runner:
                 sys.exit(1)
 
         self.uv_path = shutil.which('uv')
-        if self.uv_path is None and self.args.command not in ('help', 'tests'):
-            print('You need to have `uv` installed to run this script')
-            sys.exit(2)
 
         self.venv = None
         if 'VIRTUAL_ENV' in os.environ:
@@ -78,10 +75,14 @@ class Runner:
         sys.stdout.reconfigure(line_buffering=True)
         self.parse_args(argv)
 
+        if self.uv_path is None and self.args.command not in ('help', 'tests'):
+            print('You need to have `uv` installed to run this script')
+            return 2
+
         if not self.is_supported_python_version():
             return 1
 
-        if not self.venv and self.args.command != 'devenv':
+        if self.uv_path and not self.venv and self.args.command != 'devenv':
             is_uv = 'UV' in os.environ
             if not is_uv:
                 run_cmd = ['uv', 'run', '--isolated']
@@ -102,7 +103,11 @@ class Runner:
                 or self.args.command == 'presubmit'
             )
         ):
-            venv_path = self.venv.replace(THIS_DIR, '/')
+            venv_path = (
+                self.venv.replace(THIS_DIR, '/')
+                if self.venv
+                else 'the current environment'
+            )
             if 'cache/uv/builds' in venv_path:
                 venv_path = 'an isolated .venv'
             print(

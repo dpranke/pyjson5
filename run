@@ -61,7 +61,7 @@ class Runner:
                 )
                 sys.exit(1)
 
-        self.uv_path = shutil.which('uv')
+        self.uv_path = None
 
         self.venv = None
         if 'VIRTUAL_ENV' in os.environ:
@@ -75,6 +75,7 @@ class Runner:
         sys.stdout.reconfigure(line_buffering=True)
         self.parse_args(argv)
 
+        self.uv_path = shutil.which('uv')
         if self.uv_path is None and self.args.command not in ('help', 'tests'):
             print('You need to have `uv` installed to run this script')
             return 2

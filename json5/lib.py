@@ -143,6 +143,11 @@ def load(
           string as written, and must be able to handle both decimal and
           hexadecimal literals (e.g. `0x1F`); only the default parser
           decodes hexadecimal literals automatically.
+        - the `parse_constant` parameter does not have the same semantics
+          as in the `json` module either: a custom callback is passed the
+          constant's spelling as written, so in addition to `NaN`,
+          `Infinity` and `-Infinity` it must also accept the `-NaN` form
+          of negative NaN, which is legal JSON5.
 
     `load()` reads the entire remaining stream into memory, even when
     `consume_trailing=False`. That option controls whether the parser
@@ -224,6 +229,11 @@ def loads(
           string as written, and must be able to handle both decimal and
           hexadecimal literals (e.g. `0x1F`); only the default parser
           decodes hexadecimal literals automatically.
+        - the `parse_constant` parameter does not have the same semantics
+          as in the `json` module either: a custom callback is passed the
+          constant's spelling as written, so in addition to `NaN`,
+          `Infinity` and `-Infinity` it must also accept the `-NaN` form
+          of negative NaN, which is legal JSON5.
 
     Raises
         - `ValueError` if given an invalid document. This is different
@@ -281,7 +291,9 @@ def parse(
     optional `start` parameter that specifies a zero-based offset to start
     parsing from in the string, (d) the `parse_int` parameter does not have
     the same semantics as in the `json` module (see `loads()` for details),
-    and (e) the return value is different, as described below.
+    (e) the `parse_constant` parameter also differs from the `json` module
+    (see `loads()` for details), and (f) the return value is different,
+    as described below.
 
     `parse()` is useful if you have a string that might contain multiple
     values and you need to extract all of them; you can do so by repeatedly

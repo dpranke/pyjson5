@@ -118,7 +118,7 @@ id_esc_continue = id_esc_start
                 | ~~('u' ('200C' | '200c' | '200D' | '200d')) unicode_esc
 
 num_literal    = '-' unsigned_lit:n                  -> '-' + n
-               | '+' unsigned_lit:n                  -> n
+               | '+' unsigned_lit:n                  -> '+' + n
                | unsigned_lit:n                      -> n
 
 unsigned_lit   = dec_literal:d ~id_start             -> d

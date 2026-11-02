@@ -1423,7 +1423,7 @@ class Parser:
             [
                 lambda: self._ch('+'),
                 lambda: self._bind(self._unsigned_lit_, 'n'),
-                lambda: self._succeed(self._get('n')),
+                lambda: self._succeed('+' + self._get('n')),
             ]
         )
         self._pop('num_literal__c1')

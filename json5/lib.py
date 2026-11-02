@@ -384,7 +384,7 @@ def _convert(
         return float(s.replace('Infinity', 'inf').replace('NaN', 'nan'))
 
     def _parse_int(s):
-        if s.lstrip('-').startswith(('0x', '0X')):
+        if s.lstrip('+-').startswith(('0x', '0X')):
             return int(s, 16)
         return int(s)
 
@@ -426,7 +426,7 @@ def _walk_ast(
         return False
     ty, v = el
     if ty == 'number':
-        unsigned = v[1:] if v.startswith('-') else v
+        unsigned = v[1:] if v[:1] in ('-', '+') else v
         if unsigned.startswith(('0x', '0X')):
             return parse_int(v)
         if '.' in v or 'e' in v or 'E' in v:

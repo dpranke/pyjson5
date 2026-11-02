@@ -324,12 +324,17 @@ class TestLoads(unittest.TestCase):
             json5.loads('-Infinity', parse_constant=hook), '-Infinity'
         )
         self.assertEqual(json5.loads('NaN', parse_constant=hook), 'NaN')
+        self.assertEqual(
+            json5.loads('+Infinity', parse_constant=hook), '+Infinity'
+        )
+        self.assertEqual(json5.loads('+NaN', parse_constant=hook), '+NaN')
 
     def test_parse_float(self):
         def hook(x):
             return x
 
         self.assertEqual(json5.loads('1.0', parse_float=hook), '1.0')
+        self.assertEqual(json5.loads('+1.5', parse_float=hook), '+1.5')
         for text in ('1E5', '1E+5', '2.5E-3', '1e5', '1e-5'):
             with self.subTest(text=text):
                 self.assertEqual(json5.loads(text, parse_float=hook), text)
@@ -341,8 +346,11 @@ class TestLoads(unittest.TestCase):
         self.assertEqual(json5.loads('1', parse_int=hook), '1')
         self.assertEqual(json5.loads('0x10', parse_int=hook), '0x10')
         self.assertEqual(json5.loads('-0xff', parse_int=hook), '-0xff')
+        self.assertEqual(json5.loads('+5', parse_int=hook), '+5')
+        self.assertEqual(json5.loads('+0xff', parse_int=hook), '+0xff')
         self.assertEqual(json5.loads('0x10'), 16)
         self.assertEqual(json5.loads('-0xff'), -255)
+        self.assertEqual(json5.loads('+0xff'), 255)
         self.assertEqual(json5.loads('0X2a'), 42)
 
     def test_sample_file(self):

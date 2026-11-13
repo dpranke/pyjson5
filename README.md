@@ -269,6 +269,8 @@ to activate it.
 ## Version History / Release Notes:
 
 * Unreleased
+    * Encode float subclasses using their underlying values without calling
+      custom equality or float conversion methods.
     * Preserve duck-typed mapping contents without testing their truth value.
     * Preserve duck-typed array contents without testing their truth value.
     * Honor explicit false-valued callable parsing hooks and default encoders

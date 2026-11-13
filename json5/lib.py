@@ -751,6 +751,9 @@ class JSON5Encoder:
         return f'"{s}"' if as_key else s
 
     def _encode_float(self, obj: float, *, as_key: bool) -> str:
+        # Inspect the underlying value without invoking subclass overrides,
+        # matching the json module and our use of float.__repr__ below.
+        obj = float.__float__(obj)
         if obj == float('inf'):
             allowed = self.allow_nan
             s = 'Infinity'

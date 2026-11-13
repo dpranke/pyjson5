@@ -42,6 +42,20 @@ class NoTruthHook(RecordingHook):
         )  # pragma: no cover
 
 
+class NoCompareFloat(float):
+    __hash__ = float.__hash__
+
+    def __eq__(self, other):
+        raise AssertionError(
+            'Float equality must not be called'
+        )  # pragma: no cover
+
+    def __float__(self):
+        raise AssertionError(
+            'Float conversion must not be called'
+        )  # pragma: no cover
+
+
 class TestOptionalHooks(unittest.TestCase):
     def test_decoding_hooks(self):
         cases = (
@@ -854,6 +868,32 @@ class TestDumps(unittest.TestCase):
                 self.fail()
 
         self.assertEqual(json5.dumps(MyFloat(0.5)), '0.5')
+
+    def test_custom_float_finite(self):
+        for number in (1.5, -0.0):
+            value = NoCompareFloat(number)
+            for obj in (value, {value: 'value'}):
+                with self.subTest(number=number, obj_type=type(obj)):
+                    self.assertEqual(
+                        json5.dumps(obj, allow_nan=False),
+                        json.dumps(obj, allow_nan=False),
+                    )
+
+    def test_custom_float_nonfinite(self):
+        for number, expected in (
+            (float('inf'), 'Infinity'),
+            (float('-inf'), '-Infinity'),
+            (float('nan'), 'NaN'),
+        ):
+            value = NoCompareFloat(number)
+            for obj, text in (
+                (value, expected),
+                ({value: 'value'}, '{"' + expected + '": "value"}'),
+            ):
+                with self.subTest(number=number, obj_type=type(obj)):
+                    self.assertEqual(json5.dumps(obj), text)
+                    with self.assertRaises(ValueError):
+                        json5.dumps(obj, allow_nan=False)
 
     def test_custom_objects(self):
         class MyDict:

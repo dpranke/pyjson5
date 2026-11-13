@@ -158,6 +158,30 @@ class ToolTest(unittest.TestCase):
         )
         self.check(['-c', 'NaN'], out='NaN\n')
 
+    def test_invalid_input(self):
+        # Parse errors should print a clean message like the dump errors
+        # do, not a traceback.
+        self.check(
+            ['-c', '{bad'],
+            returncode=1,
+            out='',
+            err='<string>:1 Unexpected end of input at column 5\n',
+        )
+        self.check(
+            [],
+            stdin='{oops',
+            returncode=1,
+            out='',
+            err='<string>:1 Unexpected end of input at column 6\n',
+        )
+        self.check(
+            [],
+            stdin='',
+            returncode=1,
+            out='',
+            err='Empty strings are not legal JSON5\n',
+        )
+
     def test_quote_keys(self):
         self.check(
             ['--quote-keys', '-c', '{foo: 1}'],

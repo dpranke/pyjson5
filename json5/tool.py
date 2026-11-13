@@ -65,7 +65,12 @@ def main(argv=None, host=None):
         args.trailing_commas = False
         args.quote_style = json5.QuoteStyle.ALWAYS_DOUBLE.value
 
-    obj = json5.loads(inp, strict=args.strict)
+    try:
+        obj = json5.loads(inp, strict=args.strict)
+    except ValueError as error:
+        host.print(str(error), file=host.stderr)
+        return 1
+
     try:
         s = json5.dumps(
             obj,

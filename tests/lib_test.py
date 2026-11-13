@@ -827,6 +827,13 @@ class TestDumps(unittest.TestCase):
         # work.
         self.assertRaises(TypeError, json5.dumps, {1, 2, 3})
 
+    def test_invalid_key_type_message(self):
+        # Unencodable keys must fail with a clean, correctly-formatted
+        # message, not one with a stray ``f`` in it.
+        with self.assertRaises(TypeError) as ctx:
+            json5.dumps({(1, 2): 'x'})
+        self.assertEqual(str(ctx.exception), "Invalid key: (1, 2)")
+
     def test_custom_numbers(self):
         # See https://github.com/dpranke/pyjson5/issues/57: we
         # need to ensure that we use the bare int.__repr__ and

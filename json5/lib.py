@@ -719,7 +719,7 @@ class JSON5Encoder:
             return s
 
         if as_key:
-            raise TypeError(f'Invalid key f{obj}')
+            raise TypeError(f'Invalid key: {obj!r}')
         return self._encode_non_basic_type(obj, seen, level)
 
     def _encode_basic_type(self, obj: Any, *, as_key: bool) -> Optional[str]:

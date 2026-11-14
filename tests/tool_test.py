@@ -200,6 +200,18 @@ class ToolTest(unittest.TestCase):
     def test_read_command(self):
         self.check(['-c', '"foo"'], out='"foo"\n')
 
+    def test_read_empty_command(self):
+        # An empty -c string is still the input; stdin and FILE are not read.
+        err = 'Empty strings are not legal JSON5\n'
+        self.check(['-c', ''], stdin='"foo"', returncode=1, out='', err=err)
+        self.check(
+            ['-c', '', 'foo.json5'],
+            files={'foo.json5': '"foo"\n'},
+            returncode=1,
+            out='',
+            err=err,
+        )
+
     def test_read_from_stdin(self):
         self.check([], stdin='"foo"\n', out='"foo"\n')
 

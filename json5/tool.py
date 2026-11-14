@@ -45,7 +45,7 @@ def main(argv=None, host=None):
         host.print(__version__)
         return 0
 
-    if args.cmd:
+    if args.cmd is not None:
         inp = args.cmd
     elif args.file == '-':
         inp = host.stdin.read()

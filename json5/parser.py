@@ -339,13 +339,31 @@ class Parser:
         )
 
     def _value__c0_(self):
-        self._seq([lambda: self._str('null'), lambda: self._succeed('None')])
+        self._seq(
+            [
+                lambda: self._str('null'),
+                lambda: self._not(self._id_continue_),
+                lambda: self._succeed('None'),
+            ]
+        )
 
     def _value__c1_(self):
-        self._seq([lambda: self._str('true'), lambda: self._succeed('True')])
+        self._seq(
+            [
+                lambda: self._str('true'),
+                lambda: self._not(self._id_continue_),
+                lambda: self._succeed('True'),
+            ]
+        )
 
     def _value__c2_(self):
-        self._seq([lambda: self._str('false'), lambda: self._succeed('False')])
+        self._seq(
+            [
+                lambda: self._str('false'),
+                lambda: self._not(self._id_continue_),
+                lambda: self._succeed('False'),
+            ]
+        )
 
     def _value__c3_(self):
         self._push('value__c3')
@@ -1442,7 +1460,7 @@ class Parser:
         self._choose(
             [
                 self._unsigned_lit__c0_,
-                self._hex_literal_,
+                self._unsigned_lit__c1_,
                 self._unsigned_lit__c2_,
                 self._unsigned_lit__c3_,
             ]
@@ -1459,11 +1477,34 @@ class Parser:
         )
         self._pop('unsigned_lit__c0')
 
+    def _unsigned_lit__c1_(self):
+        self._push('unsigned_lit__c1')
+        self._seq(
+            [
+                lambda: self._bind(self._hex_literal_, 'h'),
+                lambda: self._not(self._id_start_),
+                lambda: self._succeed(self._get('h')),
+            ]
+        )
+        self._pop('unsigned_lit__c1')
+
     def _unsigned_lit__c2_(self):
-        self._str('Infinity')
+        self._seq(
+            [
+                lambda: self._str('Infinity'),
+                lambda: self._not(self._id_continue_),
+                lambda: self._succeed('Infinity'),
+            ]
+        )
 
     def _unsigned_lit__c3_(self):
-        self._str('NaN')
+        self._seq(
+            [
+                lambda: self._str('NaN'),
+                lambda: self._not(self._id_continue_),
+                lambda: self._succeed('NaN'),
+            ]
+        )
 
     def _dec_literal_(self):
         self._choose(

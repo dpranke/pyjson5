@@ -16,9 +16,9 @@ eol            = '\u000D' '\u000A' | '\u000D' | '\u000A'
 comment        = '//' (~eol anything)*
                | '/*' (~'*/' anything)* '*/'
 
-value          = 'null'                               -> 'None'
-               | 'true'                               -> 'True'
-               | 'false'                              -> 'False'
+value          = 'null' ~id_continue                  -> 'None'
+               | 'true' ~id_continue                  -> 'True'
+               | 'false' ~id_continue                 -> 'False'
                | object:v                             -> ['object', v]
                | array:v                              -> ['array', v]
                | string:v                             -> ['string', v]
@@ -122,9 +122,9 @@ num_literal    = '-' unsigned_lit:n                  -> '-' + n
                | unsigned_lit:n                      -> n
 
 unsigned_lit   = dec_literal:d ~id_start             -> d
-               | hex_literal
-               | 'Infinity'
-               | 'NaN'
+               | hex_literal:h ~id_start             -> h
+               | 'Infinity' ~id_continue             -> 'Infinity'
+               | 'NaN' ~id_continue                  -> 'NaN'
 
 dec_literal    = dec_int_lit:d frac:f exp:e          -> d + f + e
                | dec_int_lit:d frac:f                -> d + f

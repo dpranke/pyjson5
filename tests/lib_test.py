@@ -578,6 +578,31 @@ class TestParse(unittest.TestCase):
         self.assertEqual(err, None)
         self.assertEqual(pos, 4)
 
+    def test_literal_must_end_at_token_boundary(self):
+        # 'nullable' is one identifier, not `null` followed by 'able', and
+        # a numeric literal can't be followed by an identifier character.
+        for s, pos in (
+            ('nullable', 4),
+            ('truex', 4),
+            ('false0', 5),
+            ('Infinitytrue', 8),
+            ('-Infinityx', 9),
+            ('NaNNaN', 3),
+            ('0xAnull', 3),
+            ('0x1g', 3),
+        ):
+            with self.subTest(s=s):
+                val, err, actual_pos = json5.parse(s, consume_trailing=False)
+                self.assertIsNone(val)
+                self.assertIsNotNone(err)
+                self.assertEqual(pos, actual_pos)
+
+        self.check('null,', None, err=None, pos=4, consume_trailing=False)
+        self.check(
+            'Infinity//', float('inf'), err=None, pos=8, consume_trailing=False
+        )
+        self.check('0x1F]', 31, err=None, pos=4, consume_trailing=False)
+
 
 class TestDump(unittest.TestCase):
     def test_basic(self):

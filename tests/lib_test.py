@@ -549,6 +549,16 @@ class TestParse(unittest.TestCase):
                     (None, 'Empty strings are not legal JSON5', 0),
                 )
 
+    def test_parse_invalid_start(self):
+        # A negative start indexes the string from the end and a start past
+        # the end indexes off it; neither is an offset into the document.
+        for source, start in (('012', -2), ('012', 4)):
+            with self.subTest(source=source, start=start):
+                self.assertEqual(
+                    json5.parse(source, start=start),
+                    (None, f'Invalid start position {start}', 0),
+                )
+
     def test_parse(self):
         self.check('4', 4, err=None, pos=1)
         self.check('4 ', 4, err=None, pos=2)

@@ -349,6 +349,8 @@ def parse(
     if not s:
         return None, 'Empty strings are not legal JSON5', 0
     start = start or 0
+    if not 0 <= start <= len(s):
+        return None, f'Invalid start position {start}', 0
     parser = Parser(s, '<string>', pos=start)
     ast, err, pos = parser.parse(
         global_vars={'_strict': strict, '_consume_trailing': consume_trailing}
